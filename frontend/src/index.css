@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 4.8% 95.9%; /* stone-50 */
+    --foreground: 160 84% 10%; /* emerald-950 approx */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 160 84% 10%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 84% 10%;
+    
+    --primary: 160 84% 10%;
+    --primary-foreground: 60 4.8% 95.9%;
+    
+    --secondary: 160 20% 90%;
+    --secondary-foreground: 160 84% 10%;
+    
+    --muted: 60 5% 90%;
+    --muted-foreground: 160 10% 40%;
+    
+    --accent: 84 81% 44%; /* lime-500 */
+    --accent-foreground: 160 84% 10%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 4.8% 95.9%;
+    
+    --border: 60 5% 85%;
+    --input: 60 5% 85%;
+    --ring: 84 81% 44%;
+    
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 160 84% 10%;
+    --foreground: 60 4.8% 95.9%;
+    --card: 160 84% 12%;
+    --card-foreground: 60 4.8% 95.9%;
+    --popover: 160 84% 12%;
+    --popover-foreground: 60 4.8% 95.9%;
+    --primary: 84 81% 44%;
+    --primary-foreground: 160 84% 10%;
+    --secondary: 160 20% 25%;
+    --secondary-foreground: 60 4.8% 95.9%;
+    --muted: 160 20% 25%;
+    --muted-foreground: 60 10% 70%;
+    --accent: 84 81% 44%;
+    --accent-foreground: 160 84% 10%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 60 4.8% 95.9%;
+    --border: 160 20% 25%;
+    --input: 160 20% 25%;
+    --ring: 84 81% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-sm;
+  }
+  .glass-dark {
+    @apply bg-emerald-950/80 backdrop-blur-md border border-emerald-900/50 shadow-sm;
+  }
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
