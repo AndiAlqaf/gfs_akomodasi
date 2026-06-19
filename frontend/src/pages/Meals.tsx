@@ -4,7 +4,7 @@ import { mealsAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Coffee, Soup, Pizza, UtensilsCrossed, Truck, CheckCircle } from 'lucide-react';
+import { Truck, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -115,65 +115,6 @@ const Meals: React.FC = () => {
             </Button>
           ))}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-        <Card className="hover-lift border-0 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-yellow-100/50 to-transparent rounded-bl-full -mr-4 -mt-4" />
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-yellow-100 p-4 rounded-2xl shadow-inner border border-yellow-200/50">
-                <Coffee className="w-7 h-7 text-yellow-700" />
-              </div>
-              <div>
-                <p className="text-sm text-emerald-700 font-medium">Breakfast (Req)</p>
-                <p className="text-3xl font-bold text-emerald-950">{stats.breakfast}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover-lift border-0 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-100/50 to-transparent rounded-bl-full -mr-4 -mt-4" />
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-100 p-4 rounded-2xl shadow-inner border border-orange-200/50">
-                <Soup className="w-7 h-7 text-orange-700" />
-              </div>
-              <div>
-                <p className="text-sm text-emerald-700 font-medium">Lunch (Req)</p>
-                <p className="text-3xl font-bold text-emerald-950">{stats.lunch}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover-lift border-0 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-red-100/50 to-transparent rounded-bl-full -mr-4 -mt-4" />
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-red-100 p-4 rounded-2xl shadow-inner border border-red-200/50">
-                <Pizza className="w-7 h-7 text-red-700" />
-              </div>
-              <div>
-                <p className="text-sm text-emerald-700 font-medium">Dinner (Req)</p>
-                <p className="text-3xl font-bold text-emerald-950">{stats.dinner}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover-lift border-0 shadow-sm overflow-hidden relative bg-emerald-950 text-stone-50">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-lime-400/30 to-transparent rounded-bl-full -mr-4 -mt-4" />
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-lime-400/20 p-4 rounded-2xl shadow-inner border border-lime-400/30">
-                <UtensilsCrossed className="w-7 h-7 text-lime-400" />
-              </div>
-              <div>
-                <p className="text-sm text-stone-300 font-medium">Total Req Today</p>
-                <p className="text-3xl font-bold text-stone-50">{stats.total}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <Card className="border-0 shadow-sm rounded-xl overflow-hidden animate-fade-in border-emerald-100" style={{ animationDelay: '200ms' }}>

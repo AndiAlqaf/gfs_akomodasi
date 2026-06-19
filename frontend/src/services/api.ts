@@ -25,6 +25,10 @@ export const areaAPI = {
   delete: (id: string) => api.delete(`/areas/${id}`),
 };
 
+export const dataRegisterAPI = {
+  create: (type: string, data: any) => api.post(`/data_register.php?action=add_${type}`, data),
+};
+
 export const messAPI = {
   getAll: () => api.get('/mess'),
   getById: (id: string) => api.get(`/mess/${id}`),

@@ -58,11 +58,31 @@ const Header: React.FC = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                import('sweetalert2').then(Swal => {
+                  Swal.default.fire({
+                    title: 'My Profile',
+                    html: `<b>Name:</b> ${user?.name || 'Admin User'}<br/><b>Role:</b> ${user?.role || 'Administrator'}`,
+                    icon: 'info',
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#064e3b'
+                  });
+                });
+              }}>
                 <User className="mr-2" size={16} />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                import('sweetalert2').then(Swal => {
+                  Swal.default.fire({
+                    title: 'Settings',
+                    text: 'System Settings and Preferences will be available here soon.',
+                    icon: 'warning',
+                    confirmButtonText: 'Got it',
+                    confirmButtonColor: '#064e3b'
+                  });
+                });
+              }}>
                 <Settings className="mr-2" size={16} />
                 Settings
               </DropdownMenuItem>

@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users } from 'lucide-react';
+import Swal from 'sweetalert2';
+
+import { dataRegisterAPI } from '@/services/api';
 
 export default function DataRegister() {
   const [activeTab, setActiveTab] = useState('area');
@@ -55,28 +58,187 @@ export default function DataRegister() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Placeholder for actual save implementation. 
-    // In the future this will POST to data_register.php based on activeTab.
-    setTimeout(() => {
+    let type = activeTab;
+    if (activeTab === 'meals') type = 'meals_dp';
+
+    try {
+      await dataRegisterAPI.create(type, formData);
       setIsSaving(false);
       setIsModalOpen(false);
       setFormData({});
-      alert("Feature coming soon: Saving real data to MySQL!");
-      fetchData(); // Refresh data just in case
-    }, 500);
+      fetchData(); // Refresh data
+      Swal.fire({ icon: 'success', title: 'Saved!', text: 'Data saved successfully!', timer: 2000, showConfirmButton: false });
+    } catch (error) {
+      console.error('Failed to save data:', error);
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Failed to save data!', timer: 2000, showConfirmButton: false });
+      setIsSaving(false);
+    }
   };
 
   const renderAddForm = () => {
     return (
-      <div className="grid gap-4 py-4 text-emerald-950">
-        <p className="text-sm text-emerald-700 italic">Fields for {activeTab.toUpperCase()} will be fully implemented here in the future.</p>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label className="text-right font-medium">Name / ID</Label>
-          <Input 
-            className="col-span-3 border-emerald-200" 
-            placeholder="Enter new data..." 
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-          />
+      <div className="grid gap-4 py-4 text-emerald-950 max-h-[60vh] overflow-y-auto px-2">
+        {activeTab === 'area' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Area Name</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIVING RESIDENCE 1" onChange={(e) => setFormData({...formData, area_name: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Area ID</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIV.RES.01" onChange={(e) => setFormData({...formData, area_id: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'mess' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Mess Name</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LANDED HOUSE-01" onChange={(e) => setFormData({...formData, mess_name: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Mess ID</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP.MES.LH.01" onChange={(e) => setFormData({...formData, mess_id: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Area</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, area_id: e.target.value})}>
+                <option value="">Select Area</option>
+                {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Managed By</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" onChange={(e) => setFormData({...formData, managed_by: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'room' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Room No</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LH.01.01" onChange={(e) => setFormData({...formData, room_no: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Mess</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, mess_id: e.target.value})}>
+                <option value="">Select Mess</option>
+                {messes.map(m => <option key={m.id} value={m.id}>{m.mess_name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Allocation</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, room_allocation: e.target.value})}>
+                <option value="">Select Allocation</option>
+                <option value="REGULAR GUEST">Regular Guest</option>
+                <option value="SPECIAL GUEST">Special Guest</option>
+                <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Beds</Label>
+              <Input type="number" className="col-span-3 border-emerald-200" placeholder="1" onChange={(e) => setFormData({...formData, beds: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'meals' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Delivery Point</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({...formData, delivery_point: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Area</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, area_id: e.target.value})}>
+                <option value="">Select Area</option>
+                {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'laundry_dp' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Point Name</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LDP SAMAENRE" onChange={(e) => setFormData({...formData, point_name: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Area</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, area_id: e.target.value})}>
+                <option value="">Select Area</option>
+                {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'laundry_bag' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Name</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" onChange={(e) => setFormData({...formData, nama: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Room</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, room_id: e.target.value})}>
+                <option value="">Select Room</option>
+                {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Laundry Bag</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Bag Name/ID" onChange={(e) => setFormData({...formData, laundry_bag: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Laundry Box</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Box Name" onChange={(e) => setFormData({...formData, laundry_box: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'guest' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Name</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" onChange={(e) => setFormData({...formData, name: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Room</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, room_id: e.target.value})}>
+                <option value="">Select Room</option>
+                {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Category</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({...formData, occupants_category: e.target.value})}>
+                <option value="REGULAR GUEST">Regular Guest</option>
+                <option value="SPECIAL GUEST">Special Guest</option>
+                <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Job</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. EMPLOYEE" onChange={(e) => setFormData({...formData, job: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Position</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. MANAGER" onChange={(e) => setFormData({...formData, position: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Level</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SENIOR STAFF" onChange={(e) => setFormData({...formData, level_category: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        <div className="grid grid-cols-4 items-center gap-4 mt-2">
+          <Label className="text-right font-medium">Remarks</Label>
+          <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." onChange={(e) => setFormData({...formData, remarks: e.target.value})} />
         </div>
       </div>
     );

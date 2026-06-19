@@ -53,12 +53,56 @@ try {
         }
     }
 
-    // ---- POST METHODS (For adding new entry - skeleton) ----
+    // ---- POST METHODS ----
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents("php://input"), true);
-        // We can implement actual inserts here later when the frontend form is fully functional.
-        // For now, just return success so the UI doesn't crash if it tries to POST.
-        echo json_encode(['success' => true, 'message' => 'API POST endpoint ready', 'data_received' => $data]);
+        $registeredBy = $data['registered_by'] ?? 'System';
+
+        if ($action === 'add_area') {
+            $stmt = $pdo->prepare("INSERT INTO areas (area_name, area_id, registered_by, remarks) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$data['area_name'], $data['area_id'], $registeredBy, $data['remarks'] ?? '']);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_mess') {
+            $stmt = $pdo->prepare("INSERT INTO messes (mess_name, mess_id, area_id, rooms_count, mess_status, managed_by, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $data['mess_name'], $data['mess_id'], $data['area_id'], 
+                $data['rooms_count'] ?? 0, $data['mess_status'] ?? 'OWNED BY CERIA', 
+                $data['managed_by'] ?? '', $registeredBy, $data['remarks'] ?? ''
+            ]);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_room') {
+            $stmt = $pdo->prepare("INSERT INTO rooms (room_no, mess_id, room_allocation, beds, room_status, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $data['room_no'], $data['mess_id'], $data['room_allocation'] ?? 'REGULAR GUEST',
+                $data['beds'] ?? 1, $data['room_status'] ?? 'READY', $registeredBy, $data['remarks'] ?? ''
+            ]);
+            // update room count in mess
+            $pdo->prepare("UPDATE messes SET rooms_count = rooms_count + 1 WHERE id = ?")->execute([$data['mess_id']]);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_meals_dp') {
+            $stmt = $pdo->prepare("INSERT INTO meals_dp (delivery_point, area_id, canteen_status, registered_by, remarks) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$data['delivery_point'], $data['area_id'], $data['canteen_status'] ?? 'READY', $registeredBy, $data['remarks'] ?? '']);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_laundry_dp') {
+            $stmt = $pdo->prepare("INSERT INTO laundry_dp (point_name, area_id, dp_status, registered_by, remarks) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$data['point_name'], $data['area_id'], $data['dp_status'] ?? 'READY', $registeredBy, $data['remarks'] ?? '']);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_laundry_bag') {
+            $stmt = $pdo->prepare("INSERT INTO laundry_bag (nama, room_id, laundry_bag, laundry_box, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['nama'], $data['room_id'], $data['laundry_bag'] ?? '', $data['laundry_box'] ?? '', $registeredBy, $data['remarks'] ?? '']);
+            echo json_encode(['success' => true]);
+        } elseif ($action === 'add_guest') {
+            $stmt = $pdo->prepare("INSERT INTO guests (room_id, name, occupants_category, personal_identification, reg_id_card, job, position, level_category, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $data['room_id'], $data['name'], $data['occupants_category'] ?? 'REGULAR GUEST',
+                $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '',
+                $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '',
+                $registeredBy, $data['remarks'] ?? ''
+            ]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['error' => 'Invalid POST action']);
+        }
     }
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);

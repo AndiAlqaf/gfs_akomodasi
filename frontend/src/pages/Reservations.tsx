@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Swal from 'sweetalert2';
 
 const Reservations: React.FC = () => {
   const queryClient = useQueryClient();
@@ -48,12 +49,12 @@ const Reservations: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       setIsDialogOpen(false);
-      alert('Sponsor Notified (Simulated Email/WA)');
+      Swal.fire({ icon: 'success', title: 'Booked!', text: 'Room successfully booked!', timer: 2000, showConfirmButton: false });
     }
   });
 
   const handleBooking = () => {
-    if (!guestName || !selectedRoom) return alert("Pilih kamar dan masukkan nama tamu.");
+    if (!guestName || !selectedRoom) return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Pilih kamar dan masukkan nama tamu.', timer: 2000, showConfirmButton: false });
     createReservationMutation.mutate({
       guestName,
       category: guestCategory,

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import Swal from 'sweetalert2';
 
 type Role = 'office_boy' | 'driver' | 'laundry_coordinator' | 'laundry_officer' | 'laundry_crew';
 
@@ -33,6 +34,11 @@ const Laundry: React.FC = () => {
     mutationFn: (data: any) => laundryAPI.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['laundry'] });
+      Swal.fire({ icon: 'success', title: 'Success!', text: 'Laundry collected successfully!', timer: 2000, showConfirmButton: false });
+    },
+    onError: (error) => {
+      console.error(error);
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Error collecting laundry!', timer: 2000, showConfirmButton: false });
     }
   });
 
