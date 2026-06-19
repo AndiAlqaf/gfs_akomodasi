@@ -4,7 +4,7 @@ import { reservationAPI, roomAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Calendar, User, MapPin, LogIn, LogOut, CheckCircle } from 'lucide-react';
+import { Plus, Calendar, User, MapPin, LogIn, LogOut, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
@@ -12,8 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 const Reservations: React.FC = () => {
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [role, setRole] = useState<'front_desk' | 'office_boy' | 'guest'>('front_desk');
+  const [role, setRole] = useState<'front_desk' | 'office_boy'>('front_desk');
   
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -76,16 +75,12 @@ const Reservations: React.FC = () => {
     return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
   };
 
-  const filteredReservations = reservations.filter((r: any) =>
-    r.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.roomNo?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredReservations = reservations;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reservations & Check-in</h1>
           <p className="text-gray-500 mt-1">Manage guest arrivals and room status</p>
         </div>
       </div>
@@ -93,7 +88,7 @@ const Reservations: React.FC = () => {
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center gap-4">
         <span className="font-semibold text-gray-700">Simulate Role:</span>
         <div className="flex gap-2">
-          {['front_desk', 'office_boy', 'guest'].map(r => (
+          {['front_desk', 'office_boy'].map(r => (
             <Button 
               key={r} 
               variant={role === r ? 'default' : 'outline'}
@@ -108,7 +103,7 @@ const Reservations: React.FC = () => {
 
       {role === 'office_boy' && (
         <Card>
-          <CardHeader><CardTitle>Room Readiness Checklist (Office Boy)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg uppercase">Room Readiness Checklist (Office Boy)</CardTitle></CardHeader>
           <CardContent>
             {roomsLoading ? <p>Loading rooms...</p> : (
               <Table>
@@ -134,16 +129,13 @@ const Reservations: React.FC = () => {
         </Card>
       )}
 
-      {(role === 'front_desk' || role === 'guest') && (
+      {role === 'front_desk' && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Reservations</CardTitle>
+              <CardTitle className="text-lg uppercase">All Reservations</CardTitle>
               <div className="flex gap-4 items-center">
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <Input placeholder="Search reservations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
-                </div>
+
                 {role === 'front_desk' && (
                   <Button className="gap-2" onClick={() => setIsDialogOpen(true)}><Plus size={20} /> Book Room</Button>
                 )}
@@ -158,7 +150,10 @@ const Reservations: React.FC = () => {
                     <TableHead>Room No</TableHead>
                     <TableHead>Guest Name</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Check In / Est</TableHead>
+                    <TableHead>Check-In</TableHead>
+                    <TableHead>Check-Out</TableHead>
+                    <TableHead>Estimated Arrival</TableHead>
+                    <TableHead>Estimate Departure</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -169,7 +164,10 @@ const Reservations: React.FC = () => {
                       <TableCell className="font-medium">{reservation.roomNo}</TableCell>
                       <TableCell>{reservation.guestName}</TableCell>
                       <TableCell>{reservation.occupants_category}</TableCell>
-                      <TableCell>{reservation.check_in || reservation.estimated_arrival}</TableCell>
+                      <TableCell>{reservation.check_in || '-'}</TableCell>
+                      <TableCell>{reservation.check_out || '-'}</TableCell>
+                      <TableCell>{reservation.estimated_arrival || '-'}</TableCell>
+                      <TableCell>{reservation.estimated_departure || '-'}</TableCell>
                       <TableCell>{getStatusBadge(reservation.guest_status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -188,7 +186,7 @@ const Reservations: React.FC = () => {
                     </TableRow>
                   ))}
                   {filteredReservations.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center py-4">No reservations found.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-4">No reservations found.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

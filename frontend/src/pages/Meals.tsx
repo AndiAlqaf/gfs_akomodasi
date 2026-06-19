@@ -4,7 +4,7 @@ import { mealsAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Coffee, Soup, Pizza, UtensilsCrossed, Truck, CheckCircle } from 'lucide-react';
+import { Coffee, Soup, Pizza, UtensilsCrossed, Truck, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,6 @@ import { formatDate } from '@/lib/utils';
 
 const Meals: React.FC = () => {
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState('');
   const [role, setRole] = useState<'chief_cook' | 'driver' | 'canteen_officer'>('chief_cook');
 
   const { data: mealsResp, isLoading } = useQuery({
@@ -29,14 +28,8 @@ const Meals: React.FC = () => {
   const accommodatedMeals = mealsResp?.data?.accommodatedData || [];
   const visitorMeals = mealsResp?.data?.visitorData || [];
 
-  const filterData = (data: any[], keys: string[]) => {
-    return data.filter((item: any) => 
-      keys.some(key => item[key]?.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  };
-
-  const filteredAccommodated = filterData(accommodatedMeals, ['guestName', 'roomNo']);
-  const filteredVisitor = filterData(visitorMeals, ['visitor_name', 'request_by', 'approved_by']);
+  const filteredAccommodated = accommodatedMeals;
+  const filteredVisitor = visitorMeals;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -104,7 +97,6 @@ const Meals: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-emerald-950 tracking-tight">Meals Services</h1>
           <p className="text-emerald-700 mt-1">Daily Meal Production & Delivery</p>
         </div>
       </div>
@@ -187,11 +179,8 @@ const Meals: React.FC = () => {
       <Card className="border-0 shadow-sm rounded-xl overflow-hidden animate-fade-in border-emerald-100" style={{ animationDelay: '200ms' }}>
         <CardHeader className="bg-white border-b border-emerald-100">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl text-emerald-950">Meals Services Tables</CardTitle>
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300" size={18} />
-              <Input placeholder="Search records..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-stone-50 border-transparent focus-visible:ring-lime-400 transition-all rounded-full" />
-            </div>
+            <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Tables</CardTitle>
+
           </div>
         </CardHeader>
         <CardContent>

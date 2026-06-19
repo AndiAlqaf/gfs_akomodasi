@@ -24,20 +24,19 @@ const Information: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-emerald-950 tracking-tight">Information Center</h1>
         <p className="text-emerald-700 mt-1">Live data reports from database</p>
       </div>
 
       <Tabs defaultValue="rooms" className="w-full">
         <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
-          <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">INFORMATION ROOM</TabsTrigger>
-          <TabsTrigger value="pob" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">INFORMATION PERSON ON BOARD</TabsTrigger>
+          <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">ROOM INFO</TabsTrigger>
+          <TabsTrigger value="pob" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">PERSON ON BOARD INFO</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rooms" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
             <CardHeader className="bg-white border-b border-emerald-100">
-              <CardTitle className="text-xl text-emerald-950">Room Information</CardTitle>
+              <CardTitle className="text-lg text-emerald-950 uppercase">Room Information</CardTitle>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {roomLoading ? (
@@ -46,16 +45,21 @@ const Information: React.FC = () => {
                 <div className="overflow-x-auto">
                   <Table className="min-w-max text-sm bg-white rounded-xl overflow-hidden shadow-sm border border-emerald-100">
                     <TableHeader className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <TableRow className="hover:bg-emerald-900">
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">NO</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">ROOM</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">MESS</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">AREA</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">NAME</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">ROOM ALLOCATION</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900" colSpan={3}>BEDS<br/>(AVAIL | OCC | VAC)</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">STATUS</TableHead>
-                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">REMARK</TableHead>
+                      <TableRow className="hover:bg-emerald-900 border-b border-emerald-900">
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>NO</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>ROOM</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>MESS</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>AREA</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>NAME</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>ROOM ALLOCATION</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-b border-emerald-900" colSpan={3}>BEDS</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>STATUS</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900 align-middle" rowSpan={2}>REMARK</TableHead>
+                      </TableRow>
+                      <TableRow className="hover:bg-emerald-900 bg-emerald-900/50">
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">AVAILABLE</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">OCCUPIED</TableHead>
+                        <TableHead className="text-stone-50 font-bold text-center border-emerald-900">VACANT</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="divide-y divide-emerald-50">
@@ -87,7 +91,7 @@ const Information: React.FC = () => {
         <TabsContent value="pob" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
             <CardHeader className="bg-white border-b border-emerald-100">
-              <CardTitle className="text-xl text-emerald-950">Person On Board (POB) Information</CardTitle>
+              <CardTitle className="text-lg text-emerald-950 uppercase">Person On Board (POB) Information</CardTitle>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {pobLoading ? (

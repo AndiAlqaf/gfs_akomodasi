@@ -4,7 +4,6 @@ import { dashboardAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BedDouble, Users, UtensilsCrossed, Shirt, TrendingUp } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
 const Dashboard: React.FC = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -63,6 +62,7 @@ const Dashboard: React.FC = () => {
 
   const COLORS = ['#A3E635', '#022C22', '#F59E0B']; // Lime-400, Emerald-950, Orange
 
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -73,9 +73,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-emerald-950 tracking-tight">Dashboard</h1>
         <p className="text-emerald-800 mt-1">Welcome to GFS Ceria Accommodation System</p>
       </div>
 
@@ -86,7 +84,7 @@ const Dashboard: React.FC = () => {
           return (
             <Card key={index} className="hover-lift border-0 shadow-sm overflow-hidden animate-fade-in border-emerald-100" style={{ animationDelay: `${index * 100}ms` }}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-700">
+                <CardTitle className="text-sm font-medium text-emerald-700 uppercase">
                   {stat.title}
                 </CardTitle>
                 <div className={`${stat.color} p-2.5 rounded-xl shadow-inner text-white border border-white/20`}>
@@ -111,7 +109,7 @@ const Dashboard: React.FC = () => {
         {/* Room Occupancy Chart */}
         <Card className="hover-lift border-0 shadow-sm animate-fade-in border-emerald-100" style={{ animationDelay: '400ms' }}>
           <CardHeader className="border-b border-emerald-100 bg-white">
-            <CardTitle className="text-emerald-950">Room Occupancy Status</CardTitle>
+            <CardTitle className="text-lg text-emerald-950 uppercase">Room Occupancy Status</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -139,7 +137,7 @@ const Dashboard: React.FC = () => {
         {/* Recent Activity */}
         <Card className="hover-lift border-0 shadow-sm animate-fade-in border-emerald-100" style={{ animationDelay: '500ms' }}>
           <CardHeader className="border-b border-emerald-100 bg-white">
-            <CardTitle className="text-emerald-950">Recent Activities</CardTitle>
+            <CardTitle className="text-lg text-emerald-950 uppercase">Recent Activities</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -171,6 +169,8 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+
     </div>
   );
 };

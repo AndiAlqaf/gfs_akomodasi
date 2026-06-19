@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bell, Search, User, LogOut, Settings } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Bell, User, LogOut, Settings } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import {
   DropdownMenu,
@@ -9,27 +10,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 const Header: React.FC = () => {
   const { user, logout } = useAppStore();
+  const location = useLocation();
+
+  const pageTitles: Record<string, string> = {
+    '/': 'Dashboard',
+    '/data-register': 'Data Register',
+    '/reservations': 'Reservation & Check-In/ Out',
+    '/information': 'Information',
+    '/meals': 'Meals Services',
+    '/laundry': 'Laundry Services',
+  };
+
+  const currentTitle = pageTitles[location.pathname] || '';
 
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
-        {/* Search */}
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              type="search"
-              placeholder="Search guests, rooms, reservations..."
-              className="pl-10 bg-white/50 border-emerald-100 focus-visible:ring-lime-400 rounded-full transition-all"
-            />
-          </div>
+        {/* Page Title */}
+        <div className="flex-1 max-w-md flex items-center">
+          <h1 className="text-xl font-bold text-emerald-950 tracking-tight uppercase">{currentTitle}</h1>
         </div>
-
         {/* Right section */}
         <div className="flex items-center gap-4">
           {/* Notifications */}

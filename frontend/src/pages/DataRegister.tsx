@@ -5,10 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users } from 'lucide-react';
 
 export default function DataRegister() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('area');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,8 +87,7 @@ export default function DataRegister() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-emerald-950 tracking-tight">Data Register</h1>
-          <p className="text-emerald-700 mt-1">SISTEM INFORMASI LAYANAN AKOMODASI GFS CERIA</p>
+          <p className="text-emerald-700 mt-1">Sistem Informasi Layanan Akomodasi GFS Ceria</p>
         </div>
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
@@ -116,16 +114,8 @@ export default function DataRegister() {
       <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
         <CardHeader className="bg-white border-b border-emerald-100 pb-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <CardTitle className="text-xl text-emerald-950">Master Data Registration</CardTitle>
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300" size={18} />
-              <Input 
-                placeholder="Search master data..." 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-                className="pl-10 bg-stone-50 border-transparent focus-visible:ring-lime-400 transition-all rounded-full" 
-              />
-            </div>
+            <CardTitle className="text-lg text-emerald-950 uppercase">Master Data Registration</CardTitle>
+
           </div>
         </CardHeader>
         
@@ -143,10 +133,10 @@ export default function DataRegister() {
                   <BedDouble size={16} /> Room
                 </TabsTrigger>
                 <TabsTrigger value="meals" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Utensils size={16} /> Meals DP
+                  <Utensils size={16} /> Meals Drop Point
                 </TabsTrigger>
                 <TabsTrigger value="laundry_dp" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Shirt size={16} /> Laundry DP
+                  <Shirt size={16} /> Laundry Drop & Delivery Point 
                 </TabsTrigger>
                 <TabsTrigger value="laundry_bag" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                   <Package size={16} /> Laundry Bag & Box

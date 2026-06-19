@@ -92,10 +92,8 @@ const Laundry: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Laundry Services (Live Database)</h1>
-          <p className="text-gray-500 mt-1">Role-based Laundry Tracking with PHP & MySQL</p>
+          <p className="text-gray-500 mt-1">Role-based Laundry Tracking</p>
         </div>
-        
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center gap-4">
           <span className="font-semibold text-gray-700">Simulate Role:</span>
           <div className="flex gap-2 flex-wrap">
@@ -115,7 +113,7 @@ const Laundry: React.FC = () => {
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="capitalize">{role.replace('_', ' ')} Action Board</CardTitle>
+          <CardTitle className="text-lg uppercase">{role.replace('_', ' ')} Action Board</CardTitle>
           {role === 'office_boy' && (
             <Button size="sm" onClick={() => {
               const newId = Date.now().toString().slice(-4);
