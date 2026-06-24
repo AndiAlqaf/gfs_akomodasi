@@ -3,171 +3,315 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { laundryAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import Swal from 'sweetalert2';
+import { CheckCircle, Truck, Package, RotateCcw, Box, UserCheck } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
-type Role = 'office_boy' | 'driver' | 'laundry_coordinator' | 'laundry_officer' | 'laundry_crew';
+type Role = 'office_boy' | 'dispatcher' | 'officer';
 
 const Laundry: React.FC = () => {
   const queryClient = useQueryClient();
   const [role, setRole] = useState<Role>('office_boy');
+  
+  // States for Office Boy Drop Form
+  const [room, setRoom] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [bagId, setBagId] = useState('');
+  const [boxId, setBoxId] = useState('');
+  const [pkg, setPkg] = useState('Regular');
+  const [dropPoint, setDropPoint] = useState('');
+
+  // States for Officer Receiving
   const [weightInput, setWeightInput] = useState<{ [key: string]: string }>({});
+
+  // States for Officer Details Form
+  const [selectedTxForDetails, setSelectedTxForDetails] = useState<any>(null);
+  const [clothesList, setClothesList] = useState<any[]>([]);
 
   const { data: laundryResponse, isLoading } = useQuery({
     queryKey: ['laundry'],
     queryFn: laundryAPI.getAll
   });
 
-  const laundryItems = laundryResponse?.data?.data || [];
+  const transactions = laundryResponse?.data?.data || [];
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status, extraData }: { id: string; status: string; extraData?: any }) => 
-      laundryAPI.updateStatus(id, status, extraData),
+  // Derived state for Dispatcher (Groups by Box ID)
+  const boxes = transactions.reduce((acc: any, tx: any) => {
+    if (!acc[tx.laundry_box_id]) {
+      acc[tx.laundry_box_id] = {
+        boxId: tx.laundry_box_id,
+        dropPoint: tx.drop_point,
+        deliverDate: tx.deliver_date,
+        returnDate: tx.return_date,
+        bagsCount: 0,
+        statusSet: new Set()
+      };
+    }
+    acc[tx.laundry_box_id].bagsCount++;
+    acc[tx.laundry_box_id].statusSet.add(tx.current_status);
+    return acc;
+  }, {});
+
+  const boxList = Object.values(boxes).map((b: any) => ({
+    ...b,
+    isReadyToDeliver: b.statusSet.has('DROPPED_AT_POINT') && !b.statusSet.has('DELIVERED_TO_LAUNDRY'),
+    isReadyToReturn: b.statusSet.has('PROCESS_COMPLETED') || b.statusSet.has('RECEIVED_AT_LAUNDRY') // Or Rejected
+  }));
+
+  // Mutations
+  const createDropMutation = useMutation({
+    mutationFn: (data: any) => laundryAPI.createDrop(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['laundry'] });
+      setRoom(''); setGuestName(''); setBagId(''); setBoxId(''); setDropPoint('');
+      Swal.fire({ icon: 'success', title: 'Dropped!', timer: 1500, showConfirmButton: false });
     }
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data: any) => laundryAPI.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['laundry'] });
-      Swal.fire({ icon: 'success', title: 'Success!', text: 'Laundry collected successfully!', timer: 2000, showConfirmButton: false });
+  const actionMutation = useMutation({
+    mutationFn: ({ action, id, data }: any) => {
+      switch(action) {
+        case 'deliver': return laundryAPI.deliverToLaundry(id);
+        case 'receive': return laundryAPI.receiveBag({ laundry_bag_id: id, ...data });
+        case 'add_details': return laundryAPI.addDetails(data);
+        case 'complete': return laundryAPI.completeProcess(id);
+        case 'return': return laundryAPI.returnToDrop(id);
+        case 'distribute': return laundryAPI.distributeToRoom(id);
+        default: return Promise.resolve();
+      }
     },
-    onError: (error) => {
-      console.error(error);
-      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Error collecting laundry!', timer: 2000, showConfirmButton: false });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['laundry'] });
+      Swal.fire({ icon: 'success', title: 'Success', timer: 1500, showConfirmButton: false });
+      setSelectedTxForDetails(null);
     }
   });
 
-  const updateStatus = (id: string, newStatus: string, extraData: any = {}) => {
-    updateStatusMutation.mutate({ id, status: newStatus, extraData });
+  const handleDropSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
-  const handleWeightChange = (id: string, value: string) => {
-    setWeightInput(prev => ({ ...prev, [id]: value }));
-  };
-
-  const renderActions = (item: any) => {
-    switch (role) {
-      case 'office_boy':
-        if (item.status === 'IN_TRANSIT_CLEAN') return <Button size="sm" onClick={() => updateStatus(item.id, 'DELIVERED_ROOM')} disabled={updateStatusMutation.isPending}>Deliver to Room</Button>;
-        if (item.status === 'DELIVERED_ROOM') return <Button size="sm" variant="outline" onClick={() => updateStatus(item.id, 'COMPLETED')} disabled={updateStatusMutation.isPending}>Mark Completed</Button>;
-        if (item.status === 'REJECTED') return <Button size="sm" variant="destructive" onClick={() => updateStatus(item.id, 'COMPLETED')} disabled={updateStatusMutation.isPending}>Return Rejected to Room</Button>;
-        break;
-      case 'driver':
-        if (item.status === 'COLLECTED_DIRTY') return <Button size="sm" onClick={() => updateStatus(item.id, 'IN_TRANSIT_DIRTY')} disabled={updateStatusMutation.isPending}>Deliver to Laundry House</Button>;
-        if (item.status === 'CHECKED_CLEAN') return <Button size="sm" onClick={() => updateStatus(item.id, 'IN_TRANSIT_CLEAN')} disabled={updateStatusMutation.isPending}>Deliver to Mess Drop Point</Button>;
-        break;
-      case 'laundry_officer':
-        if (item.status === 'IN_TRANSIT_DIRTY') return <Button size="sm" onClick={() => updateStatus(item.id, 'RECEIVED_AT_LAUNDRY')} disabled={updateStatusMutation.isPending}>Receive Bag</Button>;
-        if (item.status === 'RECEIVED_AT_LAUNDRY') {
-          return (
-            <div className="flex gap-2 items-center">
-              <Input 
-                type="number" 
-                placeholder="Weight (kg)" 
-                className="w-24 h-8"
-                value={weightInput[item.id] || ''}
-                onChange={(e) => handleWeightChange(item.id, e.target.value)}
-              />
-              <Button size="sm" onClick={() => {
-                if (weightInput[item.id]) updateStatus(item.id, 'WEIGHED', { weight: parseFloat(weightInput[item.id]) });
-              }} disabled={updateStatusMutation.isPending || !weightInput[item.id]}>Accept & Weigh</Button>
-              <Button size="sm" variant="destructive" onClick={() => updateStatus(item.id, 'REJECTED')} disabled={updateStatusMutation.isPending}>Reject</Button>
-            </div>
-          );
-        }
-        if (item.status === 'PACKING') return <Button size="sm" onClick={() => updateStatus(item.id, 'CHECKED_CLEAN')} disabled={updateStatusMutation.isPending}>Check Clean Bag</Button>;
-        break;
-      case 'laundry_coordinator':
-        if (item.status === 'REJECTED') return <span className="text-red-500 font-medium">Handle Rejected</span>;
-        break;
-      case 'laundry_crew':
-        if (item.status === 'WEIGHED') return <Button size="sm" onClick={() => updateStatus(item.id, 'WASHING')} disabled={updateStatusMutation.isPending}>Start Washing</Button>;
-        if (item.status === 'WASHING') return <Button size="sm" onClick={() => updateStatus(item.id, 'IRONING')} disabled={updateStatusMutation.isPending}>Start Ironing</Button>;
-        if (item.status === 'IRONING') return <Button size="sm" onClick={() => updateStatus(item.id, 'PACKING')} disabled={updateStatusMutation.isPending}>Start Packing</Button>;
-        break;
-    }
-    return <span className="text-gray-400">-</span>;
+  const handleDetailsSubmit = (txId: string) => {
+    if (clothesList.length === 0) return;
+    actionMutation.mutate({ action: 'add_details', id: txId, data: { transaction_id: txId, details: clothesList } });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-500 mt-1">Role-based Laundry Tracking</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center gap-4">
-          <span className="font-semibold text-gray-700">Simulate Role:</span>
-          <div className="flex gap-2 flex-wrap">
-            {(['office_boy', 'driver', 'laundry_coordinator', 'laundry_officer', 'laundry_crew'] as Role[]).map(r => (
-              <Button 
-                key={r} 
-                variant={role === r ? 'default' : 'outline'}
-                onClick={() => setRole(r)}
-                className="capitalize"
-              >
-                {r.replace('_', ' ')}
-              </Button>
-            ))}
-          </div>
+          <p className="text-emerald-700 mt-1">Laundry Tracking System</p>
         </div>
       </div>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg uppercase">{role.replace('_', ' ')} Action Board</CardTitle>
-          {role === 'office_boy' && (
-            <Button size="sm" onClick={() => {
-              const newId = Date.now().toString().slice(-4);
-              createMutation.mutate({
-                roomNo: `NEW.${newId}`,
-                guestName: 'NEW GUEST'
-              });
-            }} disabled={createMutation.isPending}>Collect New Dirty Laundry</Button>
+
+      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white">
+        <span className="font-semibold text-emerald-800">Simulate Role:</span>
+        <div className="flex gap-2">
+          <Button variant={role === 'office_boy' ? 'default' : 'outline'} className={role === 'office_boy' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('office_boy')}>Office Boy</Button>
+          <Button variant={role === 'dispatcher' ? 'default' : 'outline'} className={role === 'dispatcher' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('dispatcher')}>Dispatcher / Driver</Button>
+          <Button variant={role === 'officer' ? 'default' : 'outline'} className={role === 'officer' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('officer')}>Laundry Officer</Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue={role === 'office_boy' ? 'drop' : role === 'dispatcher' ? 'deliver' : 'receive'} className="w-full">
+        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm w-full md:w-auto overflow-x-auto">
+          {role === 'office_boy' && <TabsTrigger value="drop" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Drop & Distribute Form</TabsTrigger>}
+          {role === 'dispatcher' && <TabsTrigger value="deliver" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Deliver & Returned Form</TabsTrigger>}
+          {role === 'officer' && (
+            <>
+              <TabsTrigger value="receive" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Receiving Form</TabsTrigger>
+              <TabsTrigger value="details" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Receiving Details Form</TabsTrigger>
+            </>
           )}
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="py-8 text-center text-gray-500">Loading data from database...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Bag ID</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Weight</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action Needed</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {laundryItems.map((l: any) => (
-                  <TableRow key={l.id}>
-                    <TableCell className="font-medium">{l.laundryBagId}</TableCell>
-                    <TableCell>{l.guestName}</TableCell>
-                    <TableCell>{parseFloat(l.weight) > 0 ? `${l.weight} kg` : '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={l.status === 'COMPLETED' ? 'default' : l.status === 'REJECTED' ? 'destructive' : 'secondary'}>
-                        {l.status.replace(/_/g, ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{renderActions(l)}</TableCell>
-                  </TableRow>
-                ))}
-                {laundryItems.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-gray-500">No laundry items in database</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+        </TabsList>
+
+        {/* --- OFFICE BOY TAB --- */}
+        {role === 'office_boy' && (
+          <TabsContent value="drop" className="m-0 animate-fade-in space-y-6">
+            <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-emerald-50/30">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4">
+                <CardTitle className="text-md text-emerald-900 uppercase">Laundry Drop Form</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={handleDropSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">ROOM</label><Input value={room} onChange={e=>setRoom(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">NAME</label><Input value={guestName} onChange={e=>setGuestName(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">BAG ID</label><Input value={bagId} onChange={e=>setBagId(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">BOX ID</label><Input value={boxId} onChange={e=>setBoxId(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
+                    <select value={pkg} onChange={e=>setPkg(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="Regular">Regular</option><option value="Express">Express</option></select>
+                  </div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e=>setDropPoint(e.target.value)} required /></div>
+                  <div className="md:col-span-2 lg:col-span-3 xl:col-span-6 flex justify-end mt-2">
+                    <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Add to Drop Point</Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+              <div className="w-full relative overflow-hidden bg-white">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <tr><th className="px-6 py-4">ROOM</th><th className="px-6 py-4">NAME</th><th className="px-6 py-4">BAG ID</th><th className="px-6 py-4">BOX</th><th className="px-6 py-4">PKG</th><th className="px-6 py-4">DROP PNT</th><th className="px-6 py-4">DROP DATE</th><th className="px-6 py-4">DISTRIBUTE DATE</th><th className="px-6 py-4">ACTION</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {transactions.map((t: any) => (
+                        <tr key={t.id} className="hover:bg-emerald-50/50">
+                          <td className="px-6 py-3">{t.room}</td><td className="px-6 py-3">{t.guest_name}</td><td className="px-6 py-3 font-medium">{t.laundry_bag_id}</td>
+                          <td className="px-6 py-3">{t.laundry_box_id}</td><td className="px-6 py-3">{t.services_package}</td><td className="px-6 py-3">{t.drop_point}</td>
+                          <td className="px-6 py-3 text-xs">{formatDate(t.drop_date)}</td><td className="px-6 py-3 text-xs">{formatDate(t.distribute_date)}</td>
+                          <td className="px-6 py-3">
+                            {t.current_status === 'RETURNED_TO_DROP' ? (
+                              <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={()=>actionMutation.mutate({action:'distribute', id: t.laundry_bag_id})}>Distribute</Button>
+                            ) : <span className="text-xs text-emerald-600">{t.current_status}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      {transactions.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-gray-500">No data found</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* --- DISPATCHER TAB --- */}
+        {role === 'dispatcher' && (
+          <TabsContent value="deliver" className="m-0 animate-fade-in space-y-6">
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+               <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Deliver & Returned Board</CardTitle></CardHeader>
+               <div className="w-full relative overflow-hidden bg-white">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <tr><th className="px-6 py-4">LAUNDRY BOX</th><th className="px-6 py-4">DELIVER POINT</th><th className="px-6 py-4">BAGS</th><th className="px-6 py-4">DELIVER DATE</th><th className="px-6 py-4">RETURN DATE</th><th className="px-6 py-4">ACTION</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {boxList.map((b: any) => (
+                        <tr key={b.boxId} className="hover:bg-emerald-50/50">
+                          <td className="px-6 py-3 font-bold text-emerald-900">{b.boxId}</td><td className="px-6 py-3">{b.dropPoint}</td><td className="px-6 py-3 text-emerald-600 font-mono">{b.bagsCount} bags</td>
+                          <td className="px-6 py-3 text-xs">{formatDate(b.deliverDate)}</td><td className="px-6 py-3 text-xs">{formatDate(b.returnDate)}</td>
+                          <td className="px-6 py-3">
+                            {b.isReadyToDeliver ? (
+                              <Button size="sm" className="bg-amber-500 hover:bg-amber-600 h-7 text-xs px-3" onClick={()=>actionMutation.mutate({action:'deliver', id: b.boxId})}><Truck size={14} className="mr-1"/> To Laundry</Button>
+                            ) : b.isReadyToReturn && !b.returnDate ? (
+                              <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600 h-7 text-xs px-3" onClick={()=>actionMutation.mutate({action:'return', id: b.boxId})}><RotateCcw size={14} className="mr-1"/> Return Box</Button>
+                            ) : <span className="text-xs text-gray-500">In Process</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      {boxList.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No boxes found</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+               </div>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* --- OFFICER TABS --- */}
+        {role === 'officer' && (
+          <>
+          <TabsContent value="receive" className="m-0 animate-fade-in space-y-6">
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+               <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Receiving Form (Status & Weight)</CardTitle></CardHeader>
+               <div className="w-full relative overflow-hidden bg-white">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <tr><th className="px-6 py-4">BAG ID</th><th className="px-6 py-4">BAG STATUS</th><th className="px-6 py-4">RECEIVING DATE</th><th className="px-6 py-4">WEIGHT (KG)</th><th className="px-6 py-4">NO OF PCS</th><th className="px-6 py-4 text-center">ACTION</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {transactions.filter((t:any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
+                        <tr key={t.id} className="hover:bg-emerald-50/50">
+                          <td className="px-6 py-3 font-bold text-emerald-900">{t.laundry_bag_id}</td>
+                          <td className="px-6 py-3 font-semibold text-emerald-700">{t.bag_status}</td>
+                          <td className="px-6 py-3 text-xs">{formatDate(t.receiving_date)}</td>
+                          <td className="px-6 py-3">
+                            {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
+                              <Input type="number" step="0.1" className="w-20 h-8" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} />
+                            ) : <span className="font-mono">{t.weight || '-'}</span>}
+                          </td>
+                          <td className="px-6 py-3 font-mono">{t.no_of_pcs_total}</td>
+                          <td className="px-6 py-3 text-center">
+                            {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
+                              <div className="flex gap-2 justify-center">
+                                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-7 px-2" onClick={()=>actionMutation.mutate({action:'receive', id: t.laundry_bag_id, data: { bag_status: 'Accepted', weight: weightInput[t.id] }})}>Accept</Button>
+                                <Button size="sm" className="bg-red-500 hover:bg-red-600 h-7 px-2" onClick={()=>actionMutation.mutate({action:'receive', id: t.laundry_bag_id, data: { bag_status: 'Rejected', weight: weightInput[t.id] }})}>Reject</Button>
+                              </div>
+                            ) : t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted' ? (
+                              <span className="text-xs text-amber-600 font-medium">Needs Details</span>
+                            ) : t.current_status === 'DETAILS_ADDED' ? (
+                              <Button size="sm" className="bg-blue-500 hover:bg-blue-600 h-7" onClick={()=>actionMutation.mutate({action:'complete', id: t.laundry_bag_id})}>Mark Done</Button>
+                            ) : <span className="text-xs text-gray-400">{t.current_status}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      {transactions.filter((t:any) => t.current_status !== 'DROPPED_AT_POINT').length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No bags arrived yet.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="details" className="m-0 animate-fade-in space-y-6">
+            {!selectedTxForDetails ? (
+              <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Select Bag to Add Details</CardTitle></CardHeader>
+                <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {transactions.filter((t:any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').map((t:any) => (
+                    <Button key={t.id} variant="outline" className="h-16 flex flex-col items-center justify-center border-emerald-200 text-emerald-800 hover:bg-emerald-50" onClick={() => { setSelectedTxForDetails(t); setClothesList([{ clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }]); }}>
+                      <span className="font-bold">{t.laundry_bag_id}</span>
+                      <span className="text-xs text-emerald-600">{t.room} - {t.guest_name}</span>
+                    </Button>
+                  ))}
+                  {transactions.filter((t:any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').length === 0 && <p className="text-sm text-gray-500 col-span-full">No bags waiting for details.</p>}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-white">
+                <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+                  <CardTitle className="text-md text-emerald-900 uppercase">Entering Details for: {selectedTxForDetails.laundry_bag_id}</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTxForDetails(null)}>Cancel</Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-emerald-950 text-stone-50 text-xs">
+                        <tr><th className="p-3">CLOTHES TYPE</th><th className="p-3">BRAND</th><th className="p-3">COLOUR</th><th className="p-3">SIZE</th><th className="p-3 w-20">QTY</th><th className="p-3 w-10"></th></tr>
+                      </thead>
+                      <tbody>
+                        {clothesList.map((c, i) => (
+                          <tr key={i} className="border-b border-gray-100">
+                            <td className="p-2"><Input value={c.clothes_type} onChange={e => {const n=[...clothesList]; n[i].clothes_type=e.target.value; setClothesList(n)}} placeholder="Shirt, Pants..." /></td>
+                            <td className="p-2"><Input value={c.brand} onChange={e => {const n=[...clothesList]; n[i].brand=e.target.value; setClothesList(n)}} placeholder="Nike..." /></td>
+                            <td className="p-2"><Input value={c.colour} onChange={e => {const n=[...clothesList]; n[i].colour=e.target.value; setClothesList(n)}} placeholder="Blue..." /></td>
+                            <td className="p-2"><Input value={c.size} onChange={e => {const n=[...clothesList]; n[i].size=e.target.value; setClothesList(n)}} placeholder="M, L..." /></td>
+                            <td className="p-2"><Input type="number" value={c.no_of_pcs} onChange={e => {const n=[...clothesList]; n[i].no_of_pcs=e.target.value; setClothesList(n)}} min="1" /></td>
+                            <td className="p-2"><Button variant="destructive" size="sm" onClick={() => {const n=[...clothesList]; n.splice(i,1); setClothesList(n)}} className="h-8 px-2">X</Button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="p-4 flex justify-between bg-emerald-50/20">
+                    <Button variant="outline" onClick={() => setClothesList([...clothesList, { clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }])}>+ Add Row</Button>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleDetailsSubmit(selectedTxForDetails.id)}>Save & Proceed</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+          </>
+        )}
+      </Tabs>
     </div>
   );
 };

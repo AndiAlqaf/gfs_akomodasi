@@ -21,6 +21,11 @@ const Reservations: React.FC = () => {
   const [guestName, setGuestName] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [roomsCurrentPage, setRoomsCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const { data: reservationsResp, isLoading: resLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: reservationAPI.getAll,
@@ -36,6 +41,7 @@ const Reservations: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     }
   });
 
@@ -48,6 +54,7 @@ const Reservations: React.FC = () => {
     mutationFn: (data: any) => reservationAPI.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setIsDialogOpen(false);
       Swal.fire({ icon: 'success', title: 'Booked!', text: 'Room successfully booked!', timer: 2000, showConfirmButton: false });
     }
@@ -67,6 +74,9 @@ const Reservations: React.FC = () => {
   const reservations = reservationsResp?.data?.data || [];
   const rooms = roomsResp?.data?.data || [];
 
+  console.log('reservationsResp:', reservationsResp);
+  console.log('reservations:', reservations);
+
   const getStatusBadge = (status: string) => {
     const variants: any = {
       'ON SITE': 'success',
@@ -77,6 +87,8 @@ const Reservations: React.FC = () => {
   };
 
   const filteredReservations = reservations;
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage) || 1;
+  const paginatedData = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -103,28 +115,59 @@ const Reservations: React.FC = () => {
       </div>
 
       {role === 'office_boy' && (
-        <Card>
-          <CardHeader><CardTitle className="text-lg uppercase">Room Readiness Checklist (Office Boy)</CardTitle></CardHeader>
-          <CardContent>
-            {roomsLoading ? <p>Loading rooms...</p> : (
-              <Table>
-                <TableHeader><TableRow><TableHead>Room</TableHead><TableHead>Allocation</TableHead><TableHead>Status</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {rooms.map((r: any) => (
-                    <TableRow key={r.id}>
-                      <TableCell>{r.room_no}</TableCell>
-                      <TableCell>{r.room_allocation}</TableCell>
-                      <TableCell><Badge variant={r.room_status === 'READY' ? 'default' : 'destructive'}>{r.room_status}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => updateRoomMutation.mutate({id: r.id, status: 'READY'})}>Set Ready</Button>
-                          <Button size="sm" variant="destructive" onClick={() => updateRoomMutation.mutate({id: r.id, status: 'NOT READY YET'})}>Set Not Ready</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="bg-emerald-50/50 border-b border-emerald-100"><CardTitle className="text-lg uppercase text-emerald-950">Room Readiness Checklist (Office Boy)</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            {roomsLoading ? <div className="p-4 text-center text-emerald-700">Loading rooms...</div> : (
+              <div className="w-full bg-white overflow-x-auto">
+                <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                  <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                    <tr>
+                      <th className="px-6 py-4">Room</th>
+                      <th className="px-6 py-4">Allocation</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-emerald-50">
+                    {(() => {
+                      const paginatedRooms = rooms.slice((roomsCurrentPage - 1) * itemsPerPage, roomsCurrentPage * itemsPerPage);
+                      return paginatedRooms.map((r: any) => (
+                        <tr key={r.id} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="px-6 py-3 font-medium text-emerald-950">{r.room_no}</td>
+                          <td className="px-6 py-3 text-emerald-700">{r.room_allocation}</td>
+                          <td className="px-6 py-3"><Badge variant={r.room_status === 'READY' ? 'success' : 'destructive'}>{r.room_status}</Badge></td>
+                          <td className="px-6 py-3">
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => updateRoomMutation.mutate({id: r.id, status: 'READY'})}>Set Ready</Button>
+                              <Button size="sm" variant="destructive" onClick={() => updateRoomMutation.mutate({id: r.id, status: 'NOT READY YET'})}>Set Not Ready</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                    {rooms.length === 0 && (
+                      <tr><td colSpan={4} className="text-center py-8 text-gray-500">No rooms found.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+                
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 rounded-b-xl">
+                  <div className="text-sm text-emerald-800">
+                    Showing <span className="font-semibold">{rooms.length > 0 ? (roomsCurrentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(roomsCurrentPage * itemsPerPage, rooms.length)}</span> of <span className="font-semibold">{rooms.length}</span> entries
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setRoomsCurrentPage(prev => Math.max(prev - 1, 1))} disabled={roomsCurrentPage === 1}>Previous</Button>
+                    {Array.from({ length: Math.ceil(rooms.length / itemsPerPage) || 1 }, (_, i) => i + 1).map(page => (
+                      <Button key={page} variant={roomsCurrentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setRoomsCurrentPage(page)} className={roomsCurrentPage === page ? 'bg-emerald-600 hover:bg-emerald-700' : ''}>
+                        {page}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setRoomsCurrentPage(prev => Math.min(prev + 1, Math.ceil(rooms.length / itemsPerPage) || 1))} disabled={roomsCurrentPage === (Math.ceil(rooms.length / itemsPerPage) || 1)}>Next</Button>
+                  </div>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -145,52 +188,70 @@ const Reservations: React.FC = () => {
           </CardHeader>
           <CardContent>
             {resLoading ? <div className="text-center py-4">Loading database...</div> : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Room No</TableHead>
-                    <TableHead>Guest Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Check-In</TableHead>
-                    <TableHead>Check-Out</TableHead>
-                    <TableHead>Estimated Arrival</TableHead>
-                    <TableHead>Estimate Departure</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReservations?.map((reservation: any) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell className="font-medium">{reservation.roomNo}</TableCell>
-                      <TableCell>{reservation.guestName}</TableCell>
-                      <TableCell>{reservation.occupants_category}</TableCell>
-                      <TableCell>{reservation.check_in || '-'}</TableCell>
-                      <TableCell>{reservation.check_out || '-'}</TableCell>
-                      <TableCell>{reservation.estimated_arrival || '-'}</TableCell>
-                      <TableCell>{reservation.estimated_departure || '-'}</TableCell>
-                      <TableCell>{getStatusBadge(reservation.guest_status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {reservation.guest_status === 'SCHEDULED' && (
-                            <Button size="sm" variant="outline" className="gap-1" onClick={() => updateReservationMutation.mutate({id: reservation.id, status: 'ON SITE'})} title="Front Desk Check-in or QR Code Scan">
-                              <LogIn size={16} /> Check In (Scan QR)
-                            </Button>
-                          )}
-                          {reservation.guest_status === 'ON SITE' && (
-                            <Button size="sm" variant="outline" className="gap-1" onClick={() => updateReservationMutation.mutate({id: reservation.id, status: 'OFF SITE'})}>
-                              <LogOut size={16} /> Check Out
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredReservations.length === 0 && (
-                    <TableRow><TableCell colSpan={9} className="text-center py-4">No reservations found.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <tr>
+                        <th className="px-6 py-4">ROOM NO</th>
+                        <th className="px-6 py-4">GUEST NAME</th>
+                        <th className="px-6 py-4">CATEGORY</th>
+                        <th className="px-6 py-4">CHECK-IN</th>
+                        <th className="px-6 py-4">CHECK-OUT</th>
+                        <th className="px-6 py-4">ESTIMATED ARRIVAL</th>
+                        <th className="px-6 py-4">ESTIMATE DEPARTURE</th>
+                        <th className="px-6 py-4">STATUS</th>
+                        <th className="px-6 py-4 text-center">ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {paginatedData?.map((reservation: any) => (
+                        <tr key={reservation.id} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="px-6 py-3 font-medium text-emerald-950">{reservation.roomNo}</td>
+                          <td className="px-6 py-3 font-medium text-emerald-900">{reservation.guestName}</td>
+                          <td className="px-6 py-3 text-emerald-700">{reservation.occupants_category}</td>
+                          <td className="px-6 py-3 text-emerald-600">{reservation.check_in ? formatDate(reservation.check_in) : '-'}</td>
+                          <td className="px-6 py-3 text-emerald-600">{reservation.check_out ? formatDate(reservation.check_out) : '-'}</td>
+                          <td className="px-6 py-3 text-emerald-600">{reservation.estimated_arrival ? formatDate(reservation.estimated_arrival) : '-'}</td>
+                          <td className="px-6 py-3 text-emerald-600">{reservation.estimated_departure ? formatDate(reservation.estimated_departure) : '-'}</td>
+                          <td className="px-6 py-3">{getStatusBadge(reservation.guest_status)}</td>
+                          <td className="px-6 py-3 text-center">
+                          <div className="flex justify-center gap-2">
+                            {reservation.guest_status === 'SCHEDULED' && (
+                              <Button size="sm" variant="outline" className="gap-1" onClick={() => updateReservationMutation.mutate({id: reservation.id, status: 'ON SITE'})} title="Front Desk Check-in or QR Code Scan">
+                                <LogIn size={16} /> Check In (Scan QR)
+                              </Button>
+                            )}
+                            {reservation.guest_status === 'ON SITE' && (
+                              <Button size="sm" variant="outline" className="gap-1 bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 hover:text-rose-800" onClick={() => updateReservationMutation.mutate({id: reservation.id, status: 'OFF SITE'})} title="Simulate Front Desk or QR Scan Check-Out">
+                                <LogOut size={16} /> Check Out
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                        </tr>
+                      ))}
+                      {paginatedData.length === 0 && (
+                        <tr><td colSpan={9} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
+                  <div className="text-sm text-emerald-800">
+                    Showing <span className="font-semibold">{filteredReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, filteredReservations.length)}</span> of <span className="font-semibold">{filteredReservations.length}</span> entries
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700' : ''}>
+                        {page}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>Next</Button>
+                  </div>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

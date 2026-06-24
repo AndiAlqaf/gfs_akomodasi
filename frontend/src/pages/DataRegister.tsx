@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 import { dataRegisterAPI } from '@/services/api';
@@ -24,6 +24,33 @@ export default function DataRegister() {
   const [laundryDp, setLaundryDp] = useState<any[]>([]);
   const [laundryBag, setLaundryBag] = useState<any[]>([]);
   const [guests, setGuests] = useState<any[]>([]);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const getCurrentData = () => {
+    switch (activeTab) {
+      case 'area': return areas;
+      case 'mess': return messes;
+      case 'room': return rooms;
+      case 'meals': return mealsDp;
+      case 'laundry_dp': return laundryDp;
+      case 'laundry_bag': return laundryBag;
+      case 'guest': return guests;
+      default: return [];
+    }
+  };
+
+  const currentData = getCurrentData();
+  const totalPages = Math.ceil(currentData.length / itemsPerPage) || 1;
+  const paginatedData = currentData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const getRowIndex = (idx: number) => (currentPage - 1) * itemsPerPage + idx + 1;
 
   const fetchData = async () => {
     try {
@@ -203,6 +230,10 @@ export default function DataRegister() {
         {activeTab === 'guest' && (
           <>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Inst/Company</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" onChange={(e) => setFormData({...formData, institution_company: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Name</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
@@ -233,6 +264,22 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Level</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="e.g. SENIOR STAFF" onChange={(e) => setFormData({...formData, level_category: e.target.value})} />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Meals Pkg</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. STANDARD BUFFET" onChange={(e) => setFormData({...formData, meals_packages: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Breakfast DP</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({...formData, breakfast_dp: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Lunch DP</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U SMELTER CANTEEN" onChange={(e) => setFormData({...formData, lunch_dp: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Dinner DP</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({...formData, dinner_dp: e.target.value})} />
+            </div>
           </>
         )}
 
@@ -245,7 +292,7 @@ export default function DataRegister() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -273,7 +320,7 @@ export default function DataRegister() {
       </div>
 
       {/* Main Content */}
-      <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
+      <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full">
         <CardHeader className="bg-white border-b border-emerald-100 pb-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <CardTitle className="text-lg text-emerald-950 uppercase">Master Data Registration</CardTitle>
@@ -312,8 +359,8 @@ export default function DataRegister() {
             <div className="p-6">
               {/* TAB A: AREA */}
               <TabsContent value="area" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-6 py-4 text-center">NO</th>
@@ -325,9 +372,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {areas.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-6 py-3 text-emerald-800 font-medium">{row.area_name}</td>
                           <td className="px-6 py-3 text-emerald-700">{row.area_id}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
@@ -342,8 +389,8 @@ export default function DataRegister() {
 
               {/* TAB B: MESS */}
               <TabsContent value="mess" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-4 py-4 text-center">NO</th>
@@ -359,9 +406,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {messes.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-4 py-3 text-emerald-800 font-medium">{row.mess_name}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.mess_id}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.area_name}</td>
@@ -380,8 +427,8 @@ export default function DataRegister() {
 
               {/* TAB C: ROOM */}
               <TabsContent value="room" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-4 py-4 text-center">NO</th>
@@ -397,9 +444,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {rooms.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.mess_id_str}</td>
@@ -418,8 +465,8 @@ export default function DataRegister() {
 
               {/* TAB D: MEALS DELIVERY POINT */}
               <TabsContent value="meals" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-6 py-4 text-center">NO</th>
@@ -432,9 +479,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {mealsDp.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-6 py-3 text-emerald-800 font-medium">{row.delivery_point}</td>
                           <td className="px-6 py-3 text-emerald-700">{row.area_name}</td>
                           <td className="px-6 py-3 font-semibold text-emerald-900">{row.canteen_status}</td>
@@ -450,8 +497,8 @@ export default function DataRegister() {
 
               {/* TAB E: LAUNDRY DELIVERY POINT */}
               <TabsContent value="laundry_dp" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-6 py-4 text-center">NO</th>
@@ -464,9 +511,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {laundryDp.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-6 py-3 text-emerald-800 font-medium">{row.point_name}</td>
                           <td className="px-6 py-3 text-emerald-700">{row.area_name}</td>
                           <td className="px-6 py-3 font-semibold text-emerald-900">{row.dp_status}</td>
@@ -482,8 +529,8 @@ export default function DataRegister() {
 
               {/* TAB F: LAUNDRY BAG & BOX */}
               <TabsContent value="laundry_bag" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-4 py-4 text-center">NO</th>
@@ -497,9 +544,9 @@ export default function DataRegister() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {laundryBag.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-4 py-3 text-emerald-800 font-medium">{row.nama}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.room_no}</td>
                           <td className="px-4 py-3 text-emerald-800">{row.laundry_bag}</td>
@@ -515,34 +562,55 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB G: GUEST */}
-              <TabsContent value="guest" className="m-0 animate-fade-in">
-                <div className="bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
+              <TabsContent value="guest" className="m-0 animate-fade-in w-full max-w-full overflow-hidden">
+                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
-                        <th className="px-4 py-4 text-center">NO</th>
-                        <th className="px-4 py-4">ROOM NO</th>
-                        <th className="px-4 py-4">MESS</th>
-                        <th className="px-4 py-4">NAME</th>
-                        <th className="px-4 py-4">PERSONAL IDENTIFICATION</th>
-                        <th className="px-4 py-4">REG. ID CARD</th>
-                        <th className="px-4 py-4">JOB</th>
-                        <th className="px-4 py-4">POSITION</th>
-                        <th className="px-4 py-4">LEVEL CATEGORY</th>
+                        <th className="px-4 py-4 text-center border border-emerald-900" rowSpan={2}>NO</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>INSTITUTION/<br/>COMPANY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>ROOM NO</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MESS</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>NAME</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>PERSONAL ID</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REG. ID CARD</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>JOB</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>POSITION</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
+                        <th className="px-4 py-2 text-center border border-emerald-900" colSpan={3}>MEALS DELIVERY POINT</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REGISTERED BY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LAST REG.</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REMARKS</th>
+                      </tr>
+                      <tr>
+                        <th className="px-4 py-2 text-center border border-emerald-900">BREAKFAST</th>
+                        <th className="px-4 py-2 text-center border border-emerald-900">LUNCH</th>
+                        <th className="px-4 py-2 text-center border border-emerald-900">DINNER</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {guests.map((row, idx) => (
+                      {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{idx + 1}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-bold">{row.name}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.personal_identification}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.reg_id_card}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.job}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.position}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-semibold">{row.level_category}</td>
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950 border border-emerald-100">{getRowIndex(idx)}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.institution_company || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.room_no}</td>
+                          <td className="px-4 py-3 text-emerald-700 border border-emerald-100">{row.mess_name}</td>
+                          <td className="px-4 py-3 text-emerald-900 font-bold border border-emerald-100">{row.name}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.occupants_category || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.personal_identification || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.reg_id_card || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.job || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.position || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-900 font-semibold border border-emerald-100">{row.level_category || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.meals_packages || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.breakfast_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.lunch_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.dinner_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.registered_by || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.remarks || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -551,6 +619,36 @@ export default function DataRegister() {
               </TabsContent>
             </div>
           </Tabs>
+
+          {/* Pagination Controls */}
+          <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl">
+            <div className="text-sm text-emerald-600">
+              Showing <span className="font-medium text-emerald-950">{currentData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-emerald-950">{Math.min(currentPage * itemsPerPage, currentData.length)}</span> of <span className="font-medium text-emerald-950">{currentData.length}</span> entries
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="border-emerald-200 text-emerald-800"
+              >
+                <ChevronLeft size={16} /> Previous
+              </Button>
+              <div className="text-sm font-medium text-emerald-950 px-2">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="border-emerald-200 text-emerald-800"
+              >
+                Next <ChevronRight size={16} />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

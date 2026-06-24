@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@/types';
 
 interface AppState {
@@ -23,6 +23,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'gfs-ceria-storage',
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );

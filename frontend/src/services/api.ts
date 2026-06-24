@@ -55,27 +55,32 @@ export const reservationAPI = {
 };
 
 export const mealsAPI = {
-  getToday: () => api.get('/meals.php'),
-  updateStatus: (id: string, status: string) => api.post('/meals.php', { action: 'update_status', id, status }),
+  getSchedule: () => api.get('/meals.php?type=schedule'),
+  getRequests: () => api.get('/meals.php?type=requests'),
+  getDeliveryPoints: () => api.get('/meals.php?type=dp'),
+  createRequest: (data: any) => api.post('/meals.php', { action: 'create_request', ...data }),
+  approveRequest: (id: string, approvedBy: string) => api.post('/meals.php', { action: 'approve_request', id, approved_by: approvedBy }),
 };
 
 export const laundryAPI = {
   getAll: () => api.get('/laundry.php'),
-  create: (data: any) => api.post('/laundry.php', data),
-  updateStatus: (id: string, status: string, data?: any) => 
-    api.post(`/laundry.php`, { action: 'update_status', id, status, ...data }),
+  createDrop: (data: any) => api.post('/laundry.php?action=create_drop', data),
+  deliverToLaundry: (boxId: string) => api.post('/laundry.php?action=deliver_to_laundry', { laundry_box_id: boxId }),
+  receiveBag: (data: any) => api.post('/laundry.php?action=receive_bag', data),
+  addDetails: (data: any) => api.post('/laundry.php?action=add_details', data),
+  completeProcess: (bagId: string) => api.post('/laundry.php?action=complete_process', { laundry_bag_id: bagId }),
+  returnToDrop: (boxId: string) => api.post('/laundry.php?action=return_to_drop', { laundry_box_id: boxId }),
+  distributeToRoom: (bagId: string) => api.post('/laundry.php?action=distribute_to_room', { laundry_bag_id: bagId }),
 };
 
 export const dashboardAPI = {
-  getStats: () => api.get('/dashboard/stats'),
-  getOccupancyChart: (period: string) => api.get(`/dashboard/occupancy?period=${period}`),
-  getMealsChart: (period: string) => api.get(`/dashboard/meals?period=${period}`),
-  getLaundryChart: (period: string) => api.get(`/dashboard/laundry?period=${period}`),
+  getStats: () => api.get('/dashboard.php'),
 };
 
 export const informationAPI = {
   getRooms: () => api.get('/information.php?type=room'),
   getPob: () => api.get('/information.php?type=pob'),
+  getMeals: () => api.get('/information.php?type=meals'),
 };
 
 export default api;

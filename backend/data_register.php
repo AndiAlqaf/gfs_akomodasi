@@ -92,11 +92,12 @@ try {
             $stmt->execute([$data['nama'], $data['room_id'], $data['laundry_bag'] ?? '', $data['laundry_box'] ?? '', $registeredBy, $data['remarks'] ?? '']);
             echo json_encode(['success' => true]);
         } elseif ($action === 'add_guest') {
-            $stmt = $pdo->prepare("INSERT INTO guests (room_id, name, occupants_category, personal_identification, reg_id_card, job, position, level_category, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO guests (room_id, name, institution_company, occupants_category, personal_identification, reg_id_card, job, position, level_category, meals_packages, breakfast_dp, lunch_dp, dinner_dp, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $data['room_id'], $data['name'], $data['occupants_category'] ?? 'REGULAR GUEST',
+                $data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST',
                 $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '',
                 $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '',
+                $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '',
                 $registeredBy, $data['remarks'] ?? ''
             ]);
             echo json_encode(['success' => true]);

@@ -35,10 +35,16 @@ if ($method === 'GET') {
         try {
             if ($status === 'ON SITE') {
                 $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_in = NOW() WHERE id = ?");
+                // Find room id and update to OCCUPIED
+                $rStmt = $pdo->prepare("SELECT room_id FROM reservations WHERE id = ?");
+                $rStmt->execute([$id]);
+                $roomId = $rStmt->fetchColumn();
+                if ($roomId) {
+                    $pdo->prepare("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?")->execute([$roomId]);
+                }
             } elseif ($status === 'OFF SITE') {
                 $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_out = NOW() WHERE id = ?");
                 // Also free up the room
-                // Find room id
                 $rStmt = $pdo->prepare("SELECT room_id FROM reservations WHERE id = ?");
                 $rStmt->execute([$id]);
                 $roomId = $rStmt->fetchColumn();
@@ -77,9 +83,8 @@ if ($method === 'GET') {
                 'SCHEDULED'
             ]);
 
-            // 3. Mark Room as booked (optional depending on logic, usually stays available until check-in or has a "BOOKED" status)
-            // The requirements say Office Boy checks if room is ready. 
-            // So we leave room status as is or update if needed.
+            // 3. Mark Room as booked
+            $pdo->prepare("UPDATE rooms SET room_status = 'BOOKED' WHERE id = ?")->execute([$input['room_id']]);
             
             $pdo->commit();
             echo json_encode(["success" => true]);

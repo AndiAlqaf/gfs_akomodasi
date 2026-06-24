@@ -1,304 +1,444 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { mealsAPI } from '@/services/api';
+import { mealsAPI, informationAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Truck, CheckCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Plus } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+
+const ITEMS_PER_PAGE = 10;
 
 const Meals: React.FC = () => {
   const queryClient = useQueryClient();
-  const [role, setRole] = useState<'chief_cook' | 'driver' | 'canteen_officer'>('chief_cook');
+  const [role, setRole] = useState<'canteen_officer' | 'canteen_supervisor'>('canteen_officer');
+  
+  // Form state
+  const [guestName, setGuestName] = useState('');
+  const [mealsPackage, setMealsPackage] = useState('');
+  const [deliveryPointId, setDeliveryPointId] = useState('');
+  const [mealTime, setMealTime] = useState('');
+  const [noOfPacks, setNoOfPacks] = useState('1');
+  const [remark, setRemark] = useState('');
 
-  const { data: mealsResp, isLoading } = useQuery({
-    queryKey: ['meals-today'],
-    queryFn: mealsAPI.getToday,
+  // Pagination states
+  const [requestPage, setRequestPage] = useState(1);
+  const [schedulePage, setSchedulePage] = useState(1);
+  const [deliveryPage, setDeliveryPage] = useState(1);
+
+  const { data: scheduleResp, isLoading: scheduleLoading } = useQuery({
+    queryKey: ['meals-schedule'],
+    queryFn: mealsAPI.getSchedule,
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => mealsAPI.updateStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meals-today'] })
+  const { data: requestResp, isLoading: requestLoading } = useQuery({
+    queryKey: ['meals-requests'],
+    queryFn: mealsAPI.getRequests,
   });
 
-  const stats = mealsResp?.data?.stats || { breakfast: 0, lunch: 0, dinner: 0, total: 0 };
-  const accommodatedMeals = mealsResp?.data?.accommodatedData || [];
-  const visitorMeals = mealsResp?.data?.visitorData || [];
+  const { data: dpResp } = useQuery({
+    queryKey: ['meals-dp'],
+    queryFn: mealsAPI.getDeliveryPoints,
+  });
 
-  const filteredAccommodated = accommodatedMeals;
-  const filteredVisitor = visitorMeals;
+  const { data: deliveryResp, isLoading: deliveryLoading } = useQuery({
+    queryKey: ['meals-delivery-info'],
+    queryFn: informationAPI.getMeals,
+  });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PREPARING': return <Badge variant="destructive">Preparing</Badge>;
-      case 'IN TRANSIT': return <Badge variant="warning">In Transit</Badge>;
-      case 'DELIVERED': return <Badge variant="success">Delivered</Badge>;
-      default: return <Badge>{status}</Badge>;
+  const createRequestMutation = useMutation({
+    mutationFn: (data: any) => mealsAPI.createRequest(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meals-requests'] });
+      setGuestName('');
+      setMealsPackage('');
+      setDeliveryPointId('');
+      setMealTime('');
+      setNoOfPacks('1');
+      setRemark('');
     }
-  };
+  });
 
-  const renderAction = (meal: any) => (
-    <TableCell className="text-right whitespace-nowrap">
-      {role === 'chief_cook' && meal.status === 'PREPARING' && (
-        <Button size="sm" variant="outline" className="gap-2" onClick={() => updateStatusMutation.mutate({id: meal.id, status: 'IN TRANSIT'})}>
-          <Truck size={16} /> Ready
-        </Button>
-      )}
-      {role === 'driver' && meal.status === 'IN TRANSIT' && (
-        <Button size="sm" variant="outline" className="gap-2" onClick={() => updateStatusMutation.mutate({id: meal.id, status: 'DELIVERED'})}>
-          <CheckCircle size={16} /> Delivered
-        </Button>
-      )}
-      {role === 'canteen_officer' && (
-        <span className="text-xs text-gray-500 italic">View Only</span>
-      )}
-    </TableCell>
-  );
+  const approveRequestMutation = useMutation({
+    mutationFn: ({ id, approvedBy }: { id: string; approvedBy: string }) => mealsAPI.approveRequest(id, approvedBy),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meals-requests'] })
+  });
 
-  // Generate Summary Data
-  const generateSummary = () => {
-    const summary: any[] = [];
-    const allMeals = [...accommodatedMeals.map((m: any) => ({...m, accStatus: 'ACCOMMODATED'})), ...visitorMeals.map((m: any) => ({...m, accStatus: 'VISITOR'}))];
-    
-    // Group by delivery point and meal package
-    const grouped = allMeals.reduce((acc: any, meal: any) => {
-      const key = `${meal.delivery_point}_${meal.meals_package}_${meal.accStatus}`;
-      if (!acc[key]) {
-        acc[key] = {
-          delivery_point: meal.delivery_point,
-          meals_package: meal.meals_package,
-          accStatus: meal.accStatus,
-          breakfast_packs: 0,
-          lunch_packs: 0,
-          dinner_packs: 0,
-        };
-      }
-      if (meal.breakfast) acc[key].breakfast_packs += parseInt(meal.breakfast_packs) || 0;
-      if (meal.lunch) acc[key].lunch_packs += parseInt(meal.lunch_packs) || 0;
-      if (meal.dinner) acc[key].dinner_packs += parseInt(meal.dinner_packs) || 0;
-      return acc;
-    }, {});
-
-    Object.values(grouped).forEach((g: any, index: number) => {
-      if (g.breakfast_packs > 0) summary.push({ ...g, meal_time: 'Breakfast', packs: g.breakfast_packs, id: `${index}_b` });
-      if (g.lunch_packs > 0) summary.push({ ...g, meal_time: 'Lunch', packs: g.lunch_packs, id: `${index}_l` });
-      if (g.dinner_packs > 0) summary.push({ ...g, meal_time: 'Dinner', packs: g.dinner_packs, id: `${index}_d` });
+  const handleCreateRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestName || !mealsPackage || !deliveryPointId || !mealTime) return;
+    createRequestMutation.mutate({
+      guest_name: guestName,
+      request_by: 'Canteen Officer A', // Simulated name
+      meals_package: mealsPackage,
+      delivery_point_id: parseInt(deliveryPointId),
+      meal_time: mealTime,
+      no_of_packs: parseInt(noOfPacks),
+      remark
     });
-
-    return summary;
   };
 
-  const summaryData = generateSummary();
+  const requestsData = requestResp?.data?.data || [];
+  const scheduleData = scheduleResp?.data?.data || [];
+  const deliveryPoints = dpResp?.data?.data || [];
+  const deliveryData = deliveryResp?.data?.data || [];
+
+  const reqTotalPages = Math.max(1, Math.ceil(requestsData.length / ITEMS_PER_PAGE));
+  const paginatedRequests = requestsData.slice((requestPage - 1) * ITEMS_PER_PAGE, requestPage * ITEMS_PER_PAGE);
+
+  const schedTotalPages = Math.max(1, Math.ceil(scheduleData.length / ITEMS_PER_PAGE));
+  const paginatedSchedule = scheduleData.slice((schedulePage - 1) * ITEMS_PER_PAGE, schedulePage * ITEMS_PER_PAGE);
+
+  const deliveryTotalPages = Math.max(1, Math.ceil(deliveryData.length / ITEMS_PER_PAGE));
+  const paginatedDelivery = deliveryData.slice((deliveryPage - 1) * ITEMS_PER_PAGE, deliveryPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-emerald-700 mt-1">Daily Meal Production & Delivery</p>
+          <p className="text-emerald-700 mt-1">Meals Request and Schedule Dashboard</p>
         </div>
       </div>
 
-      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100">
+      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white">
         <span className="font-semibold text-emerald-800">Simulate Role:</span>
         <div className="flex gap-2">
-          {['chief_cook', 'driver', 'canteen_officer'].map(r => (
-            <Button 
-              key={r} 
-              variant={role === r ? 'default' : 'outline'}
-              className={role === r ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200'}
-              onClick={() => setRole(r as any)}
-            >
-              {r.replace('_', ' ')}
-            </Button>
-          ))}
+          <Button 
+            variant={role === 'canteen_officer' ? 'default' : 'outline'}
+            className={role === 'canteen_officer' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
+            onClick={() => setRole('canteen_officer')}
+          >
+            Canteen Officer
+          </Button>
+          <Button 
+            variant={role === 'canteen_supervisor' ? 'default' : 'outline'}
+            className={role === 'canteen_supervisor' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
+            onClick={() => setRole('canteen_supervisor')}
+          >
+            Canteen Supervisor
+          </Button>
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm rounded-xl overflow-hidden animate-fade-in border-emerald-100" style={{ animationDelay: '200ms' }}>
-        <CardHeader className="bg-white border-b border-emerald-100">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Tables</CardTitle>
+      <Tabs defaultValue="request" className="w-full">
+        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm">
+          <TabsTrigger value="request" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Request</TabsTrigger>
+          <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Schedule</TabsTrigger>
+          <TabsTrigger value="delivery" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals for Delivery</TabsTrigger>
+        </TabsList>
 
+        <TabsContent value="request" className="m-0 animate-fade-in">
+          <div className="space-y-6">
+            {role === 'canteen_officer' && (
+              <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-emerald-50/30">
+                <CardHeader className="bg-white border-b border-emerald-100 py-4">
+                  <CardTitle className="text-md text-emerald-900 uppercase flex items-center gap-2">
+                    <Plus size={18} /> Meals Request Form
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">GUEST / EVENT NAME</label>
+                      <Input value={guestName} onChange={e => setGuestName(e.target.value)} required placeholder="e.g. Tamu Perusahaan" className="bg-white" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">MEALS PACKAGES</label>
+                      <select 
+                        value={mealsPackage} 
+                        onChange={e => setMealsPackage(e.target.value)} 
+                        required 
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="" disabled>Select Package</option>
+                        <option value="Standard Buffet">Standard Buffet</option>
+                        <option value="VIP Buffet">VIP Buffet</option>
+                        <option value="Room Delivery">Room Delivery</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">DELIVERY POINT</label>
+                      <select 
+                        value={deliveryPointId} 
+                        onChange={e => setDeliveryPointId(e.target.value)} 
+                        required 
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="" disabled>Select Delivery Point</option>
+                        {deliveryPoints.map((dp: any) => (
+                          <option key={dp.id} value={dp.id.toString()}>{dp.delivery_point}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">MEAL TIME</label>
+                      <select 
+                        value={mealTime} 
+                        onChange={e => setMealTime(e.target.value)} 
+                        required 
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="" disabled>Select Meal Time</option>
+                        <option value="BREAKFAST">Breakfast</option>
+                        <option value="LUNCH">Lunch</option>
+                        <option value="DINNER">Dinner</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">NO OF PACKS</label>
+                      <Input type="number" min="1" value={noOfPacks} onChange={e => setNoOfPacks(e.target.value)} required className="bg-white" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-emerald-900">REMARK</label>
+                      <Input value={remark} onChange={e => setRemark(e.target.value)} placeholder="Optional remark" className="bg-white" />
+                    </div>
+                    <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
+                      <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8" disabled={createRequestMutation.isPending}>
+                        Submit Request
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4">
+                <CardTitle className="text-md text-emerald-900 uppercase">Tabel Meals on Request</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {requestLoading ? (
+                  <div className="text-center py-8 text-emerald-600">Loading requests...</div>
+                ) : (
+                  <div className="w-full relative overflow-hidden bg-white">
+                    <div className="overflow-x-auto w-full">
+                      <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                        <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                          <tr>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>GUESTS</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>REQUEST BY</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>APPROVED BY</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
+                            <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
+                            <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>NO OF PACK</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center border-l border-emerald-800" rowSpan={2}>REMARK</th>
+                            <th className="px-6 py-4 border-b border-emerald-900 text-center border-l border-emerald-800" rowSpan={2}>ACTION</th>
+                          </tr>
+                          <tr className="bg-emerald-900/50">
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
+                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-emerald-50">
+                          {paginatedRequests.map((req: any, idx: number) => (
+                            <tr key={req.id} className="hover:bg-emerald-50/50 transition-colors">
+                              <td className="px-6 py-3 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                              <td className="px-6 py-3 text-center text-emerald-700">{formatDate(req.date)}</td>
+                              <td className="px-6 py-3 font-semibold text-emerald-900">{req.guest_name}</td>
+                              <td className="px-6 py-3 text-center text-emerald-700">{req.request_by}</td>
+                              <td className="px-6 py-3 text-center text-emerald-700">{req.approved_by || '-'}</td>
+                              <td className="px-6 py-3 text-center">
+                                <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{req.meals_package}</span>
+                              </td>
+                              
+                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'BREAKFAST' ? req.delivery_point : '-'}</td>
+                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'LUNCH' ? req.delivery_point : '-'}</td>
+                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'DINNER' ? req.delivery_point : '-'}</td>
+                              
+                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'BREAKFAST' ? req.no_of_packs : '-'}</td>
+                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'LUNCH' ? req.no_of_packs : '-'}</td>
+                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'DINNER' ? req.no_of_packs : '-'}</td>
+                              
+                              <td className="px-6 py-3 text-emerald-600 border-l border-emerald-50">{req.remark || '-'}</td>
+                              <td className="px-6 py-3 text-center border-l border-emerald-50">
+                                {req.status === 'PENDING' ? (
+                                  role === 'canteen_supervisor' ? (
+                                    <Button size="sm" className="bg-lime-500 hover:bg-lime-600 text-emerald-950 font-bold px-4 h-7 text-xs" onClick={() => approveRequestMutation.mutate({id: req.id, approvedBy: 'Supervisor S'})}>
+                                      <CheckCircle size={14} className="mr-1" /> Approve
+                                    </Button>
+                                  ) : (
+                                    <span className="text-amber-600 font-semibold text-xs bg-amber-50 px-2 py-1 rounded border border-amber-200">PENDING</span>
+                                  )
+                                ) : (
+                                  <span className="text-emerald-700 font-bold text-xs bg-lime-100 px-2 py-1 rounded border border-lime-200">APPROVED</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {paginatedRequests.length === 0 && (
+                            <tr><td colSpan={14} className="text-center py-8 text-emerald-600">No requests found.</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                      <div className="text-sm text-emerald-800">
+                        Showing <span className="font-semibold">{requestsData.length > 0 ? (requestPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(requestPage * ITEMS_PER_PAGE, requestsData.length)}</span> of <span className="font-semibold">{requestsData.length}</span> entries
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setRequestPage(p => Math.max(p - 1, 1))} disabled={requestPage === 1}>Previous</Button>
+                        {Array.from({ length: reqTotalPages }, (_, i) => i + 1).map(p => (
+                          <Button key={p} variant={requestPage === p ? 'default' : 'outline'} size="sm" onClick={() => setRequestPage(p)} className={requestPage === p ? 'bg-emerald-600 text-white' : ''}>{p}</Button>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={() => setRequestPage(p => Math.min(p + 1, reqTotalPages))} disabled={requestPage === reqTotalPages}>Next</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="accommodated" className="w-full">
-            <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200">
-              <TabsTrigger value="accommodated" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all">Accommodation Provided</TabsTrigger>
-              <TabsTrigger value="visitor" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all">Visitor (No Accommodation)</TabsTrigger>
-              <TabsTrigger value="summary" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all">Meals Services Info</TabsTrigger>
-            </TabsList>
+        </TabsContent>
 
-            <TabsContent value="accommodated">
-              {isLoading ? <p>Loading Meals...</p> : (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-max">
-                    <TableHeader className="bg-blue-50">
-                      <TableRow>
-                        <TableHead className="w-12">NO</TableHead>
-                        <TableHead>DATE</TableHead>
-                        <TableHead>ROOM</TableHead>
-                        <TableHead>MESS</TableHead>
-                        <TableHead>NAME</TableHead>
-                        <TableHead>MEALS PACKAGES</TableHead>
-                        <TableHead className="text-center" colSpan={3}>DELIVERY POINT</TableHead>
-                        <TableHead className="text-center" colSpan={3}>NO OF PACK</TableHead>
-                        <TableHead>REMARK / STATUS</TableHead>
-                        <TableHead className="text-right">ACTION</TableHead>
-                      </TableRow>
-                      <TableRow className="bg-blue-100 text-xs">
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead className="text-center font-semibold">BREAKFAST</TableHead>
-                        <TableHead className="text-center font-semibold">LUNCH</TableHead>
-                        <TableHead className="text-center font-semibold">DINNER</TableHead>
-                        <TableHead className="text-center font-semibold">BREAKFAST</TableHead>
-                        <TableHead className="text-center font-semibold">LUNCH</TableHead>
-                        <TableHead className="text-center font-semibold">DINNER</TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAccommodated?.map((meal: any, i: number) => (
-                        <TableRow key={meal.id}>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell>{meal.date}</TableCell>
-                          <TableCell>{meal.roomNo}</TableCell>
-                          <TableCell>{meal.mess}</TableCell>
-                          <TableCell className="font-medium">{meal.guestName}</TableCell>
-                          <TableCell>
-                            <Badge variant={meal.meals_package === 'ROOM DELIVERY' ? 'default' : 'secondary'}>
-                              {meal.meals_package}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-xs">{meal.breakfast ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center text-xs">{meal.lunch ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center text-xs">{meal.dinner ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.breakfast ? meal.breakfast_packs : 0}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.lunch ? meal.lunch_packs : 0}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.dinner ? meal.dinner_packs : 0}</TableCell>
-                          <TableCell>{getStatusBadge(meal.status)}</TableCell>
-                          {renderAction(meal)}
-                        </TableRow>
+        <TabsContent value="schedule" className="m-0 animate-fade-in">
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+            <CardHeader className="bg-white border-b border-emerald-100 py-4">
+              <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
+                Tabel Meals on Schedule
+                <span className="text-xs font-normal text-emerald-600 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                  Auto-updated daily based on On-Site Guests
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {scheduleLoading ? (
+                <div className="text-center py-8 text-emerald-600">Loading schedule...</div>
+              ) : (
+                <div className="w-full relative overflow-hidden bg-white">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                        <tr>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NAME</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
+                          <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center border-l border-emerald-800" rowSpan={2}>REMARK</th>
+                        </tr>
+                        <tr className="bg-emerald-900/50">
+                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
+                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedSchedule.map((row: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-6 py-3 font-semibold text-emerald-950">{row.room}</td>
+                            <td className="px-6 py-3 text-emerald-700">{row.mess}</td>
+                            <td className="px-6 py-3 font-medium text-emerald-900">{row.name}</td>
+                            <td className="px-6 py-3 text-center">
+                              <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{row.meals_packages}</span>
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.breakfast_dp || '-'}</td>
+                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.lunch_dp || '-'}</td>
+                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.dinner_dp || '-'}</td>
+                            <td className="px-6 py-3 text-emerald-600 border-l border-emerald-50">{row.remark || '-'}</td>
+                          </tr>
+                        ))}
+                        {paginatedSchedule.length === 0 && (
+                          <tr><td colSpan={8} className="text-center py-8 text-emerald-600">No scheduled meals found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                    <div className="text-sm text-emerald-800">
+                      Showing <span className="font-semibold">{scheduleData.length > 0 ? (schedulePage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(schedulePage * ITEMS_PER_PAGE, scheduleData.length)}</span> of <span className="font-semibold">{scheduleData.length}</span> entries
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSchedulePage(p => Math.max(p - 1, 1))} disabled={schedulePage === 1}>Previous</Button>
+                      {Array.from({ length: schedTotalPages }, (_, i) => i + 1).map(p => (
+                        <Button key={p} variant={schedulePage === p ? 'default' : 'outline'} size="sm" onClick={() => setSchedulePage(p)} className={schedulePage === p ? 'bg-emerald-600 text-white' : ''}>{p}</Button>
                       ))}
-                    </TableBody>
-                  </Table>
+                      <Button variant="outline" size="sm" onClick={() => setSchedulePage(p => Math.min(p + 1, schedTotalPages))} disabled={schedulePage === schedTotalPages}>Next</Button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="visitor">
-              {isLoading ? <p>Loading Meals...</p> : (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-max">
-                    <TableHeader className="bg-green-50">
-                      <TableRow>
-                        <TableHead className="w-12">NO</TableHead>
-                        <TableHead>DATE</TableHead>
-                        <TableHead>GUESTS</TableHead>
-                        <TableHead>REQUEST BY</TableHead>
-                        <TableHead>APPROVED BY</TableHead>
-                        <TableHead>MEALS PACKAGES</TableHead>
-                        <TableHead className="text-center" colSpan={3}>DELIVERY POINT</TableHead>
-                        <TableHead className="text-center" colSpan={3}>NO OF PACK</TableHead>
-                        <TableHead>REMARK / STATUS</TableHead>
-                        <TableHead className="text-right">ACTION</TableHead>
-                      </TableRow>
-                      <TableRow className="bg-green-100 text-xs">
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                        <TableHead className="text-center font-semibold">BREAKFAST</TableHead>
-                        <TableHead className="text-center font-semibold">LUNCH</TableHead>
-                        <TableHead className="text-center font-semibold">DINNER</TableHead>
-                        <TableHead className="text-center font-semibold">BREAKFAST</TableHead>
-                        <TableHead className="text-center font-semibold">LUNCH</TableHead>
-                        <TableHead className="text-center font-semibold">DINNER</TableHead>
-                        <TableHead></TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredVisitor?.map((meal: any, i: number) => (
-                        <TableRow key={meal.id}>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell>{meal.date}</TableCell>
-                          <TableCell className="font-medium">{meal.visitor_name}</TableCell>
-                          <TableCell>{meal.request_by}</TableCell>
-                          <TableCell>{meal.approved_by}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{meal.meals_package}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-xs">{meal.breakfast ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center text-xs">{meal.lunch ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center text-xs">{meal.dinner ? meal.delivery_point : '-'}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.breakfast ? meal.breakfast_packs : 0}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.lunch ? meal.lunch_packs : 0}</TableCell>
-                          <TableCell className="text-center font-mono">{meal.dinner ? meal.dinner_packs : 0}</TableCell>
-                          <TableCell>{getStatusBadge(meal.status)}</TableCell>
-                          {renderAction(meal)}
-                        </TableRow>
+        <TabsContent value="delivery" className="m-0 animate-fade-in">
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
+            <CardHeader className="bg-white border-b border-emerald-100 py-4">
+              <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
+                Tabel Meals for Delivery
+                <span className="text-xs font-normal text-emerald-600 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                  Aggregated from Schedule and Approved Requests
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {deliveryLoading ? (
+                <div className="text-center py-8 text-emerald-600">Loading delivery info...</div>
+              ) : (
+                <div className="w-full relative overflow-hidden bg-white">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                        <tr>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">NO</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">DATE</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEALS PACKAGES</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEALS DELIVERY POINT</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">AREA</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEAL TIME</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">NO OF PACKS</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">ACCOMODATION STATUS</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center">REMARK</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedDelivery.map((row: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-6 py-3 font-semibold text-emerald-950 text-center">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{new Date().toISOString().split('T')[0]}</td>
+                            <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
+                            <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
+                            <td className="px-6 py-3 text-gray-500 text-center">{row.area}</td>
+                            <td className="px-6 py-3 text-emerald-700 font-medium text-center">{row.meal_time}</td>
+                            <td className="px-6 py-3 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{row.accommodation_status}</td>
+                            <td className="px-6 py-3 text-emerald-600">-</td>
+                          </tr>
+                        ))}
+                        {paginatedDelivery.length === 0 && (
+                          <tr><td colSpan={9} className="text-center py-8 text-emerald-600">No delivery info found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                    <div className="text-sm text-emerald-800">
+                      Showing <span className="font-semibold">{deliveryData.length > 0 ? (deliveryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(deliveryPage * ITEMS_PER_PAGE, deliveryData.length)}</span> of <span className="font-semibold">{deliveryData.length}</span> entries
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setDeliveryPage(p => Math.max(p - 1, 1))} disabled={deliveryPage === 1}>Previous</Button>
+                      {Array.from({ length: deliveryTotalPages }, (_, i) => i + 1).map(p => (
+                        <Button key={p} variant={deliveryPage === p ? 'default' : 'outline'} size="sm" onClick={() => setDeliveryPage(p)} className={deliveryPage === p ? 'bg-emerald-600 text-white' : ''}>{p}</Button>
                       ))}
-                    </TableBody>
-                  </Table>
+                      <Button variant="outline" size="sm" onClick={() => setDeliveryPage(p => Math.min(p + 1, deliveryTotalPages))} disabled={deliveryPage === deliveryTotalPages}>Next</Button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </TabsContent>
-
-            <TabsContent value="summary">
-              <div className="overflow-x-auto">
-                <Table className="min-w-max">
-                  <TableHeader className="bg-cyan-50">
-                    <TableRow>
-                      <TableHead className="w-12">NO</TableHead>
-                      <TableHead>DATE</TableHead>
-                      <TableHead>MEALS PACKAGES</TableHead>
-                      <TableHead>MEALS DELIVERY POINT</TableHead>
-                      <TableHead>AREA</TableHead>
-                      <TableHead>MEAL TIME</TableHead>
-                      <TableHead className="text-center">NO OF PACKS</TableHead>
-                      <TableHead>ACCOMODATION STATUS</TableHead>
-                      <TableHead>REMARK</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {summaryData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-gray-500">No meals found for today.</TableCell>
-                      </TableRow>
-                    ) : (
-                      summaryData.map((row: any, i: number) => (
-                        <TableRow key={row.id}>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell>{new Date().toISOString().split('T')[0]}</TableCell>
-                          <TableCell>{row.meals_package}</TableCell>
-                          <TableCell>{row.delivery_point}</TableCell>
-                          <TableCell className="text-gray-400 italic">Auto-resolved</TableCell>
-                          <TableCell>{row.meal_time}</TableCell>
-                          <TableCell className="text-center font-bold text-lg">{row.packs}</TableCell>
-                          <TableCell>{row.accStatus}</TableCell>
-                          <TableCell>-</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
