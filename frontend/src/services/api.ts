@@ -1,10 +1,26 @@
 import axios from 'axios';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/gfs_akomodasi/backend';
+const DEFAULT_API_PORT = import.meta.env.VITE_API_PORT || '31145';
+
+const buildDefaultApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return `http://127.0.0.1:${DEFAULT_API_PORT}/api`;
+  }
+
+  const runtimeHost = import.meta.env.VITE_API_HOST || window.location.hostname || '127.0.0.1';
+  return `http://${runtimeHost}:${DEFAULT_API_PORT}/api`;
+};
+
+const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
+
+export const API_BASE_URL = normalizeBaseUrl(
+  import.meta.env.VITE_API_BASE_URL || buildDefaultApiBaseUrl()
+);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -17,6 +33,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const message = error.response?.data?.error || error.message || 'API request failed';
+    return Promise.reject(new Error(message));
+  }
+);
+
 export const areaAPI = {
   getAll: () => api.get('/areas'),
   getById: (id: string) => api.get(`/areas/${id}`),
@@ -26,7 +50,15 @@ export const areaAPI = {
 };
 
 export const dataRegisterAPI = {
-  create: (type: string, data: any) => api.post(`/data_register.php?action=add_${type}`, data),
+  getAreas: () => api.get('/data_register.php', { params: { action: 'get_areas' } }),
+  getMesses: () => api.get('/data_register.php', { params: { action: 'get_messes' } }),
+  getRooms: () => api.get('/data_register.php', { params: { action: 'get_rooms' } }),
+  getMealsDp: () => api.get('/data_register.php', { params: { action: 'get_meals_dp' } }),
+  getLaundryDp: () => api.get('/data_register.php', { params: { action: 'get_laundry_dp' } }),
+  getLaundryBag: () => api.get('/data_register.php', { params: { action: 'get_laundry_bag' } }),
+  getGuests: () => api.get('/data_register.php', { params: { action: 'get_guests' } }),
+  create: (type: string, data: any) =>
+    api.post('/data_register.php', data, { params: { action: `add_${type}` } }),
 };
 
 export const messAPI = {
@@ -39,7 +71,7 @@ export const messAPI = {
 };
 
 export const roomAPI = {
-  getAll: (category?: string) => api.get(`/rooms.php${category ? `?category=${category}` : ''}`),
+  getAll: (category?: string) => api.get('/rooms.php', { params: category ? { category } : undefined }),
   updateStatus: (id: string, status: string) => api.post(`/rooms.php`, { action: 'update_status', id, status }),
 };
 
@@ -55,9 +87,9 @@ export const reservationAPI = {
 };
 
 export const mealsAPI = {
-  getSchedule: () => api.get('/meals.php?type=schedule'),
-  getRequests: () => api.get('/meals.php?type=requests'),
-  getDeliveryPoints: () => api.get('/meals.php?type=dp'),
+  getSchedule: () => api.get('/meals.php', { params: { type: 'schedule' } }),
+  getRequests: () => api.get('/meals.php', { params: { type: 'requests' } }),
+  getDeliveryPoints: () => api.get('/meals.php', { params: { type: 'dp' } }),
   createRequest: (data: any) => api.post('/meals.php', { action: 'create_request', ...data }),
   approveRequest: (id: string, approvedBy: string) => api.post('/meals.php', { action: 'approve_request', id, approved_by: approvedBy }),
 };
@@ -78,9 +110,9 @@ export const dashboardAPI = {
 };
 
 export const informationAPI = {
-  getRooms: () => api.get('/information.php?type=room'),
-  getPob: () => api.get('/information.php?type=pob'),
-  getMeals: () => api.get('/information.php?type=meals'),
+  getRooms: () => api.get('/information.php', { params: { type: 'room' } }),
+  getPob: () => api.get('/information.php', { params: { type: 'pob' } }),
+  getMeals: () => api.get('/information.php', { params: { type: 'meals' } }),
 };
 
 export default api;

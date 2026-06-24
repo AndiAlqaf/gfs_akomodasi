@@ -3,10 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   BedDouble, 
-  Users, 
   UtensilsCrossed, 
   Shirt,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Building2,
