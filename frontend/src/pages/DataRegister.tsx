@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-import { dataRegisterAPI } from '@/services/api';
+import { dataRegisterAPI, API_BASE_URL } from '@/services/api';
 
 export default function DataRegister() {
   const [activeTab, setActiveTab] = useState('area');
@@ -54,7 +54,7 @@ export default function DataRegister() {
 
   const fetchData = async () => {
     try {
-      const baseUrl = 'http://localhost/gfs_akomodasi/backend/data_register.php?action=';
+      const baseUrl = `${API_BASE_URL}/data_register.php?action=`;
       const [
         resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests
       ] = await Promise.all([
