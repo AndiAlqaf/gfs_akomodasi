@@ -151,7 +151,14 @@ if ($method === 'GET') {
             // Flatten and return
             $result = array_values($aggregated);
             echo json_encode(["data" => $result]);
+        } elseif ($type === 'meeting') {
+            // INFORMATION_MEETING_ROOMS query
+            $query = "SELECT * FROM meeting_rooms ORDER BY id ASC";
+            $stmt = $pdo->query($query);
+            $data = $stmt->fetchAll();
+            echo json_encode(["data" => $data]);
         }
+
     } catch (\PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => $e->getMessage()]);

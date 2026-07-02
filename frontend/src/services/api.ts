@@ -81,6 +81,7 @@ export const informationAPI = {
   getRooms: () => api.get('/information.php?type=room'),
   getPob: () => api.get('/information.php?type=pob'),
   getMeals: () => api.get('/information.php?type=meals'),
+  getMeetingRooms: () => api.get('/information.php?type=meeting'),
 };
 
 export default api;

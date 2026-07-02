@@ -43,8 +43,8 @@ const Sidebar: React.FC = () => {
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-white tracking-tight">Layanan Akomodasi</h1>
-              <p className="text-[10px] uppercase tracking-wider text-lime-400 font-medium">GFS Ceria</p>
+              <h1 className="font-bold text-lg text-white tracking-tight">SILARIA</h1>
+              <p className="text-[10px] uppercase tracking-wider text-lime-400 font-medium">SITE WOLO</p>
             </div>
           </div>
         )}

@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -15,6 +17,13 @@ const Information: React.FC = () => {
   const [pobPage, setPobPage] = useState(1);
   const [mealsPage, setMealsPage] = useState(1);
   const [laundryPage, setLaundryPage] = useState(1);
+  const [meetingPage, setMeetingPage] = useState(1);
+  
+  const [roomSearch, setRoomSearch] = useState('');
+  const [pobSearch, setPobSearch] = useState('');
+  const [mealsSearch, setMealsSearch] = useState('');
+  const [laundrySearch, setLaundrySearch] = useState('');
+  const [meetingSearch, setMeetingSearch] = useState('');
   const { data: roomInfoResp, isLoading: roomLoading } = useQuery({
     queryKey: ['info-rooms'],
     queryFn: informationAPI.getRooms,
@@ -38,20 +47,37 @@ const Information: React.FC = () => {
     queryFn: laundryAPI.getAll,
   });
 
+  const { data: meetingResp, isLoading: meetingLoading } = useQuery({
+    queryKey: ['info-meeting'],
+    queryFn: informationAPI.getMeetingRooms,
+  });
+
+
   const mealsServicesData = mealsInfoResp?.data?.data || [];
   const laundryItems = laundryResp?.data?.data || [];
 
-  const roomTotalPages = Math.max(1, Math.ceil(rooms.length / ITEMS_PER_PAGE));
-  const paginatedRooms = rooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
+  const filteredRooms = rooms.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(roomSearch.toLowerCase())));
+  const filteredPobs = pobs.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(pobSearch.toLowerCase())));
+  const filteredMeals = mealsServicesData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(mealsSearch.toLowerCase())));
+  const filteredLaundry = laundryItems.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(laundrySearch.toLowerCase())));
 
-  const pobTotalPages = Math.max(1, Math.ceil(pobs.length / ITEMS_PER_PAGE));
-  const paginatedPobs = pobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
+  const meetingRoomsData = meetingResp?.data?.data || [];
+  const filteredMeetingRooms = meetingRoomsData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(meetingSearch.toLowerCase())));
 
-  const laundryTotalPages = Math.max(1, Math.ceil(laundryItems.length / ITEMS_PER_PAGE));
-  const paginatedLaundryItems = laundryItems.slice((laundryPage - 1) * ITEMS_PER_PAGE, laundryPage * ITEMS_PER_PAGE);
+  const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
+  const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
 
-  const mealsTotalPages = Math.max(1, Math.ceil(mealsServicesData.length / ITEMS_PER_PAGE));
-  const paginatedMeals = mealsServicesData.slice((mealsPage - 1) * ITEMS_PER_PAGE, mealsPage * ITEMS_PER_PAGE);
+  const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
+  const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
+
+  const laundryTotalPages = Math.max(1, Math.ceil(filteredLaundry.length / ITEMS_PER_PAGE));
+  const paginatedLaundryItems = filteredLaundry.slice((laundryPage - 1) * ITEMS_PER_PAGE, laundryPage * ITEMS_PER_PAGE);
+
+  const mealsTotalPages = Math.max(1, Math.ceil(filteredMeals.length / ITEMS_PER_PAGE));
+  const paginatedMeals = filteredMeals.slice((mealsPage - 1) * ITEMS_PER_PAGE, mealsPage * ITEMS_PER_PAGE);
+
+  const meetingTotalPages = Math.max(1, Math.ceil(filteredMeetingRooms.length / ITEMS_PER_PAGE));
+  const paginatedMeetingRooms = filteredMeetingRooms.slice((meetingPage - 1) * ITEMS_PER_PAGE, meetingPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -61,7 +87,8 @@ const Information: React.FC = () => {
 
       <Tabs defaultValue="rooms" className="w-full">
         <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
-          <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">ROOM INFO</TabsTrigger>
+          <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM INFO</TabsTrigger>
+          <TabsTrigger value="meeting_rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM INFO</TabsTrigger>
           <TabsTrigger value="pob" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">PERSON ON BOARD INFO</TabsTrigger>
           <TabsTrigger value="meals" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEALS SERVICES INFO</TabsTrigger>
           <TabsTrigger value="laundry" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">LAUNDRY SERVICES INFO</TabsTrigger>
@@ -69,8 +96,12 @@ const Information: React.FC = () => {
 
         <TabsContent value="rooms" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
               <CardTitle className="text-lg text-emerald-950 uppercase">Room Information</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                <Input placeholder="Search..." value={roomSearch} onChange={e => {setRoomSearch(e.target.value); setRoomPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {roomLoading ? (
@@ -85,11 +116,9 @@ const Information: React.FC = () => {
                         <th className="px-6 py-4" rowSpan={2}>ROOM</th>
                         <th className="px-6 py-4" rowSpan={2}>MESS</th>
                         <th className="px-6 py-4" rowSpan={2}>AREA</th>
-                        <th className="px-6 py-4" rowSpan={2}>NAME</th>
                         <th className="px-6 py-4" rowSpan={2}>ROOM ALLOCATION</th>
                         <th className="px-6 py-4 text-center border-b border-emerald-900" colSpan={3}>BEDS</th>
                         <th className="px-6 py-4" rowSpan={2}>STATUS</th>
-                        <th className="px-6 py-4" rowSpan={2}>REMARK</th>
                       </tr>
                       <tr className="bg-emerald-900/50">
                         <th className="px-6 py-2 text-center border-t border-emerald-900">AVAILABLE</th>
@@ -104,7 +133,6 @@ const Information: React.FC = () => {
                           <td className="px-6 py-3 text-emerald-800 font-medium">{r.room}</td>
                           <td className="px-6 py-3 text-emerald-700">{r.mess}</td>
                           <td className="px-6 py-3 text-emerald-700">{r.area}</td>
-                          <td className="px-6 py-3 font-medium text-emerald-900">{r.guest_name || '-'}</td>
                           <td className="px-6 py-3 text-emerald-700">{r.room_allocation}</td>
                           <td className="px-6 py-3 text-center font-semibold bg-emerald-50/50 text-emerald-800 border-x border-emerald-100">{r.beds_total}</td>
                           <td className="px-6 py-3 text-center font-semibold bg-lime-50/50 text-lime-800 border-x border-emerald-100">{r.beds_occupied}</td>
@@ -112,7 +140,6 @@ const Information: React.FC = () => {
                           <td className="px-6 py-3">
                             <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{r.status}</span>
                           </td>
-                          <td className="px-6 py-3 text-emerald-600">{r.remark}</td>
                         </tr>
                       ))}
                       {paginatedRooms.length === 0 && (
@@ -125,7 +152,7 @@ const Information: React.FC = () => {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
-                      Showing <span className="font-semibold">{rooms.length > 0 ? (roomPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(roomPage * ITEMS_PER_PAGE, rooms.length)}</span> of <span className="font-semibold">{rooms.length}</span> entries
+                      Showing <span className="font-semibold">{filteredRooms.length > 0 ? (roomPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(roomPage * ITEMS_PER_PAGE, filteredRooms.length)}</span> of <span className="font-semibold">{filteredRooms.length}</span> entries
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.max(prev - 1, 1))} disabled={roomPage === 1}>Previous</Button>
@@ -143,10 +170,81 @@ const Information: React.FC = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="meeting_rooms" className="animate-fade-in mt-0">
+          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                <Input placeholder="Search..." value={meetingSearch} onChange={e => {setMeetingSearch(e.target.value); setMeetingPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 bg-stone-50/50">
+              {meetingLoading ? (
+                <div className="text-center py-8">Loading Meeting Rooms Data...</div>
+              ) : (
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                        <tr>
+                          <th className="px-6 py-4 text-center">DATE</th>
+                          <th className="px-6 py-4 text-left">ROOM</th>
+                          <th className="px-6 py-4 text-left">BUILDING</th>
+                          <th className="px-6 py-4 text-center">CAPACITY</th>
+                          <th className="px-6 py-4 text-center">BOOKING STATUS</th>
+                          <th className="px-6 py-4 text-center">RESERVED BY</th>
+                          <th className="px-6 py-4 text-center">STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                      {paginatedMeetingRooms.map((r, i) => (
+                        <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="px-6 py-3 text-emerald-800 font-medium text-center">{r.date}</td>
+                          <td className="px-6 py-3 text-emerald-800 font-medium text-left">{r.room}</td>
+                          <td className="px-6 py-3 text-emerald-700 text-left">{r.building}</td>
+                          <td className="px-6 py-3 text-emerald-700 text-center">{r.capacity}</td>
+                          <td className="px-6 py-3 text-emerald-700 text-center font-semibold">{r.booking_status}</td>
+                          <td className="px-6 py-3 text-emerald-700 text-center">{r.reserved_by}</td>
+                          <td className="px-6 py-3 text-emerald-700 text-center">{r.status}</td>
+                        </tr>
+                      ))}
+                      {paginatedMeetingRooms.length === 0 && (
+                        <tr><td colSpan={7} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
+                      )}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                    <div className="text-sm text-emerald-800">
+                      Showing <span className="font-semibold">{filteredMeetingRooms.length > 0 ? (meetingPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(meetingPage * ITEMS_PER_PAGE, filteredMeetingRooms.length)}</span> of <span className="font-semibold">{filteredMeetingRooms.length}</span> entries
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.max(prev - 1, 1))} disabled={meetingPage === 1}>Previous</Button>
+                      {Array.from({ length: meetingTotalPages }, (_, i) => i + 1).map(page => (
+                        <Button key={page} variant={meetingPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMeetingPage(page)} className={meetingPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                          {page}
+                        </Button>
+                      ))}
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.min(prev + 1, meetingTotalPages))} disabled={meetingPage === meetingTotalPages}>Next</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="pob" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
               <CardTitle className="text-lg text-emerald-950 uppercase">Person On Board (POB) Information</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                <Input placeholder="Search..." value={pobSearch} onChange={e => {setPobSearch(e.target.value); setPobPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {pobLoading ? (
@@ -162,7 +260,6 @@ const Information: React.FC = () => {
                         <th className="px-6 py-4">ROOM NO</th>
                         <th className="px-6 py-4">MESS</th>
                         <th className="px-6 py-4">AREA</th>
-                        <th className="px-6 py-4">NAME</th>
                         <th className="px-6 py-4">REG. ID</th>
                         <th className="px-6 py-4">JOB</th>
                         <th className="px-6 py-4">POSITION</th>
@@ -170,7 +267,6 @@ const Information: React.FC = () => {
                         <th className="px-6 py-4">INSTITUTION/COMPANY</th>
                         <th className="px-6 py-4">OCCUPANTS CATEGORY</th>
                         <th className="px-6 py-4 text-center">BOARDING STATUS</th>
-                        <th className="px-6 py-4">REMARKS</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -181,7 +277,6 @@ const Information: React.FC = () => {
                           <td className="px-6 py-3 text-emerald-800 font-medium">{p.room_no}</td>
                           <td className="px-6 py-3 text-emerald-700">{p.mess}</td>
                           <td className="px-6 py-3 text-emerald-700">{p.area}</td>
-                          <td className="px-6 py-3 font-medium text-emerald-900">{p.name}</td>
                           <td className="px-6 py-3 text-emerald-600">{p.reg_id_card || '-'}</td>
                           <td className="px-6 py-3 text-emerald-600">{p.job || '-'}</td>
                           <td className="px-6 py-3 text-emerald-600">{p.position || '-'}</td>
@@ -193,7 +288,6 @@ const Information: React.FC = () => {
                           <td className="px-6 py-3 text-center">
                             <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}>{p.boarding_status}</span>
                           </td>
-                          <td className="px-6 py-3 text-emerald-600">{p.remarks || '-'}</td>
                         </tr>
                       ))}
                       {paginatedPobs.length === 0 && (
@@ -206,7 +300,7 @@ const Information: React.FC = () => {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
-                      Showing <span className="font-semibold">{pobs.length > 0 ? (pobPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(pobPage * ITEMS_PER_PAGE, pobs.length)}</span> of <span className="font-semibold">{pobs.length}</span> entries
+                      Showing <span className="font-semibold">{filteredPobs.length > 0 ? (pobPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(pobPage * ITEMS_PER_PAGE, filteredPobs.length)}</span> of <span className="font-semibold">{filteredPobs.length}</span> entries
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.max(prev - 1, 1))} disabled={pobPage === 1}>Previous</Button>
@@ -226,8 +320,12 @@ const Information: React.FC = () => {
 
         <TabsContent value="meals" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
               <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Info</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                <Input placeholder="Search..." value={mealsSearch} onChange={e => {setMealsSearch(e.target.value); setMealsPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {mealsLoading ? (
@@ -242,11 +340,9 @@ const Information: React.FC = () => {
                         <th className="px-6 py-4">DATE</th>
                         <th className="px-6 py-4">MEALS PACKAGES</th>
                         <th className="px-6 py-4">MEALS DELIVERY POINT</th>
-                        <th className="px-6 py-4">AREA</th>
                         <th className="px-6 py-4">MEAL TIME</th>
                         <th className="px-6 py-4 text-center">NO OF PACKS</th>
                         <th className="px-6 py-4">ACCOMODATION STATUS</th>
-                        <th className="px-6 py-4">REMARK</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -261,11 +357,9 @@ const Information: React.FC = () => {
                             <td className="px-6 py-3 text-emerald-700">{new Date().toISOString().split('T')[0]}</td>
                             <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
                             <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
-                            <td className="px-6 py-3 text-gray-500">{row.area}</td>
                             <td className="px-6 py-3 text-emerald-700 font-medium">{row.meal_time}</td>
                             <td className="px-6 py-3 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
                             <td className="px-6 py-3 text-emerald-700">{row.accommodation_status}</td>
-                            <td className="px-6 py-3 text-emerald-600">-</td>
                           </tr>
                         ))
                       )}
@@ -276,7 +370,7 @@ const Information: React.FC = () => {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
-                      Showing <span className="font-semibold">{mealsServicesData.length > 0 ? (mealsPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(mealsPage * ITEMS_PER_PAGE, mealsServicesData.length)}</span> of <span className="font-semibold">{mealsServicesData.length}</span> entries
+                      Showing <span className="font-semibold">{filteredMeals.length > 0 ? (mealsPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(mealsPage * ITEMS_PER_PAGE, filteredMeals.length)}</span> of <span className="font-semibold">{filteredMeals.length}</span> entries
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.max(prev - 1, 1))} disabled={mealsPage === 1}>Previous</Button>
@@ -296,8 +390,12 @@ const Information: React.FC = () => {
 
         <TabsContent value="laundry" className="animate-fade-in mt-0">
           <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
               <CardTitle className="text-lg text-emerald-950 uppercase">Laundry Services Info</CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                <Input placeholder="Search..." value={laundrySearch} onChange={e => {setLaundrySearch(e.target.value); setLaundryPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
               {laundryLoading ? (
@@ -308,66 +406,36 @@ const Information: React.FC = () => {
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-[10px] font-semibold">
                       <tr>
-                        <th className="px-4 py-3">NO</th>
-                        <th className="px-4 py-3">DATE</th>
-                        <th className="px-4 py-3">ROOM</th>
-                        <th className="px-4 py-3">MESS</th>
-                        <th className="px-4 py-3">NAME</th>
-                        <th className="px-4 py-3">LAUNDRY BAG ID</th>
-                        <th className="px-4 py-3">LAUNDRY BOX</th>
-                        <th className="px-4 py-3">SERVICES PACKAGES</th>
-                        <th className="px-4 py-3">DROPPED BY</th>
-                        <th className="px-4 py-3">DROP POINT</th>
-                        <th className="px-4 py-3">DELIVERY BY</th>
-                        <th className="px-4 py-3">DELIVERY POINT</th>
-                        <th className="px-4 py-3">RECEIVED BY</th>
-                        <th className="px-4 py-3">RECEIVING DATE</th>
-                        <th className="px-4 py-3">BAG STATUS</th>
+                        <th className="px-4 py-3 text-center">NAME</th>
+                        <th className="px-4 py-3 text-center">ROOM</th>
+                        <th className="px-4 py-3 text-center">LAUNDRY<br/>BAG ID</th>
+                        <th className="px-4 py-3 text-center">LAUNDRY<br/>BOX</th>
+                        <th className="px-4 py-3 text-center">SERVICES<br/>PACKAGES</th>
                         <th className="px-4 py-3 text-center">WEIGHT</th>
-                        <th className="px-4 py-3 text-center">NO OF PCS</th>
-                        <th className="px-4 py-3">CHECK BY</th>
-                        <th className="px-4 py-3">DELIVERED BY</th>
-                        <th className="px-4 py-3">RE-DELIVERED POINT</th>
-                        <th className="px-4 py-3">DISTRIBUTED BY</th>
-                        <th className="px-4 py-3 text-center">LAUNDRY STATUS</th>
-                        <th className="px-4 py-3">COMPLETION DATE</th>
-                        <th className="px-4 py-3">REMARK</th>
+                        <th className="px-4 py-3 text-center">PCS</th>
+                        <th className="px-4 py-3 text-center">RECEIVING<br/>DATE</th>
+                        <th className="px-4 py-3 text-center">COMPLETION<br/>DATE</th>
+                        <th className="px-4 py-3 text-center">DURATION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedLaundryItems.length === 0 ? (
                         <tr>
-                          <td colSpan={16} className="text-center py-8 text-gray-500">No laundry services found.</td>
+                          <td colSpan={10} className="text-center py-8 text-gray-500">No laundry services found.</td>
                         </tr>
                       ) : (
                         paginatedLaundryItems.map((row: any, i: number) => (
-                          <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-4 py-2 font-medium text-emerald-950">{((laundryPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
-                            <td className="px-4 py-2 text-emerald-700">{formatDate(row.created_at)}</td>
-                            <td className="px-4 py-2 text-emerald-800 font-medium">{row.room}</td>
-                            <td className="px-4 py-2 text-gray-500">-</td>
-                            <td className="px-4 py-2 text-emerald-800 font-medium">{row.guest_name}</td>
-                            <td className="px-4 py-2 text-emerald-700"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200">{row.laundry_bag_id}</span></td>
+                          <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors text-center font-medium">
+                            <td className="px-4 py-2 text-emerald-800">{row.guest_name}</td>
+                            <td className="px-4 py-2 text-emerald-800">{row.room}</td>
+                            <td className="px-4 py-2 text-emerald-700 font-bold"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200">{row.laundry_bag_id}</span></td>
                             <td className="px-4 py-2 text-emerald-700">{row.laundry_box_id}</td>
                             <td className="px-4 py-2 text-emerald-700">{row.services_package}</td>
-                            <td className="px-4 py-2 text-emerald-700">Office Boy</td>
-                            <td className="px-4 py-2 text-emerald-700">{row.drop_point}</td>
-                            <td className="px-4 py-2 text-emerald-700">Dispatcher</td>
-                            <td className="px-4 py-2 text-emerald-700">Laundry House</td>
-                            <td className="px-4 py-2 text-emerald-700">Laundry Officer</td>
+                            <td className="px-4 py-2 font-bold text-emerald-800">{row.weight || '-'}</td>
+                            <td className="px-4 py-2 text-emerald-700">{row.no_of_pcs_total || '-'}</td>
                             <td className="px-4 py-2 text-emerald-700">{formatDate(row.receiving_date) || '-'}</td>
-                            <td className="px-4 py-2 text-emerald-700">{row.bag_status}</td>
-                            <td className="px-4 py-2 text-center font-bold text-emerald-800 bg-emerald-50/50">{row.weight || '-'}</td>
-                            <td className="px-4 py-2 text-center text-emerald-700">{row.no_of_pcs_total || '-'}</td>
-                            <td className="px-4 py-2 text-emerald-700">Laundry Officer</td>
-                            <td className="px-4 py-2 text-emerald-700">Dispatcher</td>
-                            <td className="px-4 py-2 text-emerald-700">{row.drop_point}</td>
-                            <td className="px-4 py-2 text-emerald-700">Office Boy</td>
-                            <td className="px-4 py-2 text-center">
-                              <span className="px-2 py-1 rounded-full text-[9px] font-bold tracking-wider bg-lime-400 text-emerald-950 shadow-sm">{row.current_status}</span>
-                            </td>
                             <td className="px-4 py-2 text-emerald-700">-</td>
-                            <td className="px-4 py-2 text-emerald-600">-</td>
+                            <td className="px-4 py-2 text-emerald-700">-</td>
                           </tr>
                         ))
                       )}
@@ -378,7 +446,7 @@ const Information: React.FC = () => {
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
-                      Showing <span className="font-semibold">{laundryItems.length > 0 ? (laundryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(laundryPage * ITEMS_PER_PAGE, laundryItems.length)}</span> of <span className="font-semibold">{laundryItems.length}</span> entries
+                      Showing <span className="font-semibold">{filteredLaundry.length > 0 ? (laundryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(laundryPage * ITEMS_PER_PAGE, filteredLaundry.length)}</span> of <span className="font-semibold">{filteredLaundry.length}</span> entries
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.max(prev - 1, 1))} disabled={laundryPage === 1}>Previous</Button>

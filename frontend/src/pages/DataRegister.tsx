@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 import { dataRegisterAPI, API_BASE_URL } from '@/services/api';
 
 export default function DataRegister() {
   const [activeTab, setActiveTab] = useState('area');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -24,6 +25,7 @@ export default function DataRegister() {
   const [laundryDp, setLaundryDp] = useState<any[]>([]);
   const [laundryBag, setLaundryBag] = useState<any[]>([]);
   const [guests, setGuests] = useState<any[]>([]);
+  const [meetingRooms, setMeetingRooms] = useState<any[]>([]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,18 +33,44 @@ export default function DataRegister() {
 
   useEffect(() => {
     setCurrentPage(1);
+    setSearchTerm('');
   }, [activeTab]);
 
   const getCurrentData = () => {
+    let data: any[] = [];
     switch (activeTab) {
-      case 'area': return areas;
-      case 'mess': return messes;
-      case 'room': return rooms;
-      case 'meals': return mealsDp;
-      case 'laundry_dp': return laundryDp;
-      case 'laundry_bag': return laundryBag;
-      case 'guest': return guests;
-      default: return [];
+      case 'area': data = areas; break;
+      case 'mess': data = messes; break;
+      case 'room': data = rooms; break;
+      case 'meeting_room': data = meetingRooms; break;
+      case 'meals': data = mealsDp; break;
+      case 'laundry_dp': data = laundryDp; break;
+      case 'laundry_bag': data = laundryBag; break;
+      case 'guest': data = guests; break;
+      default: data = []; break;
+    }
+    
+    if (searchTerm) {
+      return data.filter((item: any) => 
+        Object.values(item).some(val => 
+          String(val).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+    return data;
+  };
+
+  const getCardTitle = () => {
+    switch (activeTab) {
+      case 'area': return 'AREA';
+      case 'mess': return 'MESS';
+      case 'room': return 'BEDROOM';
+      case 'meeting_room': return 'MEETING ROOM';
+      case 'meals': return 'MEALS DROP POINT';
+      case 'laundry_dp': return 'LAUNDRY DROP & DELIVERY POINT';
+      case 'laundry_bag': return 'LAUNDRY BAG & BOX';
+      case 'guest': return 'GUEST REGISTER';
+      default: return 'DATA REGISTER';
     }
   };
 
@@ -167,6 +195,27 @@ export default function DataRegister() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Beds</Label>
               <Input type="number" className="col-span-3 border-emerald-200" placeholder="1" onChange={(e) => setFormData({...formData, beds: e.target.value})} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'meeting_room' && (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Meeting Room</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. TAMBORASI" onChange={(e) => setFormData({...formData, meeting_room: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Room ID</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP-MR-01" onChange={(e) => setFormData({...formData, room_id: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Building</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U" onChange={(e) => setFormData({...formData, building: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Capacity</Label>
+              <Input type="number" className="col-span-3 border-emerald-200" placeholder="10" onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
             </div>
           </>
         )}
@@ -323,8 +372,11 @@ export default function DataRegister() {
       <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full">
         <CardHeader className="bg-white border-b border-emerald-100 pb-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <CardTitle className="text-lg text-emerald-950 uppercase">Master Data Registration</CardTitle>
-
+            <CardTitle className="text-lg text-emerald-950 uppercase">{getCardTitle()}</CardTitle>
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+              <Input placeholder="Search..." value={searchTerm} onChange={e => {setSearchTerm(e.target.value); setCurrentPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+            </div>
           </div>
         </CardHeader>
         
@@ -339,7 +391,10 @@ export default function DataRegister() {
                   <Home size={16} /> Mess
                 </TabsTrigger>
                 <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <BedDouble size={16} /> Room
+                  <BedDouble size={16} /> Bedroom
+                </TabsTrigger>
+                <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                  <Users size={16} /> Meeting Room
                 </TabsTrigger>
                 <TabsTrigger value="meals" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                   <Utensils size={16} /> Meals Drop Point
@@ -367,7 +422,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">AREA</th>
                         <th className="px-6 py-4">AREA ID</th>
                         <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTRATION</th>
+                        <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -401,7 +456,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">MESS STATUS</th>
                         <th className="px-4 py-4">MANAGED BY</th>
                         <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTRATION</th>
+                        <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -434,12 +489,11 @@ export default function DataRegister() {
                         <th className="px-4 py-4 text-center">NO</th>
                         <th className="px-4 py-4">ROOM NO</th>
                         <th className="px-4 py-4">MESS</th>
-                        <th className="px-4 py-4">MESS ID</th>
                         <th className="px-4 py-4">ROOM ALLOCATION</th>
                         <th className="px-4 py-4 text-center">BEDS</th>
                         <th className="px-4 py-4">ROOM STATUS</th>
                         <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REG.</th>
+                        <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -449,7 +503,6 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
                           <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.mess_id_str}</td>
                           <td className="px-4 py-3 text-emerald-800">{row.room_allocation}</td>
                           <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.beds}</td>
                           <td className="px-4 py-3 font-semibold text-emerald-900">{row.room_status}</td>
@@ -458,6 +511,45 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+
+              {/* TAB H: MEETING ROOM */}
+              <TabsContent value="meeting_room" className="m-0 animate-fade-in">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <tr>
+                        <th className="px-4 py-4 text-center">NO</th>
+                        <th className="px-4 py-4">MEETING ROOM</th>
+                        <th className="px-4 py-4">ROOM ID</th>
+                        <th className="px-4 py-4">BUILDING</th>
+                        <th className="px-4 py-4 text-center">CAPACITY</th>
+                        <th className="px-4 py-4">ROOM STATUS</th>
+                        <th className="px-4 py-4">REGISTERED BY</th>
+                        <th className="px-4 py-4">LAST REGISTERED</th>
+                        <th className="px-4 py-4">REMARKS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {paginatedData.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.meeting_room}</td>
+                          <td className="px-4 py-3 text-emerald-700">{row.room_id}</td>
+                          <td className="px-4 py-3 text-emerald-800">{row.building}</td>
+                          <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.capacity}</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.room_status || 'READY'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.registered_by || 'Admin'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.last_registration || new Date().toISOString().split('T')[0]}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
+                        </tr>
+                      ))}
+                      {paginatedData.length === 0 && (
+                        <tr><td colSpan={9} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -474,7 +566,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">AREA</th>
                         <th className="px-6 py-4">CANTEEN STATUS</th>
                         <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTRATION</th>
+                        <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -506,7 +598,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">AREA</th>
                         <th className="px-6 py-4">DP STATUS</th>
                         <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTRATION</th>
+                        <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -539,7 +631,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">LAUNDRY BAG</th>
                         <th className="px-4 py-4">LAUNDRY BOX</th>
                         <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTRATION</th>
+                        <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
                       </tr>
                     </thead>
@@ -568,20 +660,20 @@ export default function DataRegister() {
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
                       <tr>
                         <th className="px-4 py-4 text-center border border-emerald-900" rowSpan={2}>NO</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>INSTITUTION/<br/>COMPANY</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>ROOM NO</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MESS</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>NAME</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>PERSONAL ID</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REG. ID CARD</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>JOB</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>POSITION</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>INSTITUTION/<br/>COMPANY</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
                         <th className="px-4 py-2 text-center border border-emerald-900" colSpan={3}>MEALS DELIVERY POINT</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REGISTERED BY</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LAST REG.</th>
+                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LAST REGISTERED</th>
                         <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REMARKS</th>
                       </tr>
                       <tr>
@@ -594,16 +686,16 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-4 py-3 text-center font-medium text-emerald-950 border border-emerald-100">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.institution_company || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.room_no}</td>
                           <td className="px-4 py-3 text-emerald-700 border border-emerald-100">{row.mess_name}</td>
                           <td className="px-4 py-3 text-emerald-900 font-bold border border-emerald-100">{row.name}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.occupants_category || '-'}</td>
                           <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.personal_identification || '-'}</td>
                           <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.reg_id_card || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.job || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.position || '-'}</td>
                           <td className="px-4 py-3 text-emerald-900 font-semibold border border-emerald-100">{row.level_category || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.institution_company || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.occupants_category || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.meals_packages || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.breakfast_dp || '-'}</td>
                           <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.lunch_dp || '-'}</td>

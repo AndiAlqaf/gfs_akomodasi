@@ -4,9 +4,10 @@ import { laundryAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Swal from 'sweetalert2';
-import { CheckCircle, Truck, Package, RotateCcw, Box, UserCheck } from 'lucide-react';
+import { CheckCircle, Truck, Package, RotateCcw, Box, UserCheck, Plus, Search } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 type Role = 'office_boy' | 'dispatcher' | 'officer';
@@ -71,14 +72,14 @@ const Laundry: React.FC = () => {
   });
 
   const actionMutation = useMutation({
-    mutationFn: ({ action, id, data }: any) => {
+    mutationFn: ({ action, id, data }: any): Promise<any> => {
       switch(action) {
-        case 'deliver': return laundryAPI.deliverToLaundry(id);
-        case 'receive': return laundryAPI.receiveBag({ laundry_bag_id: id, ...data });
-        case 'add_details': return laundryAPI.addDetails(data);
-        case 'complete': return laundryAPI.completeProcess(id);
-        case 'return': return laundryAPI.returnToDrop(id);
-        case 'distribute': return laundryAPI.distributeToRoom(id);
+        case 'deliver': return laundryAPI.deliverToLaundry(id) as Promise<any>;
+        case 'receive': return laundryAPI.receiveBag({ laundry_bag_id: id, ...data }) as Promise<any>;
+        case 'add_details': return laundryAPI.addDetails(data) as Promise<any>;
+        case 'complete': return laundryAPI.completeProcess(id) as Promise<any>;
+        case 'return': return laundryAPI.returnToDrop(id) as Promise<any>;
+        case 'distribute': return laundryAPI.distributeToRoom(id) as Promise<any>;
         default: return Promise.resolve();
       }
     },
@@ -94,6 +95,10 @@ const Laundry: React.FC = () => {
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
+  const handleWeightChange = (id: string | number, value: string) => {
+    setWeightInput(prev => ({ ...prev, [id]: value }));
+  };
+
   const handleDetailsSubmit = (txId: string) => {
     if (clothesList.length === 0) return;
     actionMutation.mutate({ action: 'add_details', id: txId, data: { transaction_id: txId, details: clothesList } });
@@ -107,64 +112,85 @@ const Laundry: React.FC = () => {
         </div>
       </div>
 
-      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white">
-        <span className="font-semibold text-emerald-800">Simulate Role:</span>
-        <div className="flex gap-2">
-          <Button variant={role === 'office_boy' ? 'default' : 'outline'} className={role === 'office_boy' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('office_boy')}>Office Boy</Button>
-          <Button variant={role === 'dispatcher' ? 'default' : 'outline'} className={role === 'dispatcher' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('dispatcher')}>Dispatcher / Driver</Button>
-          <Button variant={role === 'officer' ? 'default' : 'outline'} className={role === 'officer' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'} onClick={() => setRole('officer')}>Laundry Officer</Button>
+      <div className="glass p-2 rounded-xl flex items-center justify-start gap-2 animate-fade-in border-emerald-100 shadow-sm bg-white mb-6">
+        <div className="flex w-full md:w-auto gap-2">
+          <Button variant={role === 'office_boy' ? 'default' : 'outline'} className={`flex-1 md:flex-none px-6 py-6 font-bold uppercase tracking-wider ${role === 'office_boy' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'}`} onClick={() => setRole('office_boy')}>LAUNDRY CREW</Button>
+          <Button variant={role === 'dispatcher' ? 'default' : 'outline'} className={`flex-1 md:flex-none px-6 py-6 font-bold uppercase tracking-wider ${role === 'dispatcher' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'}`} onClick={() => setRole('dispatcher')}>LAUNDRY DISPATCHER</Button>
+          <Button variant={role === 'officer' ? 'default' : 'outline'} className={`flex-1 md:flex-none px-6 py-6 font-bold uppercase tracking-wider ${role === 'officer' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'}`} onClick={() => setRole('officer')}>LAUNDRY OFFICER</Button>
         </div>
       </div>
 
-      <Tabs defaultValue={role === 'office_boy' ? 'drop' : role === 'dispatcher' ? 'deliver' : 'receive'} className="w-full">
-        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm w-full md:w-auto overflow-x-auto">
-          {role === 'office_boy' && <TabsTrigger value="drop" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Drop & Distribute Form</TabsTrigger>}
-          {role === 'dispatcher' && <TabsTrigger value="deliver" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Deliver & Returned Form</TabsTrigger>}
-          {role === 'officer' && (
-            <>
-              <TabsTrigger value="receive" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Receiving Form</TabsTrigger>
-              <TabsTrigger value="details" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 px-4 py-2">Receiving Details Form</TabsTrigger>
-            </>
-          )}
-        </TabsList>
+
 
         {/* --- OFFICE BOY TAB --- */}
         {role === 'office_boy' && (
-          <TabsContent value="drop" className="m-0 animate-fade-in space-y-6">
-            <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-emerald-50/30">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4">
-                <CardTitle className="text-md text-emerald-900 uppercase">Laundry Drop Form</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <form onSubmit={handleDropSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">ROOM</label><Input value={room} onChange={e=>setRoom(e.target.value)} required /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">NAME</label><Input value={guestName} onChange={e=>setGuestName(e.target.value)} required /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">BAG ID</label><Input value={bagId} onChange={e=>setBagId(e.target.value)} required /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">BOX ID</label><Input value={boxId} onChange={e=>setBoxId(e.target.value)} required /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
-                    <select value={pkg} onChange={e=>setPkg(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="Regular">Regular</option><option value="Express">Express</option></select>
-                  </div>
-                  <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e=>setDropPoint(e.target.value)} required /></div>
-                  <div className="md:col-span-2 lg:col-span-3 xl:col-span-6 flex justify-end mt-2">
-                    <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Add to Drop Point</Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+          <div className="m-0 animate-fade-in space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-4 px-2 gap-4">
+              <h2 className="text-xl font-bold text-emerald-950 uppercase">LAUNDRY DROPPING & DISTRIBUTING</h2>
+              
+              <div className="flex items-center gap-4">
+                <div className="relative w-full md:w-[300px]">
+                  <Input type="text" placeholder="Search..." className="w-full pl-10 border-emerald-200 rounded-md h-10 shadow-sm focus-visible:ring-emerald-500" />
+                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+                </div>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="bg-emerald-600 text-stone-50 hover:bg-emerald-700 font-bold text-xs px-6 py-5 flex flex-col leading-tight shadow-md rounded-xl">
+                      <span>Drop & Distribute</span>
+                      <span>Form</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[700px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Drop Form</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleDropSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">ROOM</label><Input value={room} onChange={e=>setRoom(e.target.value)} required /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">NAME</label><Input value={guestName} onChange={e=>setGuestName(e.target.value)} required /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">BAG ID</label><Input value={bagId} onChange={e=>setBagId(e.target.value)} required /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">BOX ID</label><Input value={boxId} onChange={e=>setBoxId(e.target.value)} required /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
+                      <select value={pkg} onChange={e=>setPkg(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="Regular">Regular</option><option value="Express">Express</option></select>
+                    </div>
+                    <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e=>setDropPoint(e.target.value)} required /></div>
+                    <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
+                      <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Add to Drop Point</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              </div>
+            </div>
 
             <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
               <div className="w-full relative overflow-hidden bg-white">
                 <div className="overflow-x-auto w-full">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <tr><th className="px-6 py-4">ROOM</th><th className="px-6 py-4">NAME</th><th className="px-6 py-4">BAG ID</th><th className="px-6 py-4">BOX</th><th className="px-6 py-4">PKG</th><th className="px-6 py-4">DROP PNT</th><th className="px-6 py-4">DROP DATE</th><th className="px-6 py-4">DISTRIBUTE DATE</th><th className="px-6 py-4">ACTION</th></tr>
+                      <tr>
+                        <th className="px-6 py-4 text-center">ROOM</th>
+                        <th className="px-6 py-4 text-center">NAME</th>
+                        <th className="px-6 py-4 text-center">LAUNDRY<br/>BAG ID</th>
+                        <th className="px-6 py-4 text-center">LAUNDRY<br/>BOX</th>
+                        <th className="px-6 py-4 text-center">SERVICES<br/>PACKAGES</th>
+                        <th className="px-6 py-4 text-center">DROP<br/>POINT</th>
+                        <th className="px-6 py-4 text-center">DROPPING<br/>DATE</th>
+                        <th className="px-6 py-4 text-center">DISTRIBUTING<br/>DATE</th>
+                        <th className="px-6 py-4 text-center">ACTION</th>
+                      </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {transactions.map((t: any) => (
-                        <tr key={t.id} className="hover:bg-emerald-50/50">
-                          <td className="px-6 py-3">{t.room}</td><td className="px-6 py-3">{t.guest_name}</td><td className="px-6 py-3 font-medium">{t.laundry_bag_id}</td>
-                          <td className="px-6 py-3">{t.laundry_box_id}</td><td className="px-6 py-3">{t.services_package}</td><td className="px-6 py-3">{t.drop_point}</td>
-                          <td className="px-6 py-3 text-xs">{formatDate(t.drop_date)}</td><td className="px-6 py-3 text-xs">{formatDate(t.distribute_date)}</td>
+                        <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
+                          <td className="px-6 py-3">{t.room}</td>
+                          <td className="px-6 py-3">{t.guest_name}</td>
+                          <td className="px-6 py-3 font-medium">{t.laundry_bag_id}</td>
+                          <td className="px-6 py-3">{t.laundry_box_id}</td>
+                          <td className="px-6 py-3">{t.services_package}</td>
+                          <td className="px-6 py-3">{t.drop_point}</td>
+                          <td className="px-6 py-3 text-xs">{formatDate(t.drop_date)}</td>
+                          <td className="px-6 py-3 text-xs">{formatDate(t.distribute_date)}</td>
                           <td className="px-6 py-3">
                             {t.current_status === 'RETURNED_TO_DROP' ? (
                               <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={()=>actionMutation.mutate({action:'distribute', id: t.laundry_bag_id})}>Distribute</Button>
@@ -178,19 +204,19 @@ const Laundry: React.FC = () => {
                 </div>
               </div>
             </Card>
-          </TabsContent>
+          </div>
         )}
 
         {/* --- DISPATCHER TAB --- */}
         {role === 'dispatcher' && (
-          <TabsContent value="deliver" className="m-0 animate-fade-in space-y-6">
+          <div className="m-0 animate-fade-in space-y-6">
             <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
                <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Deliver & Returned Board</CardTitle></CardHeader>
                <div className="w-full relative overflow-hidden bg-white">
                 <div className="overflow-x-auto w-full">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <tr><th className="px-6 py-4">LAUNDRY BOX</th><th className="px-6 py-4">DELIVER POINT</th><th className="px-6 py-4">BAGS</th><th className="px-6 py-4">DELIVER DATE</th><th className="px-6 py-4">RETURN DATE</th><th className="px-6 py-4">ACTION</th></tr>
+                      <tr><th className="px-6 py-4">LAUNDRY BOX</th><th className="px-6 py-4">BAGS</th><th className="px-6 py-4">DELIVER POINT</th><th className="px-6 py-4">DELIVER DATE</th><th className="px-6 py-4">RETURN DATE</th><th className="px-6 py-4">ACTION</th></tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {boxList.map((b: any) => (
@@ -212,30 +238,37 @@ const Laundry: React.FC = () => {
                 </div>
                </div>
             </Card>
-          </TabsContent>
+          </div>
         )}
 
         {/* --- OFFICER TABS --- */}
         {role === 'officer' && (
-          <>
-          <TabsContent value="receive" className="m-0 animate-fade-in space-y-6">
+          <div className="flex flex-col gap-8 w-full animate-fade-in">
+            <div className="m-0 space-y-6">
             <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
                <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Receiving Form (Status & Weight)</CardTitle></CardHeader>
                <div className="w-full relative overflow-hidden bg-white">
                 <div className="overflow-x-auto w-full">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <tr><th className="px-6 py-4">BAG ID</th><th className="px-6 py-4">BAG STATUS</th><th className="px-6 py-4">RECEIVING DATE</th><th className="px-6 py-4">WEIGHT (KG)</th><th className="px-6 py-4">NO OF PCS</th><th className="px-6 py-4 text-center">ACTION</th></tr>
+                      <tr>
+                        <th className="px-6 py-4 text-center">LAUNDRY BAG ID</th>
+                        <th className="px-6 py-4 text-center">LAUNDRY BAG STATUS</th>
+                        <th className="px-6 py-4 text-center">RECEIVING DATE</th>
+                        <th className="px-6 py-4 text-center">WEIGHT</th>
+                        <th className="px-6 py-4 text-center">NO OF PCS</th>
+                        <th className="px-6 py-4 text-center">ACTION</th>
+                      </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {transactions.filter((t:any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
-                        <tr key={t.id} className="hover:bg-emerald-50/50">
+                        <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
                           <td className="px-6 py-3 font-bold text-emerald-900">{t.laundry_bag_id}</td>
                           <td className="px-6 py-3 font-semibold text-emerald-700">{t.bag_status}</td>
                           <td className="px-6 py-3 text-xs">{formatDate(t.receiving_date)}</td>
                           <td className="px-6 py-3">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
-                              <Input type="number" step="0.1" className="w-20 h-8" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} />
+                              <div className="flex justify-center"><Input type="number" step="0.1" className="w-20 h-8 text-center" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} /></div>
                             ) : <span className="font-mono">{t.weight || '-'}</span>}
                           </td>
                           <td className="px-6 py-3 font-mono">{t.no_of_pcs_total}</td>
@@ -259,9 +292,9 @@ const Laundry: React.FC = () => {
                 </div>
                </div>
             </Card>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="details" className="m-0 animate-fade-in space-y-6">
+          <div className="m-0 space-y-6">
             {!selectedTxForDetails ? (
               <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
                 <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Select Bag to Add Details</CardTitle></CardHeader>
@@ -308,10 +341,9 @@ const Laundry: React.FC = () => {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
-          </>
+          </div>
+        </div>
         )}
-      </Tabs>
     </div>
   );
 };
