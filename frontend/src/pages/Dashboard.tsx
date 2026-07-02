@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BedDouble, Users, UtensilsCrossed, Shirt, TrendingUp } from 'lucide-react';
+import { BedDouble, Users, UtensilsCrossed, Shirt } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid } from 'recharts';
 
 const Dashboard: React.FC = () => {

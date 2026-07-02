@@ -4,9 +4,12 @@ import { reservationAPI, roomAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+<<<<<<< HEAD
 import { Plus, Calendar, User, MapPin, LogIn, LogOut, CheckCircle, Search } from 'lucide-react';
+=======
+import { Plus, LogIn, LogOut } from 'lucide-react';
+>>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

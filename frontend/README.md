@@ -19,11 +19,12 @@ npm install
 npm run dev
 ```
 
+Frontend dev server berjalan di port `4321`.
+
 ### Backend
 ```bash
 cd backend
-npm install
-npm run dev
+php -S 0.0.0.0:31145 index.php
 ```
 
 ## Tech Stack
@@ -38,15 +39,15 @@ npm run dev
 - Recharts
 
 **Backend:**
-- Node.js + Express
-- MongoDB/PostgreSQL
-- JWT Authentication
+- PHP native built-in server
+- MySQL / MariaDB
+- JSON API over HTTP
 
 ## Environment Variables
 
 Create `.env` file:
 ```
-VITE_API_BASE_URL=http://localhost:3001/api
+VITE_API_BASE_URL=http://YOUR_SERVER_IP:31145/api
 ```
 
 ## Default Login

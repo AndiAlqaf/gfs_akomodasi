@@ -7,7 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Swal from 'sweetalert2';
+<<<<<<< HEAD
 import { CheckCircle, Truck, Package, RotateCcw, Box, UserCheck, Plus, Search } from 'lucide-react';
+=======
+import { Truck, RotateCcw } from 'lucide-react';
+>>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
 import { formatDate } from '@/lib/utils';
 
 type Role = 'office_boy' | 'dispatcher' | 'officer';
@@ -31,7 +35,7 @@ const Laundry: React.FC = () => {
   const [selectedTxForDetails, setSelectedTxForDetails] = useState<any>(null);
   const [clothesList, setClothesList] = useState<any[]>([]);
 
-  const { data: laundryResponse, isLoading } = useQuery({
+  const { data: laundryResponse } = useQuery({
     queryKey: ['laundry'],
     queryFn: laundryAPI.getAll
   });
@@ -72,6 +76,7 @@ const Laundry: React.FC = () => {
   });
 
   const actionMutation = useMutation({
+<<<<<<< HEAD
     mutationFn: ({ action, id, data }: any): Promise<any> => {
       switch(action) {
         case 'deliver': return laundryAPI.deliverToLaundry(id) as Promise<any>;
@@ -81,6 +86,30 @@ const Laundry: React.FC = () => {
         case 'return': return laundryAPI.returnToDrop(id) as Promise<any>;
         case 'distribute': return laundryAPI.distributeToRoom(id) as Promise<any>;
         default: return Promise.resolve();
+=======
+    mutationFn: async ({ action, id, data }: any) => {
+      switch(action) {
+        case 'deliver':
+          await laundryAPI.deliverToLaundry(id);
+          return;
+        case 'receive':
+          await laundryAPI.receiveBag({ laundry_bag_id: id, ...data });
+          return;
+        case 'add_details':
+          await laundryAPI.addDetails(data);
+          return;
+        case 'complete':
+          await laundryAPI.completeProcess(id);
+          return;
+        case 'return':
+          await laundryAPI.returnToDrop(id);
+          return;
+        case 'distribute':
+          await laundryAPI.distributeToRoom(id);
+          return;
+        default:
+          return;
+>>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
       }
     },
     onSuccess: () => {
@@ -95,8 +124,16 @@ const Laundry: React.FC = () => {
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
+<<<<<<< HEAD
   const handleWeightChange = (id: string | number, value: string) => {
     setWeightInput(prev => ({ ...prev, [id]: value }));
+=======
+  const handleWeightChange = (transactionId: string, value: string) => {
+    setWeightInput((previous) => ({
+      ...previous,
+      [transactionId]: value,
+    }));
+>>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
   };
 
   const handleDetailsSubmit = (txId: string) => {

@@ -1,5 +1,5 @@
 <?php
-require 'db.php';
+require __DIR__ . '/db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 

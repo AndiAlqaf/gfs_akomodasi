@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-import { dataRegisterAPI, API_BASE_URL } from '@/services/api';
+import { dataRegisterAPI } from '@/services/api';
 
 export default function DataRegister() {
   const [activeTab, setActiveTab] = useState('area');
@@ -82,26 +82,25 @@ export default function DataRegister() {
 
   const fetchData = async () => {
     try {
-      const baseUrl = `${API_BASE_URL}/data_register.php?action=`;
       const [
         resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests
       ] = await Promise.all([
-        fetch(baseUrl + 'get_areas').then(r => r.json()),
-        fetch(baseUrl + 'get_messes').then(r => r.json()),
-        fetch(baseUrl + 'get_rooms').then(r => r.json()),
-        fetch(baseUrl + 'get_meals_dp').then(r => r.json()),
-        fetch(baseUrl + 'get_laundry_dp').then(r => r.json()),
-        fetch(baseUrl + 'get_laundry_bag').then(r => r.json()),
-        fetch(baseUrl + 'get_guests').then(r => r.json()),
+        dataRegisterAPI.getAreas(),
+        dataRegisterAPI.getMesses(),
+        dataRegisterAPI.getRooms(),
+        dataRegisterAPI.getMealsDp(),
+        dataRegisterAPI.getLaundryDp(),
+        dataRegisterAPI.getLaundryBag(),
+        dataRegisterAPI.getGuests(),
       ]);
 
-      setAreas(resAreas || []);
-      setMesses(resMesses || []);
-      setRooms(resRooms || []);
-      setMealsDp(resMeals || []);
-      setLaundryDp(resLaundryDp || []);
-      setLaundryBag(resLaundryBag || []);
-      setGuests(resGuests || []);
+      setAreas(resAreas.data?.data || []);
+      setMesses(resMesses.data?.data || []);
+      setRooms(resRooms.data?.data || []);
+      setMealsDp(resMeals.data?.data || []);
+      setLaundryDp(resLaundryDp.data?.data || []);
+      setLaundryBag(resLaundryBag.data?.data || []);
+      setGuests(resGuests.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
