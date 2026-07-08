@@ -83,7 +83,8 @@ export const guestAPI = {
 export const reservationAPI = {
   getAll: () => api.get('/reservations.php'),
   create: (data: any) => api.post('/reservations.php', data),
-  updateStatus: (id: string, status: string) => api.post(`/reservations.php`, { action: 'update_status', id, status }),
+  updateStatus: (id: string, status: string, estimated_arrival?: string, estimated_departure?: string) => 
+    api.post(`/reservations.php`, { action: 'update_status', id, status, estimated_arrival, estimated_departure }),
 };
 
 export const mealsAPI = {
@@ -110,16 +111,11 @@ export const dashboardAPI = {
 };
 
 export const informationAPI = {
-<<<<<<< HEAD
-  getRooms: () => api.get('/information.php?type=room'),
-  getPob: () => api.get('/information.php?type=pob'),
-  getMeals: () => api.get('/information.php?type=meals'),
-  getMeetingRooms: () => api.get('/information.php?type=meeting'),
-=======
   getRooms: () => api.get('/information.php', { params: { type: 'room' } }),
   getPob: () => api.get('/information.php', { params: { type: 'pob' } }),
-  getMeals: () => api.get('/information.php', { params: { type: 'meals' } }),
->>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
+  getMealsDelivery: () => api.get('/information.php', { params: { type: 'meals_delivery' } }),
+  getMealsInfo: () => api.get('/information.php', { params: { type: 'meals_info' } }),
+  getMeetingRooms: () => api.get('/information.php', { params: { type: 'meeting' } }),
 };
 
 export default api;

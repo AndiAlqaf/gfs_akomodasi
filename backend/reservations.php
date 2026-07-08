@@ -34,7 +34,10 @@ if ($method === 'GET') {
         $status = $input['status'];
         try {
             if ($status === 'ON SITE') {
-                $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_in = NOW() WHERE id = ?");
+                // When checking in, set check_in = NOW() and clear check_out (in case they check in an OFF SITE record)
+                $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_in = NOW(), check_out = NULL WHERE id = ?");
+                $stmt->execute([$status, $id]);
+                
                 // Find room id and update to OCCUPIED
                 $rStmt = $pdo->prepare("SELECT room_id FROM reservations WHERE id = ?");
                 $rStmt->execute([$id]);
@@ -43,18 +46,55 @@ if ($method === 'GET') {
                     $pdo->prepare("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?")->execute([$roomId]);
                 }
             } elseif ($status === 'OFF SITE') {
-                $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_out = NOW() WHERE id = ?");
-                // Also free up the room
-                $rStmt = $pdo->prepare("SELECT room_id FROM reservations WHERE id = ?");
+                // Fetch the current reservation info before updating
+                $rStmt = $pdo->prepare("
+                    SELECT res.room_id, res.guest_id, g.occupants_category 
+                    FROM reservations res 
+                    LEFT JOIN guests g ON res.guest_id = g.id 
+                    WHERE res.id = ?
+                ");
                 $rStmt->execute([$id]);
-                $roomId = $rStmt->fetchColumn();
-                if ($roomId) {
+                $resData = $rStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Update current reservation to OFF SITE and set check_out date
+                $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ?, check_out = NOW() WHERE id = ?");
+                $stmt->execute([$status, $id]);
+
+                if ($resData && $resData['room_id']) {
+                    $roomId = $resData['room_id'];
+                    $guestId = $resData['guest_id'];
+                    
+                    // Free up the room
                     $pdo->prepare("UPDATE rooms SET room_status = 'READY' WHERE id = ?")->execute([$roomId]);
+                    
+                    // If regular guest, spawn a new OFF SITE reservation for their next stay
+                    if ($resData['occupants_category'] === 'REGULAR GUEST') {
+                        $newResStmt = $pdo->prepare("
+                            INSERT INTO reservations (guest_id, room_id, guest_status) 
+                            VALUES (?, ?, 'OFF SITE')
+                        ");
+                        $newResStmt->execute([$guestId, $roomId]);
+                    }
                 }
             } else {
                 $stmt = $pdo->prepare("UPDATE reservations SET guest_status = ? WHERE id = ?");
+                $stmt->execute([$status, $id]);
+                
+                if ($status === 'RE-SCHEDULED' && !empty($input['estimated_arrival']) && !empty($input['estimated_departure'])) {
+                    $pdo->prepare("UPDATE reservations SET estimated_arrival = ?, estimated_departure = ? WHERE id = ?")
+                        ->execute([$input['estimated_arrival'], $input['estimated_departure'], $id]);
+                }
+                
+                // If cancelled, free up the room
+                if ($status === 'CANCELLED') {
+                    $rStmt = $pdo->prepare("SELECT room_id FROM reservations WHERE id = ?");
+                    $rStmt->execute([$id]);
+                    $roomId = $rStmt->fetchColumn();
+                    if ($roomId) {
+                        $pdo->prepare("UPDATE rooms SET room_status = 'READY' WHERE id = ?")->execute([$roomId]);
+                    }
+                }
             }
-            $stmt->execute([$status, $id]);
             echo json_encode(["success" => true]);
         } catch (\PDOException $e) {
             http_response_code(500);

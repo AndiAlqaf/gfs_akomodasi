@@ -72,12 +72,14 @@ if ($method === 'GET') {
 
             echo json_encode(["data" => $mappedData]);
 
-        } elseif ($type === 'meals') {
-            // Aggregate meals for Meals Services Delivery Info
+        } elseif ($type === 'meals_delivery' || $type === 'meals_info') {
+            // Aggregate meals for Meals Services Delivery Info or Overall Info
+            $is_overall = ($type === 'meals_info');
             
-            // 1. Meals on Schedule (ON SITE guests)
+            // 1. Meals on Schedule (ON SITE guests) - These are for today
             $scheduleQuery = "
                 SELECT 
+                    CURDATE() as date,
                     g.meals_packages,
                     g.breakfast_dp,
                     g.lunch_dp,
@@ -96,6 +98,7 @@ if ($method === 'GET') {
             // 2. Meals on Request (APPROVED requests)
             $requestQuery = "
                 SELECT 
+                    mor.date,
                     mor.meals_package as meals_packages,
                     mdp.delivery_point,
                     a.area_name as area,
@@ -104,8 +107,13 @@ if ($method === 'GET') {
                 FROM meals_on_request mor
                 JOIN meals_dp mdp ON mor.delivery_point_id = mdp.id
                 LEFT JOIN areas a ON mdp.area_id = a.id
-                WHERE mor.status = 'APPROVED' AND mor.date = CURDATE()
+                WHERE mor.status = 'APPROVED'
             ";
+            
+            if (!$is_overall) {
+                $requestQuery .= " AND mor.date = CURDATE()";
+            }
+            
             $requestStmt = $pdo->query($requestQuery);
             $requestData = $requestStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -113,11 +121,12 @@ if ($method === 'GET') {
             $aggregated = [];
 
             // Helper to add to aggregated
-            $addAggregated = function(&$agg, $package, $dp, $area, $meal_time, $packs, $status) {
+            $addAggregated = function(&$agg, $date, $package, $dp, $area, $meal_time, $packs, $status) {
                 if (!$dp) return; // Skip if no delivery point
-                $key = $dp . '|' . $package . '|' . $meal_time . '|' . $status;
+                $key = $date . '|' . $dp . '|' . $package . '|' . $meal_time . '|' . $status;
                 if (!isset($agg[$key])) {
                     $agg[$key] = [
+                        'date' => $date,
                         'meals_packages' => $package,
                         'delivery_point' => $dp,
                         'area' => $area ?? '-',
@@ -133,9 +142,10 @@ if ($method === 'GET') {
             foreach ($scheduleData as $row) {
                 $pkg = $row['meals_packages'];
                 $area = $row['area'];
-                if ($row['breakfast_dp']) $addAggregated($aggregated, $pkg, $row['breakfast_dp'], $area, 'BREAKFAST', 1, 'PROVIDED');
-                if ($row['lunch_dp']) $addAggregated($aggregated, $pkg, $row['lunch_dp'], $area, 'LUNCH', 1, 'PROVIDED');
-                if ($row['dinner_dp']) $addAggregated($aggregated, $pkg, $row['dinner_dp'], $area, 'DINNER', 1, 'PROVIDED');
+                $date = $row['date'];
+                if ($row['breakfast_dp']) $addAggregated($aggregated, $date, $pkg, $row['breakfast_dp'], $area, 'BREAKFAST', 1, 'PROVIDED');
+                if ($row['lunch_dp']) $addAggregated($aggregated, $date, $pkg, $row['lunch_dp'], $area, 'LUNCH', 1, 'PROVIDED');
+                if ($row['dinner_dp']) $addAggregated($aggregated, $date, $pkg, $row['dinner_dp'], $area, 'DINNER', 1, 'PROVIDED');
             }
 
             // Process Request Data
@@ -145,11 +155,15 @@ if ($method === 'GET') {
                 $dp = $row['delivery_point'];
                 $time = strtoupper($row['meal_time']);
                 $packs = (int)$row['no_of_packs'];
-                $addAggregated($aggregated, $pkg, $dp, $area, $time, $packs, 'NOT PROVIDED');
+                $date = $row['date'];
+                $addAggregated($aggregated, $date, $pkg, $dp, $area, $time, $packs, 'NOT PROVIDED');
             }
 
-            // Flatten and return
+            // Flatten and return, optionally sorting by date desc
             $result = array_values($aggregated);
+            usort($result, function($a, $b) {
+                return strtotime($b['date']) - strtotime($a['date']);
+            });
             echo json_encode(["data" => $result]);
         } elseif ($type === 'meeting') {
             // INFORMATION_MEETING_ROOMS query

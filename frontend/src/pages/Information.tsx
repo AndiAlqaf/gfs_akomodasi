@@ -37,7 +37,7 @@ const Information: React.FC = () => {
 
   const { data: mealsInfoResp, isLoading: mealsLoading } = useQuery({
     queryKey: ['info-meals'],
-    queryFn: informationAPI.getMeals,
+    queryFn: informationAPI.getMealsInfo,
   });
 
   const { data: laundryResp, isLoading: laundryLoading } = useQuery({
@@ -79,10 +79,6 @@ const Information: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-emerald-700 mt-1">Live data reports from database</p>
-      </div>
-
       <Tabs defaultValue="rooms" className="w-full">
         <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
           <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM INFO</TabsTrigger>
@@ -352,7 +348,7 @@ const Information: React.FC = () => {
                         paginatedMeals.map((row: any, i: number) => (
                           <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="px-6 py-3 font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
-                            <td className="px-6 py-3 text-emerald-700">{new Date().toISOString().split('T')[0]}</td>
+                            <td className="px-6 py-3 text-emerald-700">{formatDate(row.date)}</td>
                             <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
                             <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
                             <td className="px-6 py-3 text-emerald-700 font-medium">{row.meal_time}</td>

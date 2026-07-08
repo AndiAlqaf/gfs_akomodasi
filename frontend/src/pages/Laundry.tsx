@@ -7,11 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import Swal from 'sweetalert2';
-<<<<<<< HEAD
 import { CheckCircle, Truck, Package, RotateCcw, Box, UserCheck, Plus, Search } from 'lucide-react';
-=======
-import { Truck, RotateCcw } from 'lucide-react';
->>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
 import { formatDate } from '@/lib/utils';
 
 type Role = 'office_boy' | 'dispatcher' | 'officer';
@@ -76,17 +72,6 @@ const Laundry: React.FC = () => {
   });
 
   const actionMutation = useMutation({
-<<<<<<< HEAD
-    mutationFn: ({ action, id, data }: any): Promise<any> => {
-      switch(action) {
-        case 'deliver': return laundryAPI.deliverToLaundry(id) as Promise<any>;
-        case 'receive': return laundryAPI.receiveBag({ laundry_bag_id: id, ...data }) as Promise<any>;
-        case 'add_details': return laundryAPI.addDetails(data) as Promise<any>;
-        case 'complete': return laundryAPI.completeProcess(id) as Promise<any>;
-        case 'return': return laundryAPI.returnToDrop(id) as Promise<any>;
-        case 'distribute': return laundryAPI.distributeToRoom(id) as Promise<any>;
-        default: return Promise.resolve();
-=======
     mutationFn: async ({ action, id, data }: any) => {
       switch(action) {
         case 'deliver':
@@ -109,7 +94,6 @@ const Laundry: React.FC = () => {
           return;
         default:
           return;
->>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
       }
     },
     onSuccess: () => {
@@ -124,16 +108,8 @@ const Laundry: React.FC = () => {
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
-<<<<<<< HEAD
   const handleWeightChange = (id: string | number, value: string) => {
     setWeightInput(prev => ({ ...prev, [id]: value }));
-=======
-  const handleWeightChange = (transactionId: string, value: string) => {
-    setWeightInput((previous) => ({
-      ...previous,
-      [transactionId]: value,
-    }));
->>>>>>> 428d1d17bff55d9f07e205787a4304a5b25d4155
   };
 
   const handleDetailsSubmit = (txId: string) => {
@@ -144,9 +120,6 @@ const Laundry: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-emerald-700 mt-1">Laundry Tracking System</p>
-        </div>
       </div>
 
       <div className="glass p-2 rounded-xl flex items-center justify-start gap-2 animate-fade-in border-emerald-100 shadow-sm bg-white mb-6">

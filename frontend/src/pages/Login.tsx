@@ -54,10 +54,13 @@ export default function Login() {
             <Building2 className="w-16 h-16 text-emerald-950" />
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight mb-4 text-white drop-shadow-md">
-            GFS Ceria
+            SILARIA
           </h1>
           <p className="text-xl text-emerald-100 font-medium tracking-wide drop-shadow mb-8">
-            Integrated Accommodation Management System
+            SISTEM INFORMASI LAYANAN AKOMODASI GFS
+          </p>
+          <p className="text-xl text-emerald-100 font-medium tracking-wide drop-shadow mb-8">
+            PT. CERIA
           </p>
           <div className="w-24 h-1 bg-lime-400 mx-auto rounded-full opacity-80" />
         </div>

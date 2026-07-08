@@ -50,7 +50,7 @@ const Meals: React.FC = () => {
 
   const { data: deliveryResp, isLoading: deliveryLoading } = useQuery({
     queryKey: ['meals-delivery-info'],
-    queryFn: informationAPI.getMeals,
+    queryFn: informationAPI.getMealsDelivery,
   });
 
   const createRequestMutation = useMutation({
@@ -430,7 +430,7 @@ const Meals: React.FC = () => {
                         {paginatedDelivery.map((row: any, idx: number) => (
                           <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="px-6 py-3 font-semibold text-emerald-950 text-center">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                            <td className="px-6 py-3 text-emerald-700 text-center">{new Date().toISOString().split('T')[0]}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{formatDate(row.date)}</td>
                             <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
                             <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
                             <td className="px-6 py-3 text-gray-500 text-center">{row.area}</td>
