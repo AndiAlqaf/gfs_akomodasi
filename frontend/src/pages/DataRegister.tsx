@@ -83,7 +83,7 @@ export default function DataRegister() {
   const fetchData = async () => {
     try {
       const [
-        resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests
+        resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests, resMeetingRooms
       ] = await Promise.all([
         dataRegisterAPI.getAreas(),
         dataRegisterAPI.getMesses(),
@@ -92,6 +92,7 @@ export default function DataRegister() {
         dataRegisterAPI.getLaundryDp(),
         dataRegisterAPI.getLaundryBag(),
         dataRegisterAPI.getGuests(),
+        dataRegisterAPI.getMeetingRooms(),
       ]);
 
       setAreas(resAreas.data?.data || []);
@@ -101,6 +102,7 @@ export default function DataRegister() {
       setLaundryDp(resLaundryDp.data?.data || []);
       setLaundryBag(resLaundryBag.data?.data || []);
       setGuests(resGuests.data?.data || []);
+      setMeetingRooms(resMeetingRooms.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }

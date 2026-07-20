@@ -53,6 +53,11 @@ try {
                 jsonResponse(['data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
                 break;
 
+            case 'get_meeting_rooms':
+                $stmt = $pdo->query('SELECT * FROM meeting_rooms ORDER BY id ASC');
+                jsonResponse(['data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+                break;
+
             default:
                 jsonResponse(['error' => 'Invalid GET action'], 400);
         }
@@ -161,6 +166,18 @@ try {
                     $data['dinner_dp'] ?? '',
                     $registeredBy,
                     $data['remarks'] ?? '',
+                ]);
+                jsonResponse(['success' => true], 201);
+                break;
+
+            case 'add_meeting_room':
+                requireFields($data, ['meeting_room', 'room_id', 'building', 'capacity']);
+                $stmt = $pdo->prepare('INSERT INTO meeting_rooms (room, building, capacity, status) VALUES (?, ?, ?, ?)');
+                $stmt->execute([
+                    $data['meeting_room'],
+                    $data['building'],
+                    $data['capacity'],
+                    $data['room_status'] ?? 'READY'
                 ]);
                 jsonResponse(['success' => true], 201);
                 break;

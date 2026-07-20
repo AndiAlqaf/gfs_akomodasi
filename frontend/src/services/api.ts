@@ -4,11 +4,11 @@ const DEFAULT_API_PORT = import.meta.env.VITE_API_PORT || '31145';
 
 const buildDefaultApiBaseUrl = () => {
   if (typeof window === 'undefined') {
-    return `http://127.0.0.1:${DEFAULT_API_PORT}/api`;
+    return `http://127.0.0.1:${DEFAULT_API_PORT}`;
   }
 
   const runtimeHost = import.meta.env.VITE_API_HOST || window.location.hostname || '127.0.0.1';
-  return `http://${runtimeHost}:${DEFAULT_API_PORT}/api`;
+  return `http://${runtimeHost}:${DEFAULT_API_PORT}`;
 };
 
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -57,6 +57,7 @@ export const dataRegisterAPI = {
   getLaundryDp: () => api.get('/data_register.php', { params: { action: 'get_laundry_dp' } }),
   getLaundryBag: () => api.get('/data_register.php', { params: { action: 'get_laundry_bag' } }),
   getGuests: () => api.get('/data_register.php', { params: { action: 'get_guests' } }),
+  getMeetingRooms: () => api.get('/data_register.php', { params: { action: 'get_meeting_rooms' } }),
   create: (type: string, data: any) =>
     api.post('/data_register.php', data, { params: { action: `add_${type}` } }),
 };
@@ -83,7 +84,7 @@ export const guestAPI = {
 export const reservationAPI = {
   getAll: () => api.get('/reservations.php'),
   create: (data: any) => api.post('/reservations.php', data),
-  updateStatus: (id: string, status: string, estimated_arrival?: string, estimated_departure?: string) => 
+  updateStatus: (id: string, status: string, estimated_arrival?: string, estimated_departure?: string) =>
     api.post(`/reservations.php`, { action: 'update_status', id, status, estimated_arrival, estimated_departure }),
 };
 
