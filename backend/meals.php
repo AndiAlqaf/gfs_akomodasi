@@ -11,6 +11,7 @@ if ($method === 'GET') {
             // Meals on Schedule
             $query = "
                 SELECT 
+                    res.check_in as date,
                     r.room_no as room,
                     m.mess_name as mess,
                     g.name,

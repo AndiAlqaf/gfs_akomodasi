@@ -130,20 +130,20 @@ const Reservations: React.FC = () => {
   const checkInOutPaginatedData = checkInOutReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
 
 
-      <div className="space-y-4">
-        <Tabs defaultValue="bedroom" className="w-full">
-          <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
+      <div className="flex flex-col flex-1 min-h-0">
+        <Tabs defaultValue="bedroom" className="w-full flex flex-col flex-1 min-h-0">
+          <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shrink-0 w-max">
             <TabsTrigger value="bedroom" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM</TabsTrigger>
             <TabsTrigger value="meeting" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM</TabsTrigger>
             <TabsTrigger value="checkinout" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">CHECK-IN/ OUT</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bedroom" className="animate-fade-in mt-0">
-            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+          <TabsContent value="bedroom" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+            <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-lg text-emerald-950 uppercase">BEDROOM</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -155,8 +155,8 @@ const Reservations: React.FC = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
@@ -226,7 +226,7 @@ const Reservations: React.FC = () => {
                   </table>
                 </div>
 
-                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl shrink-0 w-full">
                   <div className="text-sm text-emerald-800">
                     Showing <span className="font-semibold">{bedroomReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, bedroomReservations.length)}</span> of <span className="font-semibold">{bedroomReservations.length}</span> entries
                   </div>
@@ -244,9 +244,9 @@ const Reservations: React.FC = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="meeting" className="animate-fade-in mt-0">
-            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+          <TabsContent value="meeting" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+            <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-lg text-emerald-950 uppercase">MEETING ROOM</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -258,8 +258,8 @@ const Reservations: React.FC = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
@@ -276,9 +276,7 @@ const Reservations: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((_, idx) => (
-                        <tr key={idx} className="hover:bg-emerald-50/50 transition-colors h-10"><td colSpan={10}></td></tr>
-                      ))}
+                      <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting room reservations found.</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -286,9 +284,9 @@ const Reservations: React.FC = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="checkinout" className="animate-fade-in mt-0">
-            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+          <TabsContent value="checkinout" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+            <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-lg text-emerald-950 uppercase">CHECK-IN/ OUT</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -300,8 +298,8 @@ const Reservations: React.FC = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
@@ -346,7 +344,7 @@ const Reservations: React.FC = () => {
                   </table>
                 </div>
 
-                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl shrink-0 w-full">
                   <div className="text-sm text-emerald-800">
                     Showing <span className="font-semibold">{checkInOutReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, checkInOutReservations.length)}</span> of <span className="font-semibold">{checkInOutReservations.length}</span> entries
                   </div>

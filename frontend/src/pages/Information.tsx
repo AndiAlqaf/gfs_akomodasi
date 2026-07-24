@@ -78,9 +78,9 @@ const Information: React.FC = () => {
   const paginatedMeetingRooms = filteredMeetingRooms.slice((meetingPage - 1) * ITEMS_PER_PAGE, meetingPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="rooms" className="w-full">
-        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
+      <Tabs defaultValue="rooms" className="w-full flex flex-col flex-1 min-h-0">
+        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shrink-0 w-max">
           <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM INFO</TabsTrigger>
           <TabsTrigger value="meeting_rooms" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM INFO</TabsTrigger>
           <TabsTrigger value="pob" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">PERSON ON BOARD INFO</TabsTrigger>
@@ -88,21 +88,21 @@ const Information: React.FC = () => {
           <TabsTrigger value="laundry" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">LAUNDRY SERVICES INFO</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="rooms" className="animate-fade-in mt-0">
-          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+        <TabsContent value="rooms" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-lg text-emerald-950 uppercase">Room Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {roomLoading ? (
                 <div className="text-center py-8">Loading Room Data...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
@@ -144,7 +144,7 @@ const Information: React.FC = () => {
                   </div>
 
                   {/* Pagination Controls */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredRooms.length > 0 ? (roomPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(roomPage * ITEMS_PER_PAGE, filteredRooms.length)}</span> of <span className="font-semibold">{filteredRooms.length}</span> entries
                     </div>
@@ -164,21 +164,21 @@ const Information: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="meeting_rooms" className="animate-fade-in mt-0">
-          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+        <TabsContent value="meeting_rooms" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {meetingLoading ? (
                 <div className="text-center py-8">Loading Meeting Rooms Data...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
@@ -211,7 +211,7 @@ const Information: React.FC = () => {
                   </div>
 
                   {/* Pagination Controls */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredMeetingRooms.length > 0 ? (meetingPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(meetingPage * ITEMS_PER_PAGE, filteredMeetingRooms.length)}</span> of <span className="font-semibold">{filteredMeetingRooms.length}</span> entries
                     </div>
@@ -231,21 +231,21 @@ const Information: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="pob" className="animate-fade-in mt-0">
-          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+        <TabsContent value="pob" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-lg text-emerald-950 uppercase">Person On Board (POB) Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {pobLoading ? (
                 <div className="text-center py-8">Loading POB Data...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase font-semibold sticky top-0 z-10">
                         <tr>
@@ -292,7 +292,7 @@ const Information: React.FC = () => {
                   </div>
 
                   {/* Pagination Controls */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredPobs.length > 0 ? (pobPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(pobPage * ITEMS_PER_PAGE, filteredPobs.length)}</span> of <span className="font-semibold">{filteredPobs.length}</span> entries
                     </div>
@@ -312,21 +312,21 @@ const Information: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="meals" className="animate-fade-in mt-0">
-          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+        <TabsContent value="meals" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Info</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {mealsLoading ? (
                 <div className="text-center py-8">Loading Meals Data...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
@@ -362,7 +362,7 @@ const Information: React.FC = () => {
                   </div>
 
                   {/* Pagination Controls */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredMeals.length > 0 ? (mealsPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(mealsPage * ITEMS_PER_PAGE, filteredMeals.length)}</span> of <span className="font-semibold">{filteredMeals.length}</span> entries
                     </div>
@@ -382,21 +382,21 @@ const Information: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="laundry" className="animate-fade-in mt-0">
-          <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between">
+        <TabsContent value="laundry" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-lg text-emerald-950 uppercase">Laundry Services Info</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {laundryLoading ? (
                 <div className="text-center py-8">Loading Laundry Data...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-[10px] font-semibold sticky top-0 z-10">
                         <tr>
@@ -438,7 +438,7 @@ const Information: React.FC = () => {
                   </div>
 
                   {/* Pagination Controls */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredLaundry.length > 0 ? (laundryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(laundryPage * ITEMS_PER_PAGE, filteredLaundry.length)}</span> of <span className="font-semibold">{filteredLaundry.length}</span> entries
                     </div>

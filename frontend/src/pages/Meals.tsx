@@ -104,14 +104,14 @@ const Meals: React.FC = () => {
   const paginatedDelivery = filteredDelivery.slice((deliveryPage - 1) * ITEMS_PER_PAGE, deliveryPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden space-y-4">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <p className="text-emerald-700 mt-1">Meals Request and Schedule Dashboard</p>
         </div>
       </div>
 
-      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white">
+      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white shrink-0">
         <span className="font-semibold text-emerald-800">Simulate Role:</span>
         <div className="flex gap-2">
           <Button
@@ -131,16 +131,16 @@ const Meals: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="request" className="w-full">
-        <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm">
+      <Tabs defaultValue="request" className="w-full flex flex-col flex-1 min-h-0">
+        <TabsList className="mb-4 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm shrink-0 w-max">
           <TabsTrigger value="request" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Request</TabsTrigger>
           <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Schedule</TabsTrigger>
           <TabsTrigger value="delivery" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals for Delivery</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="request" className="m-0 animate-fade-in">
-          <div className="space-y-6">
-            <div className="flex justify-end items-center gap-4 mb-4">
+        <TabsContent value="request" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <div className="flex flex-col flex-1 min-h-0 space-y-4">
+            <div className="flex justify-end items-center gap-4 shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
@@ -222,16 +222,16 @@ const Meals: React.FC = () => {
               )}
             </div>
 
-            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4">
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
                 <CardTitle className="text-md text-emerald-900 uppercase">Tabel Meals on Request</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
                 {requestLoading ? (
                   <div className="text-center py-8 text-emerald-600">Loading requests...</div>
                 ) : (
-                  <div className="w-full relative overflow-hidden bg-white">
-                    <div className="overflow-auto max-h-[60vh] w-full relative">
+                  <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                    <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                       <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                         <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                           <tr>
@@ -296,7 +296,7 @@ const Meals: React.FC = () => {
                       </table>
                     </div>
                     {/* Pagination */}
-                    <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                    <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                       <div className="text-sm text-emerald-800">
                         Showing <span className="font-semibold">{filteredRequests.length > 0 ? (requestPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(requestPage * ITEMS_PER_PAGE, filteredRequests.length)}</span> of <span className="font-semibold">{filteredRequests.length}</span> entries
                       </div>
@@ -315,9 +315,9 @@ const Meals: React.FC = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="schedule" className="m-0 animate-fade-in">
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-            <CardHeader className="bg-white border-b border-emerald-100 py-4">
+        <TabsContent value="schedule" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
               <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
                 <div>
                   Tabel Meals on Schedule
@@ -331,15 +331,17 @@ const Meals: React.FC = () => {
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
               {scheduleLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading schedule...</div>
               ) : (
-                <div className="w-full relative overflow-hidden bg-white">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NAME</th>
@@ -354,10 +356,12 @@ const Meals: React.FC = () => {
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedSchedule.map((row: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-6 py-3 font-semibold text-emerald-950">{row.room}</td>
-                            <td className="px-6 py-3 text-emerald-700">{row.mess}</td>
-                            <td className="px-6 py-3 font-medium text-emerald-900">{row.name}</td>
+                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors text-center">
+                            <td className="px-6 py-3 font-medium text-emerald-950">{((schedulePage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-6 py-3 text-emerald-700">{row.date ? new Date(row.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true }) : new Date().toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true })}</td>
+                            <td className="px-6 py-3 font-semibold text-emerald-950 text-left">{row.room}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-left">{row.mess}</td>
+                            <td className="px-6 py-3 font-medium text-emerald-900 text-left">{row.name}</td>
                             <td className="px-6 py-3 text-center">
                               <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{row.meals_packages}</span>
                             </td>
@@ -367,13 +371,13 @@ const Meals: React.FC = () => {
                           </tr>
                         ))}
                         {paginatedSchedule.length === 0 && (
-                          <tr><td colSpan={8} className="text-center py-8 text-emerald-600">No scheduled meals found.</td></tr>
+                          <tr><td colSpan={10} className="text-center py-8 text-emerald-600">No scheduled meals found.</td></tr>
                         )}
                       </tbody>
                     </table>
                   </div>
                   {/* Pagination */}
-                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredSchedule.length > 0 ? (schedulePage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(schedulePage * ITEMS_PER_PAGE, filteredSchedule.length)}</span> of <span className="font-semibold">{filteredSchedule.length}</span> entries
                     </div>
@@ -391,9 +395,9 @@ const Meals: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="delivery" className="m-0 animate-fade-in">
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-            <CardHeader className="bg-white border-b border-emerald-100 py-4">
+        <TabsContent value="delivery" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
               <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
                 <div>
                   Tabel Meals for Delivery
@@ -407,12 +411,12 @@ const Meals: React.FC = () => {
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
               {deliveryLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading delivery info...</div>
               ) : (
-                <div className="w-full relative overflow-hidden bg-white">
-                  <div className="overflow-auto max-h-[60vh] w-full relative">
+                <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
@@ -446,7 +450,7 @@ const Meals: React.FC = () => {
                     </table>
                   </div>
                   {/* Pagination */}
-                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50">
+                  <div className="flex items-center justify-between px-6 py-3 border-t border-emerald-100 bg-stone-50/50 shrink-0 w-full">
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredDelivery.length > 0 ? (deliveryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(deliveryPage * ITEMS_PER_PAGE, filteredDelivery.length)}</span> of <span className="font-semibold">{filteredDelivery.length}</span> entries
                     </div>

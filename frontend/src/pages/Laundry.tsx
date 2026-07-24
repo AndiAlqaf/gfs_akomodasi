@@ -16,13 +16,29 @@ const Laundry: React.FC = () => {
   const queryClient = useQueryClient();
   const [role, setRole] = useState<Role>('office_boy');
 
-  // States for Office Boy Drop Form
   const [room, setRoom] = useState('');
   const [guestName, setGuestName] = useState('');
   const [bagId, setBagId] = useState('');
   const [boxId, setBoxId] = useState('');
   const [pkg, setPkg] = useState('Regular');
   const [dropPoint, setDropPoint] = useState('');
+
+  // States for Dispatcher Form
+  const [dispBox, setDispBox] = useState('');
+  const [dispBags, setDispBags] = useState('');
+  const [dispPoint, setDispPoint] = useState('');
+  const [dispDeliverDate, setDispDeliverDate] = useState('');
+  const [dispReturnDate, setDispReturnDate] = useState('');
+  const [dispAction, setDispAction] = useState('DELIVERED');
+
+
+  // States for Officer Receiving Form (Modal)
+  const [offBagId, setOffBagId] = useState('');
+  const [offBagStatus, setOffBagStatus] = useState('ACCEPTED');
+  const [offRecvDate, setOffRecvDate] = useState('');
+  const [offWeight, setOffWeight] = useState('');
+  const [offPcs, setOffPcs] = useState('');
+  const [offAction, setOffAction] = useState('PROCEED');
 
   // States for Officer Receiving
   const [weightInput, setWeightInput] = useState<{ [key: string]: string }>({});
@@ -108,6 +124,29 @@ const Laundry: React.FC = () => {
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
+  const handleDispatcherSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (dispAction === 'DELIVERED') {
+      actionMutation.mutate({ action: 'deliver', id: dispBox });
+    } else {
+      actionMutation.mutate({ action: 'return', id: dispBox });
+    }
+  };
+
+  const handleOfficerDetailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (offAction === 'PROCEED') {
+      actionMutation.mutate({ action: 'receive', id: offBagId, data: { bag_status: offBagStatus, weight: offWeight } });
+    } else {
+      actionMutation.mutate({ action: 'complete', id: offBagId });
+    }
+  };
+
+  const handleOfficerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
+  };
+
   const handleWeightChange = (id: string | number, value: string) => {
     setWeightInput(prev => ({ ...prev, [id]: value }));
   };
@@ -118,11 +157,11 @@ const Laundry: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden space-y-6">
+      <div className="flex items-center justify-between shrink-0">
       </div>
 
-      <div className="glass p-2 rounded-xl flex items-center justify-start gap-2 animate-fade-in border-emerald-100 shadow-sm bg-white mb-6">
+      <div className="glass p-2 rounded-xl flex items-center justify-start gap-2 animate-fade-in border-emerald-100 shadow-sm bg-white mb-0 shrink-0">
         <div className="flex w-full md:w-auto gap-2">
           <Button variant={role === 'office_boy' ? 'default' : 'outline'} className={`flex-1 md:flex-none px-6 py-6 font-bold uppercase tracking-wider ${role === 'office_boy' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'}`} onClick={() => setRole('office_boy')}>LAUNDRY CREW</Button>
           <Button variant={role === 'dispatcher' ? 'default' : 'outline'} className={`flex-1 md:flex-none px-6 py-6 font-bold uppercase tracking-wider ${role === 'dispatcher' ? 'bg-emerald-950 text-stone-50' : 'text-emerald-800 border-emerald-200'}`} onClick={() => setRole('dispatcher')}>LAUNDRY DISPATCHER</Button>
@@ -134,8 +173,8 @@ const Laundry: React.FC = () => {
 
       {/* --- OFFICE BOY TAB --- */}
       {role === 'office_boy' && (
-        <div className="m-0 animate-fade-in space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-4 px-2 gap-4">
+        <div className="m-0 animate-fade-in space-y-6 flex flex-col flex-1 min-h-0">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 px-2 gap-4 shrink-0">
             <h2 className="text-xl font-bold text-emerald-950 uppercase">LAUNDRY DROPPING & DISTRIBUTING</h2>
 
             <div className="flex items-center gap-4">
@@ -173,9 +212,9 @@ const Laundry: React.FC = () => {
             </div>
           </div>
 
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-            <div className="w-full relative overflow-hidden bg-white">
-              <div className="overflow-auto max-h-[60vh] w-full relative">
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0 flex-1">
+              <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                 <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                   <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                     <tr>
@@ -219,11 +258,45 @@ const Laundry: React.FC = () => {
 
       {/* --- DISPATCHER TAB --- */}
       {role === 'dispatcher' && (
-        <div className="m-0 animate-fade-in space-y-6">
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-            <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Deliver & Returned Board</CardTitle></CardHeader>
-            <div className="w-full relative overflow-hidden bg-white">
-              <div className="overflow-auto max-h-[60vh] w-full relative">
+        <div className="m-0 animate-fade-in space-y-6 flex flex-col flex-1 min-h-0">
+          
+          {/* Dispatcher Top Bar */}
+          <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm shrink-0">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-600 text-stone-50 hover:bg-emerald-700 font-bold text-xs px-6 py-5 flex flex-col leading-tight shadow-md rounded-xl">
+                  <span>Deliver & Return</span>
+                  <span>Form</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                  <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Delivering & Returning Form</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleDispatcherSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Box</label><Input value={dispBox} onChange={e => setDispBox(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Bags</label><Input value={dispBags} onChange={e => setDispBags(e.target.value)} /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Deliver Point</label><Input value={dispPoint} onChange={e => setDispPoint(e.target.value)} /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Delivering Date</label><Input type="date" value={dispDeliverDate} onChange={e => setDispDeliverDate(e.target.value)} /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Returning Date</label><Input type="date" value={dispReturnDate} onChange={e => setDispReturnDate(e.target.value)} /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
+                    <select value={dispAction} onChange={e => setDispAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <option value="DELIVERED">DELIVERED</option>
+                      <option value="RETURNED">RETURNED</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
+                    <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={actionMutation.isPending}>Submit Form</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0"><CardTitle className="text-md text-emerald-900 uppercase">Deliver & Returned Board</CardTitle></CardHeader>
+            <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0 flex-1">
+              <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                 <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                   <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                     <tr><th className="px-6 py-4">LAUNDRY BOX</th><th className="px-6 py-4">BAGS</th><th className="px-6 py-4">DELIVER POINT</th><th className="px-6 py-4">DELIVER DATE</th><th className="px-6 py-4">RETURN DATE</th><th className="px-6 py-4">ACTION</th></tr>
@@ -253,12 +326,51 @@ const Laundry: React.FC = () => {
 
       {/* --- OFFICER TABS --- */}
       {role === 'officer' && (
-        <div className="flex flex-col gap-8 w-full animate-fade-in">
-          <div className="m-0 space-y-6">
-            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Receiving Form (Status & Weight)</CardTitle></CardHeader>
-              <div className="w-full relative overflow-hidden bg-white">
-                <div className="overflow-auto max-h-[60vh] w-full relative">
+        <div className="flex flex-col gap-6 w-full animate-fade-in flex-1 min-h-0">
+          
+          {/* Officer Top Bar */}
+          <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm shrink-0">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-600 text-stone-50 hover:bg-emerald-700 font-bold text-xs px-6 py-5 flex flex-col leading-tight shadow-md rounded-xl">
+                  <span>Laundry Detail</span>
+                  <span>Form</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                  <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Receiving Form</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleOfficerDetailSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Bag ID</label><Input value={offBagId} onChange={e => setOffBagId(e.target.value)} required /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Bag Status</label>
+                    <select value={offBagStatus} onChange={e => setOffBagStatus(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <option value="ACCEPTED">ACCEPTED</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Receiving Date</label><Input type="date" value={offRecvDate} onChange={e => setOffRecvDate(e.target.value)} /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Weight</label><Input value={offWeight} onChange={e => setOffWeight(e.target.value)} placeholder="0.0" type="number" step="0.1" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">No of Pcs</label><Input value={offPcs} onChange={e => setOffPcs(e.target.value)} type="number" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
+                    <select value={offAction} onChange={e => setOffAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <option value="PROCEED">PROCEED</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
+                    <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={actionMutation.isPending}>Submit Form</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="m-0 space-y-6 flex flex-col flex-1 min-h-0">
+            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0"><CardTitle className="text-md text-emerald-900 uppercase">Receiving Form (Status & Weight)</CardTitle></CardHeader>
+              <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0 flex-1">
+                <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -304,11 +416,11 @@ const Laundry: React.FC = () => {
             </Card>
           </div>
 
-          <div className="m-0 space-y-6">
+          <div className="m-0 space-y-6 flex flex-col flex-1 min-h-0">
             {!selectedTxForDetails ? (
-              <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden">
-                <CardHeader className="bg-white border-b border-emerald-100 py-4"><CardTitle className="text-md text-emerald-900 uppercase">Select Bag to Add Details</CardTitle></CardHeader>
-                <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+                <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0"><CardTitle className="text-md text-emerald-900 uppercase">Select Bag to Add Details</CardTitle></CardHeader>
+                <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 overflow-auto max-h-full min-h-0">
                   {transactions.filter((t: any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').map((t: any) => (
                     <Button key={t.id} variant="outline" className="h-16 flex flex-col items-center justify-center border-emerald-200 text-emerald-800 hover:bg-emerald-50" onClick={() => { setSelectedTxForDetails(t); setClothesList([{ clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }]); }}>
                       <span className="font-bold">{t.laundry_bag_id}</span>
@@ -319,13 +431,13 @@ const Laundry: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-white">
-                <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+              <Card className="border border-emerald-200 shadow-sm rounded-xl overflow-hidden bg-white flex flex-col flex-1 min-h-0">
+                <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
                   <CardTitle className="text-md text-emerald-900 uppercase">Entering Details for: {selectedTxForDetails.laundry_bag_id}</CardTitle>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedTxForDetails(null)}>Cancel</Button>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-auto max-h-[60vh] relative">
+                <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                  <div className="overflow-auto max-h-full min-h-0 flex-1 relative w-full">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-emerald-950 text-stone-50 text-xs sticky top-0 z-10">
                         <tr><th className="p-3">CLOTHES TYPE</th><th className="p-3">BRAND</th><th className="p-3">COLOUR</th><th className="p-3">SIZE</th><th className="p-3 w-20">QTY</th><th className="p-3 w-10"></th></tr>
@@ -344,7 +456,7 @@ const Laundry: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className="p-4 flex justify-between bg-emerald-50/20">
+                  <div className="p-4 flex justify-between bg-emerald-50/20 shrink-0">
                     <Button variant="outline" onClick={() => setClothesList([...clothesList, { clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }])}>+ Add Row</Button>
                     <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleDetailsSubmit(selectedTxForDetails.id)}>Save & Proceed</Button>
                   </div>

@@ -342,12 +342,12 @@ export default function DataRegister() {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
 
 
       {/* Main Content */}
-      <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full">
-        <CardHeader className="bg-white border-b border-emerald-100 pb-4">
+      <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full">
+        <CardHeader className="bg-white border-b border-emerald-100 pb-4 shrink-0">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <CardTitle className="text-lg text-emerald-950 uppercase">{getCardTitle()}</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
@@ -378,9 +378,9 @@ export default function DataRegister() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0 bg-stone-50/30">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="p-4 overflow-x-auto border-b border-emerald-100 bg-white">
+        <CardContent className="flex flex-col flex-1 p-0 bg-stone-50/30 min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0">
+            <div className="p-4 overflow-x-auto border-b border-emerald-100 bg-white shrink-0">
               <TabsList className="bg-stone-100 p-1.5 rounded-2xl border border-stone-200 inline-flex w-max">
                 <TabsTrigger value="area" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                   <MapPin size={16} /> Area
@@ -409,10 +409,10 @@ export default function DataRegister() {
               </TabsList>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {/* TAB A: AREA */}
-              <TabsContent value="area" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="area" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -441,8 +441,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB B: MESS */}
-              <TabsContent value="mess" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="mess" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -479,8 +479,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB C: ROOM */}
-              <TabsContent value="room" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -515,8 +515,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB H: MEETING ROOM */}
-              <TabsContent value="meeting_room" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="meeting_room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -535,14 +535,14 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.meeting_room}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.room_id}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room}</td>
+                          <td className="px-4 py-3 text-emerald-700">{'MR-' + row.id?.toString().padStart(3, '0')}</td>
                           <td className="px-4 py-3 text-emerald-800">{row.building}</td>
                           <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.capacity}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.room_status || 'READY'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.registered_by || 'Admin'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.last_registration || new Date().toISOString().split('T')[0]}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.status || 'READY'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.reserved_by || 'Admin'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : new Date().toISOString().split('T')[0]}</td>
+                          <td className="px-4 py-3 text-emerald-600">-</td>
                         </tr>
                       ))}
                       {paginatedData.length === 0 && (
@@ -554,8 +554,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB D: MEALS DELIVERY POINT */}
-              <TabsContent value="meals" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="meals" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -586,8 +586,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB E: LAUNDRY DELIVERY POINT */}
-              <TabsContent value="laundry_dp" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="laundry_dp" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -618,8 +618,8 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB F: LAUNDRY BAG & BOX */}
-              <TabsContent value="laundry_bag" className="m-0 animate-fade-in">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="laundry_bag" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
@@ -652,55 +652,55 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB G: GUEST */}
-              <TabsContent value="guest" className="m-0 animate-fade-in w-full max-w-full overflow-hidden">
-                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+              <TabsContent value="guest" className="m-0 animate-fade-in w-full max-w-full data-[state=active]:flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center border border-emerald-900" rowSpan={2}>NO</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>ROOM NO</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MESS</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>NAME</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>PERSONAL ID</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REG. ID CARD</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>JOB</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>POSITION</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
-                        <th className="px-4 py-2 text-center border border-emerald-900" colSpan={3}>MEALS DELIVERY POINT</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REGISTERED BY</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>LAST REGISTERED</th>
-                        <th className="px-4 py-4 border border-emerald-900" rowSpan={2}>REMARKS</th>
+                        <th className="px-4 py-4 text-center border-b border-emerald-900" rowSpan={2}>NO</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>ROOM NO</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>MESS</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>NAME</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>PERSONAL ID</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>REG. ID CARD</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>JOB</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>POSITION</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
+                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
+                        <th className="px-4 py-2 text-center border-b border-emerald-900 border-l border-emerald-800" colSpan={3}>MEALS DELIVERY POINT</th>
+                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REGISTERED BY</th>
+                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>LAST REGISTERED</th>
+                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REMARKS</th>
                       </tr>
-                      <tr>
-                        <th className="px-4 py-2 text-center border border-emerald-900">BREAKFAST</th>
-                        <th className="px-4 py-2 text-center border border-emerald-900">LUNCH</th>
-                        <th className="px-4 py-2 text-center border border-emerald-900">DINNER</th>
+                      <tr className="bg-emerald-900/50">
+                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
+                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950 border border-emerald-100">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.room_no}</td>
-                          <td className="px-4 py-3 text-emerald-700 border border-emerald-100">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-bold border border-emerald-100">{row.name}</td>
-                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.personal_identification || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.reg_id_card || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.job || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.position || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-semibold border border-emerald-100">{row.level_category || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.institution_company || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium border border-emerald-100">{row.occupants_category || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.meals_packages || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.breakfast_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.lunch_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 border border-emerald-100">{row.dinner_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.registered_by || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border border-emerald-100">{row.remarks || '-'}</td>
+                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
+                          <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
+                          <td className="px-4 py-3 text-emerald-900 font-bold">{row.name}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.personal_identification || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.reg_id_card || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800">{row.job || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800">{row.position || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-900 font-semibold">{row.level_category || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.institution_company || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.occupants_category || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800">{row.meals_packages || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.breakfast_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.lunch_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.dinner_dp || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.registered_by || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.remarks || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -711,7 +711,7 @@ export default function DataRegister() {
           </Tabs>
 
           {/* Pagination Controls */}
-          <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl">
+          <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl shrink-0">
             <div className="text-sm text-emerald-600">
               Showing <span className="font-medium text-emerald-950">{currentData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-emerald-950">{Math.min(currentPage * itemsPerPage, currentData.length)}</span> of <span className="font-medium text-emerald-950">{currentData.length}</span> entries
             </div>
