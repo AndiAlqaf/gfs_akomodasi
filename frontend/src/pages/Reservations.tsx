@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Plus, Calendar, User, MapPin, LogIn, LogOut, CheckCircle, Search, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
+import { useAppStore } from '@/stores/useAppStore';
 
 const Reservations: React.FC = () => {
   const queryClient = useQueryClient();
+  const { user } = useAppStore();
 
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -23,6 +25,21 @@ const Reservations: React.FC = () => {
   const [estimatedArrival, setEstimatedArrival] = useState('');
   const [estimatedDeparture, setEstimatedDeparture] = useState('');
   const [remark, setRemark] = useState('');
+
+  // States for Meeting Room Booking Form
+  const [isMeetingDialogOpen, setIsMeetingDialogOpen] = useState(false);
+  const [mrDate, setMrDate] = useState('');
+  const [mrRequestedBy, setMrRequestedBy] = useState(user?.name || '');
+  const [mrDepartement, setMrDepartement] = useState('');
+  const [mrMeetingRoom, setMrMeetingRoom] = useState('');
+  const [mrParticipants, setMrParticipants] = useState('');
+  const [mrStart, setMrStart] = useState('');
+  const [mrFinish, setMrFinish] = useState('');
+  const [mrAdditionalInfo, setMrAdditionalInfo] = useState('');
+  const [mrAction, setMrAction] = useState('SCHEDULLED');
+  const [mrRemark, setMrRemark] = useState('');
+
+  const [activeTab, setActiveTab] = useState('bedroom');
 
   const [isCheckInOutDialogOpen, setIsCheckInOutDialogOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState('');
@@ -253,9 +270,40 @@ const Reservations: React.FC = () => {
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                     <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
-                  <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
-                    <Plus size={18} /> Book Room
-                  </Button>
+                  <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
+                        <Plus size={18} /> Book Room
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[700px]">
+                      <DialogHeader><DialogTitle className="text-emerald-950 uppercase">Meeting Room Booking Form</DialogTitle></DialogHeader>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Date</label><Input type="date" value={mrDate} onChange={e => setMrDate(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Requested By</label><Input value={mrRequestedBy} onChange={e => setMrRequestedBy(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Departement</label><Input value={mrDepartement} onChange={e => setMrDepartement(e.target.value)} /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Meeting Room</label><Input value={mrMeetingRoom} onChange={e => setMrMeetingRoom(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Participants</label><Input value={mrParticipants} onChange={e => setMrParticipants(e.target.value)} type="number" /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Start</label><Input type="time" value={mrStart} onChange={e => setMrStart(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Finish</label><Input type="time" value={mrFinish} onChange={e => setMrFinish(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Additional Info</label><Input value={mrAdditionalInfo} onChange={e => setMrAdditionalInfo(e.target.value)} /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
+                          <select value={mrAction} onChange={e => setMrAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <option value="SCHEDULLED">SCHEDULLED</option>
+                            <option value="RE-SCHEDULLED">RE-SCHEDULLED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Remark</label><Input value={mrRemark} onChange={e => setMrRemark(e.target.value)} /></div>
+                        <div className="md:col-span-2 flex justify-end mt-2">
+                          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" onClick={() => {
+                            Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
+                            setIsMeetingDialogOpen(false);
+                          }}>Submit Form</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
