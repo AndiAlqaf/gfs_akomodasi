@@ -16,7 +16,7 @@ const Information: React.FC = () => {
   const [mealsPage, setMealsPage] = useState(1);
   const [laundryPage, setLaundryPage] = useState(1);
   const [meetingPage, setMeetingPage] = useState(1);
-  
+
   const [roomSearch, setRoomSearch] = useState('');
   const [pobSearch, setPobSearch] = useState('');
   const [mealsSearch, setMealsSearch] = useState('');
@@ -94,7 +94,7 @@ const Information: React.FC = () => {
               <CardTitle className="text-lg text-emerald-950 uppercase">Room Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={roomSearch} onChange={e => {setRoomSearch(e.target.value); setRoomPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
@@ -102,47 +102,47 @@ const Information: React.FC = () => {
                 <div className="text-center py-8">Loading Room Data...</div>
               ) : (
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <tr>
-                        <th className="px-6 py-4" rowSpan={2}>NO</th>
-                        <th className="px-6 py-4" rowSpan={2}>ROOM</th>
-                        <th className="px-6 py-4" rowSpan={2}>MESS</th>
-                        <th className="px-6 py-4" rowSpan={2}>AREA</th>
-                        <th className="px-6 py-4" rowSpan={2}>ROOM ALLOCATION</th>
-                        <th className="px-6 py-4 text-center border-b border-emerald-900" colSpan={3}>BEDS</th>
-                        <th className="px-6 py-4" rowSpan={2}>STATUS</th>
-                      </tr>
-                      <tr className="bg-emerald-900/50">
-                        <th className="px-6 py-2 text-center border-t border-emerald-900">AVAILABLE</th>
-                        <th className="px-6 py-2 text-center border-t border-emerald-900">OCCUPIED</th>
-                        <th className="px-6 py-2 text-center border-t border-emerald-900">VACANT</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-emerald-50">
-                      {paginatedRooms.map((r: any, idx: number) => (
-                        <tr key={r.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 font-medium text-emerald-950">{((roomPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium">{r.room}</td>
-                          <td className="px-6 py-3 text-emerald-700">{r.mess}</td>
-                          <td className="px-6 py-3 text-emerald-700">{r.area}</td>
-                          <td className="px-6 py-3 text-emerald-700">{r.room_allocation}</td>
-                          <td className="px-6 py-3 text-center font-semibold bg-emerald-50/50 text-emerald-800 border-x border-emerald-100">{r.beds_total}</td>
-                          <td className="px-6 py-3 text-center font-semibold bg-lime-50/50 text-lime-800 border-x border-emerald-100">{r.beds_occupied}</td>
-                          <td className="px-6 py-3 text-center font-semibold bg-stone-50 text-stone-800 border-x border-emerald-100">{r.beds_vacant}</td>
-                          <td className="px-6 py-3">
-                            <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{r.status}</span>
-                          </td>
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                        <tr>
+                          <th className="px-6 py-4" rowSpan={2}>NO</th>
+                          <th className="px-6 py-4" rowSpan={2}>ROOM</th>
+                          <th className="px-6 py-4" rowSpan={2}>MESS</th>
+                          <th className="px-6 py-4" rowSpan={2}>AREA</th>
+                          <th className="px-6 py-4" rowSpan={2}>ROOM ALLOCATION</th>
+                          <th className="px-6 py-4 text-center border-b border-emerald-900" colSpan={3}>BEDS</th>
+                          <th className="px-6 py-4" rowSpan={2}>STATUS</th>
                         </tr>
-                      ))}
-                      {paginatedRooms.length === 0 && (
-                        <tr><td colSpan={11} className="text-center py-8 text-gray-500">No rooms found.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                        <tr className="bg-emerald-900/50">
+                          <th className="px-6 py-2 text-center border-t border-emerald-900">AVAILABLE</th>
+                          <th className="px-6 py-2 text-center border-t border-emerald-900">OCCUPIED</th>
+                          <th className="px-6 py-2 text-center border-t border-emerald-900">VACANT</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedRooms.map((r: any, idx: number) => (
+                          <tr key={r.id} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-6 py-3 font-medium text-emerald-950">{((roomPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-6 py-3 text-emerald-800 font-medium">{r.room}</td>
+                            <td className="px-6 py-3 text-emerald-700">{r.mess}</td>
+                            <td className="px-6 py-3 text-emerald-700">{r.area}</td>
+                            <td className="px-6 py-3 text-emerald-700">{r.room_allocation}</td>
+                            <td className="px-6 py-3 text-center font-semibold bg-emerald-50/50 text-emerald-800 border-x border-emerald-100">{r.beds_total}</td>
+                            <td className="px-6 py-3 text-center font-semibold bg-lime-50/50 text-lime-800 border-x border-emerald-100">{r.beds_occupied}</td>
+                            <td className="px-6 py-3 text-center font-semibold bg-stone-50 text-stone-800 border-x border-emerald-100">{r.beds_vacant}</td>
+                            <td className="px-6 py-3">
+                              <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{r.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                        {paginatedRooms.length === 0 && (
+                          <tr><td colSpan={11} className="text-center py-8 text-gray-500">No rooms found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
@@ -170,7 +170,7 @@ const Information: React.FC = () => {
               <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={meetingSearch} onChange={e => {setMeetingSearch(e.target.value); setMeetingPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
@@ -178,9 +178,9 @@ const Information: React.FC = () => {
                 <div className="text-center py-8">Loading Meeting Rooms Data...</div>
               ) : (
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
                           <th className="px-6 py-4 text-center">DATE</th>
                           <th className="px-6 py-4 text-left">ROOM</th>
@@ -192,24 +192,24 @@ const Information: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
-                      {paginatedMeetingRooms.map((r, i) => (
-                        <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-emerald-800 font-medium text-center">{r.date}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium text-left">{r.room}</td>
-                          <td className="px-6 py-3 text-emerald-700 text-left">{r.building}</td>
-                          <td className="px-6 py-3 text-emerald-700 text-center">{r.capacity}</td>
-                          <td className="px-6 py-3 text-emerald-700 text-center font-semibold">{r.booking_status}</td>
-                          <td className="px-6 py-3 text-emerald-700 text-center">{r.reserved_by}</td>
-                          <td className="px-6 py-3 text-emerald-700 text-center">{r.status}</td>
-                        </tr>
-                      ))}
-                      {paginatedMeetingRooms.length === 0 && (
-                        <tr><td colSpan={7} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
-                      )}
+                        {paginatedMeetingRooms.map((r, i) => (
+                          <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-6 py-3 text-emerald-800 font-medium text-center">{r.date}</td>
+                            <td className="px-6 py-3 text-emerald-800 font-medium text-left">{r.room}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-left">{r.building}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{r.capacity}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center font-semibold">{r.booking_status}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{r.reserved_by}</td>
+                            <td className="px-6 py-3 text-emerald-700 text-center">{r.status}</td>
+                          </tr>
+                        ))}
+                        {paginatedMeetingRooms.length === 0 && (
+                          <tr><td colSpan={7} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
@@ -237,7 +237,7 @@ const Information: React.FC = () => {
               <CardTitle className="text-lg text-emerald-950 uppercase">Person On Board (POB) Information</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={pobSearch} onChange={e => {setPobSearch(e.target.value); setPobPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
@@ -245,52 +245,52 @@ const Information: React.FC = () => {
                 <div className="text-center py-8">Loading POB Data...</div>
               ) : (
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase font-semibold">
-                      <tr>
-                        <th className="px-6 py-4">NO</th>
-                        <th className="px-6 py-4">DATE</th>
-                        <th className="px-6 py-4">ROOM NO</th>
-                        <th className="px-6 py-4">MESS</th>
-                        <th className="px-6 py-4">AREA</th>
-                        <th className="px-6 py-4">REG. ID</th>
-                        <th className="px-6 py-4">JOB</th>
-                        <th className="px-6 py-4">POSITION</th>
-                        <th className="px-6 py-4">LEVEL CATEGORY</th>
-                        <th className="px-6 py-4">INSTITUTION/COMPANY</th>
-                        <th className="px-6 py-4">OCCUPANTS CATEGORY</th>
-                        <th className="px-6 py-4 text-center">BOARDING STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-emerald-50">
-                      {paginatedPobs.map((p: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 font-medium text-emerald-950">{((pobPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                          <td className="px-6 py-3 text-emerald-700">{formatDate(p.date)}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium">{p.room_no}</td>
-                          <td className="px-6 py-3 text-emerald-700">{p.mess}</td>
-                          <td className="px-6 py-3 text-emerald-700">{p.area}</td>
-                          <td className="px-6 py-3 text-emerald-600">{p.reg_id_card || '-'}</td>
-                          <td className="px-6 py-3 text-emerald-600">{p.job || '-'}</td>
-                          <td className="px-6 py-3 text-emerald-600">{p.position || '-'}</td>
-                          <td className="px-6 py-3 text-emerald-600">{p.level_category || '-'}</td>
-                          <td className="px-6 py-3 text-emerald-700">
-                            <span className="bg-stone-100 text-emerald-800 px-2 py-1 rounded-md border border-stone-200">{p.institution_company || '-'}</span>
-                          </td>
-                          <td className="px-6 py-3 text-emerald-700">{p.occupants_category || '-'}</td>
-                          <td className="px-6 py-3 text-center">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}>{p.boarding_status}</span>
-                          </td>
+                      <thead className="bg-emerald-950 text-stone-50 uppercase font-semibold sticky top-0 z-10">
+                        <tr>
+                          <th className="px-6 py-4">NO</th>
+                          <th className="px-6 py-4">DATE</th>
+                          <th className="px-6 py-4">ROOM NO</th>
+                          <th className="px-6 py-4">MESS</th>
+                          <th className="px-6 py-4">AREA</th>
+                          <th className="px-6 py-4">REG. ID</th>
+                          <th className="px-6 py-4">JOB</th>
+                          <th className="px-6 py-4">POSITION</th>
+                          <th className="px-6 py-4">LEVEL CATEGORY</th>
+                          <th className="px-6 py-4">INSTITUTION/COMPANY</th>
+                          <th className="px-6 py-4">OCCUPANTS CATEGORY</th>
+                          <th className="px-6 py-4 text-center">BOARDING STATUS</th>
                         </tr>
-                      ))}
-                      {paginatedPobs.length === 0 && (
-                        <tr><td colSpan={14} className="text-center py-8 text-gray-500">No POB data found.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedPobs.map((p: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-6 py-3 font-medium text-emerald-950">{((pobPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-6 py-3 text-emerald-700">{formatDate(p.date)}</td>
+                            <td className="px-6 py-3 text-emerald-800 font-medium">{p.room_no}</td>
+                            <td className="px-6 py-3 text-emerald-700">{p.mess}</td>
+                            <td className="px-6 py-3 text-emerald-700">{p.area}</td>
+                            <td className="px-6 py-3 text-emerald-600">{p.reg_id_card || '-'}</td>
+                            <td className="px-6 py-3 text-emerald-600">{p.job || '-'}</td>
+                            <td className="px-6 py-3 text-emerald-600">{p.position || '-'}</td>
+                            <td className="px-6 py-3 text-emerald-600">{p.level_category || '-'}</td>
+                            <td className="px-6 py-3 text-emerald-700">
+                              <span className="bg-stone-100 text-emerald-800 px-2 py-1 rounded-md border border-stone-200">{p.institution_company || '-'}</span>
+                            </td>
+                            <td className="px-6 py-3 text-emerald-700">{p.occupants_category || '-'}</td>
+                            <td className="px-6 py-3 text-center">
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}>{p.boarding_status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                        {paginatedPobs.length === 0 && (
+                          <tr><td colSpan={14} className="text-center py-8 text-gray-500">No POB data found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
@@ -318,7 +318,7 @@ const Information: React.FC = () => {
               <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Info</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={mealsSearch} onChange={e => {setMealsSearch(e.target.value); setMealsPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
@@ -326,41 +326,41 @@ const Information: React.FC = () => {
                 <div className="text-center py-8">Loading Meals Data...</div>
               ) : (
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
-                      <tr>
-                        <th className="px-6 py-4">NO</th>
-                        <th className="px-6 py-4">DATE</th>
-                        <th className="px-6 py-4">MEALS PACKAGES</th>
-                        <th className="px-6 py-4">MEALS DELIVERY POINT</th>
-                        <th className="px-6 py-4">MEAL TIME</th>
-                        <th className="px-6 py-4 text-center">NO OF PACKS</th>
-                        <th className="px-6 py-4">ACCOMODATION STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-emerald-50">
-                      {paginatedMeals.length === 0 ? (
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
-                          <td colSpan={9} className="text-center py-8 text-gray-500">No meals found for today.</td>
+                          <th className="px-6 py-4">NO</th>
+                          <th className="px-6 py-4">DATE</th>
+                          <th className="px-6 py-4">MEALS PACKAGES</th>
+                          <th className="px-6 py-4">MEALS DELIVERY POINT</th>
+                          <th className="px-6 py-4">MEAL TIME</th>
+                          <th className="px-6 py-4 text-center">NO OF PACKS</th>
+                          <th className="px-6 py-4">ACCOMODATION STATUS</th>
                         </tr>
-                      ) : (
-                        paginatedMeals.map((row: any, i: number) => (
-                          <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-6 py-3 font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
-                            <td className="px-6 py-3 text-emerald-700">{formatDate(row.date)}</td>
-                            <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
-                            <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
-                            <td className="px-6 py-3 text-emerald-700 font-medium">{row.meal_time}</td>
-                            <td className="px-6 py-3 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
-                            <td className="px-6 py-3 text-emerald-700">{row.accommodation_status}</td>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedMeals.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} className="text-center py-8 text-gray-500">No meals found for today.</td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          paginatedMeals.map((row: any, i: number) => (
+                            <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
+                              <td className="px-6 py-3 font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
+                              <td className="px-6 py-3 text-emerald-700">{formatDate(row.date)}</td>
+                              <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
+                              <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
+                              <td className="px-6 py-3 text-emerald-700 font-medium">{row.meal_time}</td>
+                              <td className="px-6 py-3 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
+                              <td className="px-6 py-3 text-emerald-700">{row.accommodation_status}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">
@@ -388,7 +388,7 @@ const Information: React.FC = () => {
               <CardTitle className="text-lg text-emerald-950 uppercase">Laundry Services Info</CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={laundrySearch} onChange={e => {setLaundrySearch(e.target.value); setLaundryPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50">
@@ -396,47 +396,47 @@ const Information: React.FC = () => {
                 <div className="text-center py-8">Loading Laundry Data...</div>
               ) : (
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[10px] font-semibold">
-                      <tr>
-                        <th className="px-4 py-3 text-center">NAME</th>
-                        <th className="px-4 py-3 text-center">ROOM</th>
-                        <th className="px-4 py-3 text-center">LAUNDRY<br/>BAG ID</th>
-                        <th className="px-4 py-3 text-center">LAUNDRY<br/>BOX</th>
-                        <th className="px-4 py-3 text-center">SERVICES<br/>PACKAGES</th>
-                        <th className="px-4 py-3 text-center">WEIGHT</th>
-                        <th className="px-4 py-3 text-center">PCS</th>
-                        <th className="px-4 py-3 text-center">RECEIVING<br/>DATE</th>
-                        <th className="px-4 py-3 text-center">COMPLETION<br/>DATE</th>
-                        <th className="px-4 py-3 text-center">DURATION</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-emerald-50">
-                      {paginatedLaundryItems.length === 0 ? (
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-[10px] font-semibold sticky top-0 z-10">
                         <tr>
-                          <td colSpan={10} className="text-center py-8 text-gray-500">No laundry services found.</td>
+                          <th className="px-4 py-3 text-center">NAME</th>
+                          <th className="px-4 py-3 text-center">ROOM</th>
+                          <th className="px-4 py-3 text-center">LAUNDRY<br />BAG ID</th>
+                          <th className="px-4 py-3 text-center">LAUNDRY<br />BOX</th>
+                          <th className="px-4 py-3 text-center">SERVICES<br />PACKAGES</th>
+                          <th className="px-4 py-3 text-center">WEIGHT</th>
+                          <th className="px-4 py-3 text-center">PCS</th>
+                          <th className="px-4 py-3 text-center">RECEIVING<br />DATE</th>
+                          <th className="px-4 py-3 text-center">COMPLETION<br />DATE</th>
+                          <th className="px-4 py-3 text-center">DURATION</th>
                         </tr>
-                      ) : (
-                        paginatedLaundryItems.map((row: any, i: number) => (
-                          <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors text-center font-medium">
-                            <td className="px-4 py-2 text-emerald-800">{row.guest_name}</td>
-                            <td className="px-4 py-2 text-emerald-800">{row.room}</td>
-                            <td className="px-4 py-2 text-emerald-700 font-bold"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200">{row.laundry_bag_id}</span></td>
-                            <td className="px-4 py-2 text-emerald-700">{row.laundry_box_id}</td>
-                            <td className="px-4 py-2 text-emerald-700">{row.services_package}</td>
-                            <td className="px-4 py-2 font-bold text-emerald-800">{row.weight || '-'}</td>
-                            <td className="px-4 py-2 text-emerald-700">{row.no_of_pcs_total || '-'}</td>
-                            <td className="px-4 py-2 text-emerald-700">{formatDate(row.receiving_date) || '-'}</td>
-                            <td className="px-4 py-2 text-emerald-700">-</td>
-                            <td className="px-4 py-2 text-emerald-700">-</td>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {paginatedLaundryItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={10} className="text-center py-8 text-gray-500">No laundry services found.</td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          paginatedLaundryItems.map((row: any, i: number) => (
+                            <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors text-center font-medium">
+                              <td className="px-4 py-2 text-emerald-800">{row.guest_name}</td>
+                              <td className="px-4 py-2 text-emerald-800">{row.room}</td>
+                              <td className="px-4 py-2 text-emerald-700 font-bold"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200">{row.laundry_bag_id}</span></td>
+                              <td className="px-4 py-2 text-emerald-700">{row.laundry_box_id}</td>
+                              <td className="px-4 py-2 text-emerald-700">{row.services_package}</td>
+                              <td className="px-4 py-2 font-bold text-emerald-800">{row.weight || '-'}</td>
+                              <td className="px-4 py-2 text-emerald-700">{row.no_of_pcs_total || '-'}</td>
+                              <td className="px-4 py-2 text-emerald-700">{formatDate(row.receiving_date) || '-'}</td>
+                              <td className="px-4 py-2 text-emerald-700">-</td>
+                              <td className="px-4 py-2 text-emerald-700">-</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50">
                     <div className="text-sm text-emerald-800">

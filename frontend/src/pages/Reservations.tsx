@@ -14,7 +14,7 @@ import Swal from 'sweetalert2';
 
 const Reservations: React.FC = () => {
   const queryClient = useQueryClient();
-  
+
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [guestCategory, setGuestCategory] = useState('REGULAR GUEST');
@@ -26,17 +26,17 @@ const Reservations: React.FC = () => {
 
   const [isCheckInOutDialogOpen, setIsCheckInOutDialogOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState('');
-  
+
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [rescheduleData, setRescheduleData] = useState<any>(null);
   const [rescheduleArrival, setRescheduleArrival] = useState('');
   const [rescheduleDeparture, setRescheduleDeparture] = useState('');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [roomsCurrentPage, setRoomsCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
+
   const { data: reservationsResp, isLoading: resLoading } = useQuery({
     queryKey: ['reservations'],
     queryFn: reservationAPI.getAll,
@@ -101,7 +101,7 @@ const Reservations: React.FC = () => {
       confirmButtonText: 'Yes, Check In'
     }).then((result) => {
       if (result.isConfirmed) {
-        updateReservationMutation.mutate({id: res.id, status: 'ON SITE'});
+        updateReservationMutation.mutate({ id: res.id, status: 'ON SITE' });
       }
     });
   };
@@ -133,45 +133,45 @@ const Reservations: React.FC = () => {
     <div className="space-y-6">
 
 
-        <div className="space-y-4">
-          <Tabs defaultValue="bedroom" className="w-full">
-            <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
-              <TabsTrigger value="bedroom" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM</TabsTrigger>
-              <TabsTrigger value="meeting" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM</TabsTrigger>
-              <TabsTrigger value="checkinout" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">CHECK-IN/ OUT</TabsTrigger>
-            </TabsList>
+      <div className="space-y-4">
+        <Tabs defaultValue="bedroom" className="w-full">
+          <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex">
+            <TabsTrigger value="bedroom" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM</TabsTrigger>
+            <TabsTrigger value="meeting" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM</TabsTrigger>
+            <TabsTrigger value="checkinout" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">CHECK-IN/ OUT</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="bedroom" className="animate-fade-in mt-0">
-              <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-                <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg text-emerald-950 uppercase">BEDROOM</CardTitle>
-                  <div className="flex gap-4">
-                   <div className="relative">
-                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                     <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
-                   </div>
-                   <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4" onClick={() => setIsDialogOpen(true)}>
-                     <Plus size={18} /> Book Room
-                   </Button>
-                 </div>
-                </CardHeader>
-                <CardContent className="p-6 bg-stone-50/50">
-                  <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
-                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider">
-                        <tr>
-                       <th className="px-4 py-3 text-center">DATE</th>
-                       <th className="px-4 py-3 text-center">ROOM NO</th>
-                       <th className="px-4 py-3 text-center">MESS</th>
-                       <th className="px-4 py-3 text-center">NAME</th>
-                       <th className="px-4 py-3 text-center">ESTIMATED ARRIVAL</th>
-                       <th className="px-4 py-3 text-center">ESTIMATED DEPARTURE</th>
-                       <th className="px-4 py-3 text-center">GUEST STATUS</th>
-                       <th className="px-4 py-3 text-center">REMARK</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-emerald-50">
-                     {bedroomPaginatedData.map((res: any) => (
+          <TabsContent value="bedroom" className="animate-fade-in mt-0">
+            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg text-emerald-950 uppercase">BEDROOM</CardTitle>
+                <div className="flex gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4" onClick={() => setIsDialogOpen(true)}>
+                    <Plus size={18} /> Book Room
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 bg-stone-50/50">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-3 text-center">DATE</th>
+                        <th className="px-4 py-3 text-center">ROOM NO</th>
+                        <th className="px-4 py-3 text-center">MESS</th>
+                        <th className="px-4 py-3 text-center">NAME</th>
+                        <th className="px-4 py-3 text-center">ESTIMATED ARRIVAL</th>
+                        <th className="px-4 py-3 text-center">ESTIMATED DEPARTURE</th>
+                        <th className="px-4 py-3 text-center">GUEST STATUS</th>
+                        <th className="px-4 py-3 text-center">REMARK</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {bedroomPaginatedData.map((res: any) => (
                         <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
                           <td className="px-4 py-3">{res.created_at ? formatDate(res.created_at) : '-'}</td>
                           <td className="px-4 py-3 font-semibold text-emerald-950">{res.roomNo}</td>
@@ -185,31 +185,31 @@ const Reservations: React.FC = () => {
                             ) : (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     className={`h-7 text-[10px] uppercase font-medium flex items-center gap-1 w-full justify-between
-                                      ${res.guest_status === 'CANCELLED' ? 'text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100' : 
-                                        res.guest_status === 'RE-SCHEDULED' || res.guest_status === 'RE-SHEDULLED' ? 'text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100' : 
-                                        'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'}`}
+                                      ${res.guest_status === 'CANCELLED' ? 'text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100' :
+                                        res.guest_status === 'RE-SCHEDULED' || res.guest_status === 'RE-SHEDULLED' ? 'text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100' :
+                                          'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'}`}
                                   >
                                     {res.guest_status || 'SCHEDULED'}
                                     <ChevronDown size={12} className="opacity-50" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-32">
-                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({id: res.id, status: 'SCHEDULED'})}>
+                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'SCHEDULED' })}>
                                     SCHEDULED
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => { 
-                                    setRescheduleData(res); 
+                                  <DropdownMenuItem onClick={() => {
+                                    setRescheduleData(res);
                                     setRescheduleArrival(res.estimated_arrival?.replace(' ', 'T') || '');
                                     setRescheduleDeparture(res.estimated_departure?.replace(' ', 'T') || '');
-                                    setIsRescheduleDialogOpen(true); 
+                                    setIsRescheduleDialogOpen(true);
                                   }}>
                                     RE-SCHEDULED
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({id: res.id, status: 'CANCELLED'})}>
+                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'CANCELLED' })}>
                                     CANCELLED
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -218,153 +218,153 @@ const Reservations: React.FC = () => {
                           </td>
                           <td className="px-4 py-3 text-left max-w-xs truncate" title={res.remark || ''}>{res.remark || '-'}</td>
                         </tr>
-                     ))}
-                     {bedroomPaginatedData.length === 0 && (
-                        <tr><td colSpan={8} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
-                     )}
-                   </tbody>
-                 </table>
-               </div>
-               
-               <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
-                 <div className="text-sm text-emerald-800">
-                   Showing <span className="font-semibold">{bedroomReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, bedroomReservations.length)}</span> of <span className="font-semibold">{bedroomReservations.length}</span> entries
-                 </div>
-                 <div className="flex gap-2">
-                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                   {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1).map(page => (
-                     <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
-                       {page}
-                     </Button>
-                   ))}
-                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, bedroomTotalPages))} disabled={currentPage === bedroomTotalPages}>Next</Button>
-                 </div>
-               </div>
-              </CardContent>
-            </Card>
-            </TabsContent>
-
-            <TabsContent value="meeting" className="animate-fade-in mt-0">
-              <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-                <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg text-emerald-950 uppercase">MEETING ROOM</CardTitle>
-                  <div className="flex gap-4">
-                   <div className="relative">
-                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                     <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
-                   </div>
-                   <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
-                     <Plus size={18} /> Book Room
-                   </Button>
-                 </div>
-                </CardHeader>
-                <CardContent className="p-6 bg-stone-50/50">
-                  <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
-                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider">
-                        <tr>
-                       <th className="px-4 py-3 text-center">DATE</th>
-                       <th className="px-4 py-3 text-center">REQUESTED BY</th>
-                       <th className="px-4 py-3 text-center">DEPARTEMENT</th>
-                       <th className="px-4 py-3 text-center">MEETING ROOM</th>
-                       <th className="px-4 py-3 text-center">PARTICIPANTS</th>
-                       <th className="px-4 py-3 text-center">START</th>
-                       <th className="px-4 py-3 text-center">FINISH</th>
-                       <th className="px-4 py-3 text-center">ADDITIONAL INFO</th>
-                       <th className="px-4 py-3 text-center">ACTION</th>
-                       <th className="px-4 py-3 text-center">REMARK</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-emerald-50">
-                     {[1,2,3,4,5,6,7,8].map((_, idx) => (
-                         <tr key={idx} className="hover:bg-emerald-50/50 transition-colors h-10"><td colSpan={10}></td></tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </div>
-              </CardContent>
-            </Card>
-            </TabsContent>
-
-            <TabsContent value="checkinout" className="animate-fade-in mt-0">
-              <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
-                <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg text-emerald-950 uppercase">CHECK-IN/ OUT</CardTitle>
-                  <div className="flex gap-4">
-                   <div className="relative">
-                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                     <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
-                   </div>
-                   <Button className="bg-emerald-950 hover:bg-emerald-900 text-white rounded-lg px-6 shadow-sm" onClick={() => setIsCheckInOutDialogOpen(true)}>
-                     Check In/ Out
-                   </Button>
-                 </div>
-                </CardHeader>
-                <CardContent className="p-6 bg-stone-50/50">
-                  <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-x-auto shadow-sm relative">
-                    <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider">
-                        <tr>
-                          <th className="px-4 py-3 text-center">ROOM NO</th>
-                          <th className="px-4 py-3 text-center">MESS</th>
-                          <th className="px-4 py-3 text-center">NAME</th>
-                          <th className="px-4 py-3 text-center">CHECK-IN</th>
-                          <th className="px-4 py-3 text-center">CHECK-OUT</th>
-                          <th className="px-4 py-3 text-center">GUEST STATUS</th>
-                          <th className="px-4 py-3 text-center">ACTION</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-emerald-50">
-                        {checkInOutPaginatedData.map((res: any) => (
-                           <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                             <td className="px-4 py-3 font-semibold text-emerald-950">{res.roomNo}</td>
-                             <td className="px-4 py-3 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
-                             <td className="px-4 py-3 text-[11px] text-left">{res.guestName}</td>
-                             <td className="px-4 py-3 text-emerald-700">{res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
-                             <td className="px-4 py-3 text-emerald-700">{res.check_out ? formatDate(res.check_out) : '-'}</td>
-                             <td className="px-4 py-3 uppercase font-medium text-[11px]">{res.guest_status}</td>
-                             <td className="px-4 py-3">
-                                <div className="flex justify-center gap-1">
-                                  {(res.guest_status === 'SCHEDULED' || res.guest_status === 'OFF SITE') && (
-                                    <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>
-                                      Check In
-                                    </Button>
-                                  )}
-                                  {res.guest_status === 'ON SITE' && (
-                                    <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" onClick={() => updateReservationMutation.mutate({id: res.id, status: 'OFF SITE'})}>
-                                      Check Out
-                                    </Button>
-                                  )}
-                                </div>
-                             </td>
-                           </tr>
-                        ))}
-                        {checkInOutPaginatedData.length === 0 && (
-                           <tr><td colSpan={7} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
-                    <div className="text-sm text-emerald-800">
-                      Showing <span className="font-semibold">{checkInOutReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, checkInOutReservations.length)}</span> of <span className="font-semibold">{checkInOutReservations.length}</span> entries
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                      {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1).map(page => (
-                        <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
-                          {page}
-                        </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, checkInOutTotalPages))} disabled={currentPage === checkInOutTotalPages}>Next</Button>
-                    </div>
+                      {bedroomPaginatedData.length === 0 && (
+                        <tr><td colSpan={8} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
+                  <div className="text-sm text-emerald-800">
+                    Showing <span className="font-semibold">{bedroomReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, bedroomReservations.length)}</span> of <span className="font-semibold">{bedroomReservations.length}</span> entries
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                    {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1).map(page => (
+                      <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                        {page}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, bedroomTotalPages))} disabled={currentPage === bedroomTotalPages}>Next</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="meeting" className="animate-fade-in mt-0">
+            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg text-emerald-950 uppercase">MEETING ROOM</CardTitle>
+                <div className="flex gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
+                    <Plus size={18} /> Book Room
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 bg-stone-50/50">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-3 text-center">DATE</th>
+                        <th className="px-4 py-3 text-center">REQUESTED BY</th>
+                        <th className="px-4 py-3 text-center">DEPARTEMENT</th>
+                        <th className="px-4 py-3 text-center">MEETING ROOM</th>
+                        <th className="px-4 py-3 text-center">PARTICIPANTS</th>
+                        <th className="px-4 py-3 text-center">START</th>
+                        <th className="px-4 py-3 text-center">FINISH</th>
+                        <th className="px-4 py-3 text-center">ADDITIONAL INFO</th>
+                        <th className="px-4 py-3 text-center">ACTION</th>
+                        <th className="px-4 py-3 text-center">REMARK</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((_, idx) => (
+                        <tr key={idx} className="hover:bg-emerald-50/50 transition-colors h-10"><td colSpan={10}></td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="checkinout" className="animate-fade-in mt-0">
+            <Card className="border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100">
+              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg text-emerald-950 uppercase">CHECK-IN/ OUT</CardTitle>
+                <div className="flex gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-950 hover:bg-emerald-900 text-white rounded-lg px-6 shadow-sm" onClick={() => setIsCheckInOutDialogOpen(true)}>
+                    Check In/ Out
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 bg-stone-50/50">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-[60vh] shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-3 text-center">ROOM NO</th>
+                        <th className="px-4 py-3 text-center">MESS</th>
+                        <th className="px-4 py-3 text-center">NAME</th>
+                        <th className="px-4 py-3 text-center">CHECK-IN</th>
+                        <th className="px-4 py-3 text-center">CHECK-OUT</th>
+                        <th className="px-4 py-3 text-center">GUEST STATUS</th>
+                        <th className="px-4 py-3 text-center">ACTION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {checkInOutPaginatedData.map((res: any) => (
+                        <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
+                          <td className="px-4 py-3 font-semibold text-emerald-950">{res.roomNo}</td>
+                          <td className="px-4 py-3 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
+                          <td className="px-4 py-3 text-[11px] text-left">{res.guestName}</td>
+                          <td className="px-4 py-3 text-emerald-700">{res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
+                          <td className="px-4 py-3 text-emerald-700">{res.check_out ? formatDate(res.check_out) : '-'}</td>
+                          <td className="px-4 py-3 uppercase font-medium text-[11px]">{res.guest_status}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex justify-center gap-1">
+                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'OFF SITE') && (
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>
+                                  Check In
+                                </Button>
+                              )}
+                              {res.guest_status === 'ON SITE' && (
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'OFF SITE' })}>
+                                  Check Out
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {checkInOutPaginatedData.length === 0 && (
+                        <tr><td colSpan={7} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl">
+                  <div className="text-sm text-emerald-800">
+                    Showing <span className="font-semibold">{checkInOutReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, checkInOutReservations.length)}</span> of <span className="font-semibold">{checkInOutReservations.length}</span> entries
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                    {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1).map(page => (
+                      <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                        {page}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, checkInOutTotalPages))} disabled={currentPage === checkInOutTotalPages}>Next</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Booking Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -441,7 +441,7 @@ const Reservations: React.FC = () => {
           <DialogHeader><DialogTitle>Reschedule Booking</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="text-sm font-medium text-emerald-800 bg-emerald-50 p-2 rounded">
-              Guest: {rescheduleData?.guestName} <br/> Room: {rescheduleData?.roomNo}
+              Guest: {rescheduleData?.guestName} <br /> Room: {rescheduleData?.roomNo}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">New Estimated Arrival</label>
@@ -455,9 +455,9 @@ const Reservations: React.FC = () => {
               <Button onClick={() => {
                 if (!rescheduleArrival || !rescheduleDeparture) return Swal.fire({ icon: 'warning', text: 'Please fill both dates.', timer: 2000, showConfirmButton: false });
                 updateReservationMutation.mutate({
-                  id: rescheduleData.id, 
-                  status: 'RE-SCHEDULED', 
-                  estimated_arrival: rescheduleArrival.replace('T', ' ') + ':00', 
+                  id: rescheduleData.id,
+                  status: 'RE-SCHEDULED',
+                  estimated_arrival: rescheduleArrival.replace('T', ' ') + ':00',
                   estimated_departure: rescheduleDeparture.replace('T', ' ') + ':00'
                 });
                 setIsRescheduleDialogOpen(false);

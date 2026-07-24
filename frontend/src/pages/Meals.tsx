@@ -14,7 +14,7 @@ const ITEMS_PER_PAGE = 10;
 const Meals: React.FC = () => {
   const queryClient = useQueryClient();
   const [role, setRole] = useState<'canteen_officer' | 'canteen_supervisor'>('canteen_officer');
-  
+
   // Form state
   const [guestName, setGuestName] = useState('');
   const [mealsPackage, setMealsPackage] = useState('');
@@ -114,14 +114,14 @@ const Meals: React.FC = () => {
       <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white">
         <span className="font-semibold text-emerald-800">Simulate Role:</span>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant={role === 'canteen_officer' ? 'default' : 'outline'}
             className={role === 'canteen_officer' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
             onClick={() => setRole('canteen_officer')}
           >
             Canteen Officer
           </Button>
-          <Button 
+          <Button
             variant={role === 'canteen_supervisor' ? 'default' : 'outline'}
             className={role === 'canteen_supervisor' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
             onClick={() => setRole('canteen_supervisor')}
@@ -143,7 +143,7 @@ const Meals: React.FC = () => {
             <div className="flex justify-end items-center gap-4 mb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={requestSearch} onChange={e => {setRequestSearch(e.target.value); setRequestPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
               {role === 'canteen_officer' && (
                 <Dialog>
@@ -163,10 +163,10 @@ const Meals: React.FC = () => {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-emerald-900">MEALS PACKAGES</label>
-                        <select 
-                          value={mealsPackage} 
-                          onChange={e => setMealsPackage(e.target.value)} 
-                          required 
+                        <select
+                          value={mealsPackage}
+                          onChange={e => setMealsPackage(e.target.value)}
+                          required
                           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <option value="" disabled>Select Package</option>
@@ -177,10 +177,10 @@ const Meals: React.FC = () => {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-emerald-900">DELIVERY POINT</label>
-                        <select 
-                          value={deliveryPointId} 
-                          onChange={e => setDeliveryPointId(e.target.value)} 
-                          required 
+                        <select
+                          value={deliveryPointId}
+                          onChange={e => setDeliveryPointId(e.target.value)}
+                          required
                           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <option value="" disabled>Select Delivery Point</option>
@@ -191,10 +191,10 @@ const Meals: React.FC = () => {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-emerald-900">MEAL TIME</label>
-                        <select 
-                          value={mealTime} 
-                          onChange={e => setMealTime(e.target.value)} 
-                          required 
+                        <select
+                          value={mealTime}
+                          onChange={e => setMealTime(e.target.value)}
+                          required
                           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <option value="" disabled>Select Meal Time</option>
@@ -231,9 +231,9 @@ const Meals: React.FC = () => {
                   <div className="text-center py-8 text-emerald-600">Loading requests...</div>
                 ) : (
                   <div className="w-full relative overflow-hidden bg-white">
-                    <div className="overflow-x-auto w-full">
+                    <div className="overflow-auto max-h-[60vh] w-full relative">
                       <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                        <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                        <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                           <tr>
                             <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
                             <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
@@ -265,19 +265,19 @@ const Meals: React.FC = () => {
                               <td className="px-6 py-3 text-center">
                                 <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{req.meals_package}</span>
                               </td>
-                              
+
                               <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'BREAKFAST' ? req.delivery_point : '-'}</td>
                               <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'LUNCH' ? req.delivery_point : '-'}</td>
                               <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'DINNER' ? req.delivery_point : '-'}</td>
-                              
+
                               <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'BREAKFAST' ? req.no_of_packs : '-'}</td>
                               <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'LUNCH' ? req.no_of_packs : '-'}</td>
                               <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'DINNER' ? req.no_of_packs : '-'}</td>
-                              
+
                               <td className="px-6 py-3 text-center border-l border-emerald-50">
                                 {req.status === 'PENDING' ? (
                                   role === 'canteen_supervisor' ? (
-                                    <Button size="sm" className="bg-lime-500 hover:bg-lime-600 text-emerald-950 font-bold px-4 h-7 text-xs" onClick={() => approveRequestMutation.mutate({id: req.id, approvedBy: 'Supervisor S'})}>
+                                    <Button size="sm" className="bg-lime-500 hover:bg-lime-600 text-emerald-950 font-bold px-4 h-7 text-xs" onClick={() => approveRequestMutation.mutate({ id: req.id, approvedBy: 'Supervisor S' })}>
                                       <CheckCircle size={14} className="mr-1" /> Approve
                                     </Button>
                                   ) : (
@@ -327,7 +327,7 @@ const Meals: React.FC = () => {
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={scheduleSearch} onChange={e => {setScheduleSearch(e.target.value); setSchedulePage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <Input placeholder="Search..." value={scheduleSearch} onChange={e => { setScheduleSearch(e.target.value); setSchedulePage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
               </CardTitle>
             </CardHeader>
@@ -336,9 +336,9 @@ const Meals: React.FC = () => {
                 <div className="text-center py-8 text-emerald-600">Loading schedule...</div>
               ) : (
                 <div className="w-full relative overflow-hidden bg-white">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
@@ -403,7 +403,7 @@ const Meals: React.FC = () => {
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={deliverySearch} onChange={e => {setDeliverySearch(e.target.value); setDeliveryPage(1);}} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <Input placeholder="Search..." value={deliverySearch} onChange={e => { setDeliverySearch(e.target.value); setDeliveryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
               </CardTitle>
             </CardHeader>
@@ -412,9 +412,9 @@ const Meals: React.FC = () => {
                 <div className="text-center py-8 text-emerald-600">Loading delivery info...</div>
               ) : (
                 <div className="w-full relative overflow-hidden bg-white">
-                  <div className="overflow-x-auto w-full">
+                  <div className="overflow-auto max-h-[60vh] w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
                         <tr>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center">NO</th>
                           <th className="px-6 py-4 border-b border-emerald-900 text-center">DATE</th>

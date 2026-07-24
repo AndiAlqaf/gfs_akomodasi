@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/stores/useAppStore';
-import { Building2, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Building2, Lock, User as UserIcon, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -39,16 +40,16 @@ export default function Login() {
   return (
     <div className={`min-h-screen flex bg-white overflow-hidden transition-opacity duration-700 ease-in-out ${isSuccess ? 'opacity-0' : 'opacity-100'}`}>
       {/* Left Pane - Image & Branding */}
-      <div 
+      <div
         className="hidden lg:flex lg:w-1/2 relative bg-emerald-950 items-center justify-center animate-in fade-in slide-in-from-left-8 duration-1000 z-50"
       >
         <div className="absolute inset-0 bg-black/40 z-10" />
-        <img 
-          src="/DJI_20260215123424_0157_D.JPG.jpeg" 
-          alt="Hotel Accommodation" 
+        <img
+          src="/DJI_20260215123424_0157_D.JPG.jpeg"
+          alt="Hotel Accommodation"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
-        
+
         <div className="relative z-20 px-16 text-stone-50 max-w-2xl text-center">
           <div className="inline-flex items-center justify-center p-4 bg-lime-400 rounded-3xl mb-8 shadow-2xl shadow-lime-400/20 animate-pulse">
             <Building2 className="w-16 h-16 text-emerald-950" />
@@ -109,7 +110,7 @@ export default function Login() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="pl-12 py-6 bg-white/50 block w-full border-emerald-100 focus:ring-lime-400 focus:border-lime-400 rounded-2xl shadow-sm transition-all"
-                    placeholder="Enter 'admin'"
+                    placeholder="Enter your username"
                   />
                 </div>
               </div>
@@ -125,13 +126,24 @@ export default function Login() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 py-6 bg-white/50 block w-full border-emerald-100 focus:ring-lime-400 focus:border-lime-400 rounded-2xl shadow-sm transition-all"
-                    placeholder="Enter 'admin123'"
+                    className="pl-12 pr-12 py-6 bg-white/50 block w-full border-emerald-100 focus:ring-lime-400 focus:border-lime-400 rounded-2xl shadow-sm transition-all"
+                    placeholder="Enter your password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-emerald-400 hover:text-emerald-600 focus:outline-none transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -171,7 +183,7 @@ export default function Login() {
               </div>
             </form>
           </div>
-          
+
           <div className="mt-10 text-center text-sm font-medium text-emerald-600/50">
             &copy; {new Date().getFullYear()} GFS Ceria Accommodation.
           </div>
