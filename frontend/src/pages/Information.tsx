@@ -65,6 +65,10 @@ const Information: React.FC = () => {
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
   const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
 
+  const totalBedsAvailable = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_total) || 0), 0);
+  const totalBedsOccupied = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
+  const totalBedsVacant = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
+
   const onBoardCount = pobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
   const offBoardCount = pobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
 
@@ -105,11 +109,36 @@ const Information: React.FC = () => {
 
         <TabsContent value="rooms" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-lg text-emerald-950 uppercase">Room Information</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-3 px-6">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Bedroom Information</CardTitle>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-24 text-right uppercase tracking-wide">AVAILABLE</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {totalBedsAvailable}
+                    </div>
+                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-24 text-right uppercase tracking-wide">OCCUPIED</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {totalBedsOccupied}
+                    </div>
+                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-24 text-right uppercase tracking-wide">VACANT</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {totalBedsVacant}
+                    </div>
+                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
