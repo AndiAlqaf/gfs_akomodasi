@@ -65,11 +65,26 @@ const Information: React.FC = () => {
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
   const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
 
+  const onBoardCount = pobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
+  const offBoardCount = pobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
+
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
 
+  const totalWeight = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.weight) || 0), 0);
+  const formattedWeight = Number.isInteger(totalWeight) ? totalWeight : Number(totalWeight.toFixed(2));
+  const totalAmount = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.no_of_pcs_total || r.no_of_pcs || r.pcs) || 0), 0);
+
   const laundryTotalPages = Math.max(1, Math.ceil(filteredLaundry.length / ITEMS_PER_PAGE));
   const paginatedLaundryItems = filteredLaundry.slice((laundryPage - 1) * ITEMS_PER_PAGE, laundryPage * ITEMS_PER_PAGE);
+
+  const accommodatedCount = mealsServicesData
+    .filter((r: any) => r.accommodation_status === 'PROVIDED' || r.accommodation_status === 'ACCOMODATED')
+    .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
+
+  const nonAccommodatedCount = mealsServicesData
+    .filter((r: any) => r.accommodation_status !== 'PROVIDED' && r.accommodation_status !== 'ACCOMODATED')
+    .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
 
   const mealsTotalPages = Math.max(1, Math.ceil(filteredMeals.length / ITEMS_PER_PAGE));
   const paginatedMeals = filteredMeals.slice((mealsPage - 1) * ITEMS_PER_PAGE, mealsPage * ITEMS_PER_PAGE);
@@ -192,7 +207,7 @@ const Information: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
-                        {paginatedMeetingRooms.map((r, i) => (
+                        {paginatedMeetingRooms.map((r: any, i: number) => (
                           <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="px-6 py-3 text-emerald-800 font-medium text-center">{r.date}</td>
                             <td className="px-6 py-3 text-emerald-800 font-medium text-left">{r.room}</td>
@@ -233,11 +248,29 @@ const Information: React.FC = () => {
 
         <TabsContent value="pob" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-lg text-emerald-950 uppercase">Person On Board (POB) Information</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-3 px-6">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Person On Board (POB) Information</CardTitle>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-20 text-right uppercase tracking-wide">ON BOARD</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {onBoardCount}
+                    </div>
+                    <span className="w-14 text-left uppercase tracking-wide">PERSON</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-20 text-right uppercase tracking-wide">OFF BOARD</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {offBoardCount}
+                    </div>
+                    <span className="w-14 text-left uppercase tracking-wide">PERSON</span>
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
@@ -314,11 +347,29 @@ const Information: React.FC = () => {
 
         <TabsContent value="meals" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-lg text-emerald-950 uppercase">Meals Services Info</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-3 px-6">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Meals Services Info</CardTitle>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-36 text-right uppercase tracking-wide">ACCOMODATED</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {accommodatedCount}
+                    </div>
+                    <span className="w-10 text-left uppercase tracking-wide">PAX</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-36 text-right uppercase tracking-wide">NON ACCOMODATED</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {nonAccommodatedCount}
+                    </div>
+                    <span className="w-10 text-left uppercase tracking-wide">PAX</span>
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
@@ -384,11 +435,29 @@ const Information: React.FC = () => {
 
         <TabsContent value="laundry" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-lg text-emerald-950 uppercase">Laundry Services Info</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-3 px-6">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Laundry Services Info</CardTitle>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-20 text-right uppercase tracking-wide">WEIGHT</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {formattedWeight}
+                    </div>
+                    <span className="w-10 text-left tracking-wide font-bold">Kg</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span className="w-20 text-right uppercase tracking-wide">AMOUNT</span>
+                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                      {totalAmount}
+                    </div>
+                    <span className="w-10 text-left tracking-wide font-bold">Pcs</span>
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
@@ -418,7 +487,7 @@ const Information: React.FC = () => {
                             <td colSpan={10} className="text-center py-8 text-gray-500">No laundry services found.</td>
                           </tr>
                         ) : (
-                          paginatedLaundryItems.map((row: any, i: number) => (
+                          paginatedLaundryItems.map((row: any) => (
                             <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors text-center font-medium">
                               <td className="px-4 py-2 text-emerald-800">{row.guest_name}</td>
                               <td className="px-4 py-2 text-emerald-800">{row.room}</td>

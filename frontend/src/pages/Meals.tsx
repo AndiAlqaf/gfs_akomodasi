@@ -6,14 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CheckCircle, Plus, Search } from 'lucide-react';
+import { Calendar, CheckCircle, Plus, Search, Truck, Utensils } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+
+import { useAppStore } from '@/stores/useAppStore';
+import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
 const ITEMS_PER_PAGE = 10;
 
 const Meals: React.FC = () => {
   const queryClient = useQueryClient();
-  const [role, setRole] = useState<'canteen_officer' | 'canteen_supervisor'>('canteen_officer');
+  const { user } = useAppStore();
+
+  const canInsertRequest = hasPermission(user?.role, ROLE_PERMISSIONS.meals.requestInsert);
+  const canActionApprove = hasPermission(user?.role, ROLE_PERMISSIONS.meals.requestAction);
 
   // Form state
   const [guestName, setGuestName] = useState('');
@@ -104,133 +110,111 @@ const Meals: React.FC = () => {
   const paginatedDelivery = filteredDelivery.slice((deliveryPage - 1) * ITEMS_PER_PAGE, deliveryPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden space-y-4">
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <p className="text-emerald-700 mt-1">Meals Request and Schedule Dashboard</p>
-        </div>
-      </div>
-
-      <div className="glass p-4 rounded-xl flex items-center gap-4 animate-fade-in border-emerald-100 shadow-sm bg-white shrink-0">
-        <span className="font-semibold text-emerald-800">Simulate Role:</span>
-        <div className="flex gap-2">
-          <Button
-            variant={role === 'canteen_officer' ? 'default' : 'outline'}
-            className={role === 'canteen_officer' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
-            onClick={() => setRole('canteen_officer')}
-          >
-            Canteen Officer
-          </Button>
-          <Button
-            variant={role === 'canteen_supervisor' ? 'default' : 'outline'}
-            className={role === 'canteen_supervisor' ? 'bg-emerald-950 text-stone-50 hover:bg-emerald-900' : 'text-emerald-800 border-emerald-200 hover:bg-emerald-50'}
-            onClick={() => setRole('canteen_supervisor')}
-          >
-            Canteen Supervisor
-          </Button>
-        </div>
-      </div>
-
+    <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
       <Tabs defaultValue="request" className="w-full flex flex-col flex-1 min-h-0">
-        <TabsList className="mb-4 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shadow-sm shrink-0 w-max">
-          <TabsTrigger value="request" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Request</TabsTrigger>
-          <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals on Schedule</TabsTrigger>
-          <TabsTrigger value="delivery" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-6 py-2.5 font-medium">Meals for Delivery</TabsTrigger>
+        <TabsList className="mb-4 bg-stone-100 p-1.5 rounded-2xl border border-stone-200 inline-flex shadow-sm shrink-0 w-max">
+          <TabsTrigger value="request" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+            <Utensils size={16} /> MEALS ON REQUEST
+          </TabsTrigger>
+          <TabsTrigger value="schedule" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+            <Calendar size={16} /> MEALS ON SCHEDULE
+          </TabsTrigger>
+          <TabsTrigger value="delivery" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+            <Truck size={16} /> MEALS FOR DELIVERY
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="request" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-          <div className="flex flex-col flex-1 min-h-0 space-y-4">
-            <div className="flex justify-end items-center gap-4 shrink-0">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals on Request</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                {canInsertRequest && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
+                        <Plus size={18} /> Meals Request Form
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle className="text-emerald-950 text-xl uppercase">Meals Request Form</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">GUEST / EVENT NAME</label>
+                          <Input value={guestName} onChange={e => setGuestName(e.target.value)} required placeholder="e.g. Tamu Perusahaan" className="bg-white" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">MEALS PACKAGES</label>
+                          <select
+                            value={mealsPackage}
+                            onChange={e => setMealsPackage(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="" disabled>Select Package</option>
+                            <option value="Standard Buffet">Standard Buffet</option>
+                            <option value="VIP Buffet">VIP Buffet</option>
+                            <option value="Room Delivery">Room Delivery</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">DELIVERY POINT</label>
+                          <select
+                            value={deliveryPointId}
+                            onChange={e => setDeliveryPointId(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="" disabled>Select Delivery Point</option>
+                            {deliveryPoints.map((dp: any) => (
+                              <option key={dp.id} value={dp.id.toString()}>{dp.delivery_point}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">MEAL TIME</label>
+                          <select
+                            value={mealTime}
+                            onChange={e => setMealTime(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="" disabled>Select Meal Time</option>
+                            <option value="BREAKFAST">Breakfast</option>
+                            <option value="LUNCH">Lunch</option>
+                            <option value="DINNER">Dinner</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">NO OF PACKS</label>
+                          <Input type="number" min="1" value={noOfPacks} onChange={e => setNoOfPacks(e.target.value)} required className="bg-white" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-emerald-900">REMARK</label>
+                          <Input value={remark} onChange={e => setRemark(e.target.value)} placeholder="Optional remark" className="bg-white" />
+                        </div>
+                        <div className="md:col-span-2 flex justify-end mt-2">
+                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8" disabled={createRequestMutation.isPending}>
+                            Submit Request
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
-              {role === 'canteen_officer' && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="bg-emerald-950 text-stone-50 hover:bg-emerald-900 shadow-sm font-bold flex items-center gap-2 px-6 rounded-full">
-                      <Plus size={18} /> Meals Request Form
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle className="text-emerald-950 text-xl uppercase">Meals Request Form</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateRequest} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">GUEST / EVENT NAME</label>
-                        <Input value={guestName} onChange={e => setGuestName(e.target.value)} required placeholder="e.g. Tamu Perusahaan" className="bg-white" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">MEALS PACKAGES</label>
-                        <select
-                          value={mealsPackage}
-                          onChange={e => setMealsPackage(e.target.value)}
-                          required
-                          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="" disabled>Select Package</option>
-                          <option value="Standard Buffet">Standard Buffet</option>
-                          <option value="VIP Buffet">VIP Buffet</option>
-                          <option value="Room Delivery">Room Delivery</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">DELIVERY POINT</label>
-                        <select
-                          value={deliveryPointId}
-                          onChange={e => setDeliveryPointId(e.target.value)}
-                          required
-                          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="" disabled>Select Delivery Point</option>
-                          {deliveryPoints.map((dp: any) => (
-                            <option key={dp.id} value={dp.id.toString()}>{dp.delivery_point}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">MEAL TIME</label>
-                        <select
-                          value={mealTime}
-                          onChange={e => setMealTime(e.target.value)}
-                          required
-                          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="" disabled>Select Meal Time</option>
-                          <option value="BREAKFAST">Breakfast</option>
-                          <option value="LUNCH">Lunch</option>
-                          <option value="DINNER">Dinner</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">NO OF PACKS</label>
-                        <Input type="number" min="1" value={noOfPacks} onChange={e => setNoOfPacks(e.target.value)} required className="bg-white" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-emerald-900">REMARK</label>
-                        <Input value={remark} onChange={e => setRemark(e.target.value)} placeholder="Optional remark" className="bg-white" />
-                      </div>
-                      <div className="md:col-span-2 flex justify-end mt-2">
-                        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8" disabled={createRequestMutation.isPending}>
-                          Submit Request
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-
-            <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
-                <CardTitle className="text-md text-emerald-900 uppercase">Tabel Meals on Request</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+            </CardHeader>
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
                 {requestLoading ? (
                   <div className="text-center py-8 text-emerald-600">Loading requests...</div>
                 ) : (
-                  <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
                     <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                       <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                         <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
@@ -274,19 +258,20 @@ const Meals: React.FC = () => {
                               <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'LUNCH' ? req.no_of_packs : '-'}</td>
                               <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'DINNER' ? req.no_of_packs : '-'}</td>
 
-                              <td className="px-6 py-3 text-center border-l border-emerald-50">
-                                {req.status === 'PENDING' ? (
-                                  role === 'canteen_supervisor' ? (
-                                    <Button size="sm" className="bg-lime-500 hover:bg-lime-600 text-emerald-950 font-bold px-4 h-7 text-xs" onClick={() => approveRequestMutation.mutate({ id: req.id, approvedBy: 'Supervisor S' })}>
-                                      <CheckCircle size={14} className="mr-1" /> Approve
-                                    </Button>
+                                <td className="px-6 py-3 text-center border-l border-emerald-50">
+                                  {req.status === 'PENDING' ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <span className="text-amber-600 font-semibold text-xs bg-amber-50 px-2.5 py-1 rounded border border-amber-200">PENDING</span>
+                                      {canActionApprove && (
+                                        <Button size="sm" className="bg-lime-500 hover:bg-lime-600 text-emerald-950 font-bold px-3 h-7 text-xs shadow-sm" onClick={() => approveRequestMutation.mutate({ id: req.id, approvedBy: user?.name || 'Supervisor' })}>
+                                          <CheckCircle size={14} className="mr-1" /> Approve
+                                        </Button>
+                                      )}
+                                    </div>
                                   ) : (
-                                    <span className="text-amber-600 font-semibold text-xs bg-amber-50 px-2 py-1 rounded border border-amber-200">PENDING</span>
-                                  )
-                                ) : (
-                                  <span className="text-emerald-700 font-bold text-xs bg-lime-100 px-2 py-1 rounded border border-lime-200">APPROVED</span>
-                                )}
-                              </td>
+                                    <span className="text-emerald-700 font-bold text-xs bg-lime-100 px-2.5 py-1 rounded border border-lime-200">APPROVED</span>
+                                  )}
+                                </td>
                             </tr>
                           ))}
                           {paginatedRequests.length === 0 && (
@@ -312,30 +297,29 @@ const Meals: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
         </TabsContent>
 
         <TabsContent value="schedule" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
-              <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
-                <div>
-                  Tabel Meals on Schedule
-                  <span className="text-xs font-normal text-emerald-600 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200 ml-2">
-                    Auto-updated daily based on On-Site Guests
-                  </span>
-                </div>
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+              <div className="flex items-center gap-3 flex-wrap">
+                <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals on Schedule</CardTitle>
+                <span className="text-xs font-normal text-emerald-700 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                  Auto-updated daily based on On-Site Guests
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                   <Input placeholder="Search..." value={scheduleSearch} onChange={e => { setScheduleSearch(e.target.value); setSchedulePage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
-              </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {scheduleLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading schedule...</div>
               ) : (
-                <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
                   <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
@@ -396,26 +380,26 @@ const Meals: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="delivery" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-          <Card className="border border-emerald-100 shadow-sm rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 py-4 shrink-0">
-              <CardTitle className="text-md text-emerald-900 uppercase flex items-center justify-between">
-                <div>
-                  Tabel Meals for Delivery
-                  <span className="text-xs font-normal text-emerald-600 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200 ml-2">
-                    Aggregated from Schedule and Approved Requests
-                  </span>
-                </div>
+          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
+            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+              <div className="flex items-center gap-3 flex-wrap">
+                <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals for Delivery</CardTitle>
+                <span className="text-xs font-normal text-emerald-700 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                  Aggregated from Schedule and Approved Requests
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                   <Input placeholder="Search..." value={deliverySearch} onChange={e => { setDeliverySearch(e.target.value); setDeliveryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
-              </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {deliveryLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading delivery info...</div>
               ) : (
-                <div className="w-full bg-white relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
                   <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">

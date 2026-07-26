@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search, Edit, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 import { dataRegisterAPI } from '@/services/api';
+import { useAppStore } from '@/stores/useAppStore';
+import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
 export default function DataRegister() {
+  const { user } = useAppStore();
+  const canInsert = hasPermission(user?.role, ROLE_PERMISSIONS.dataRegister.insert);
+
   const [activeTab, setActiveTab] = useState('area');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState<any>({});
 
   // Real Data States
@@ -118,9 +124,14 @@ export default function DataRegister() {
     if (activeTab === 'meals') type = 'meals_dp';
 
     try {
-      await dataRegisterAPI.create(type, formData);
+      if (editingId) {
+        await dataRegisterAPI.update(type, editingId, formData);
+      } else {
+        await dataRegisterAPI.create(type, formData);
+      }
       setIsSaving(false);
       setIsModalOpen(false);
+      setEditingId(null);
       setFormData({});
       fetchData(); // Refresh data
       Swal.fire({ icon: 'success', title: 'Saved!', text: 'Data saved successfully!', timer: 2000, showConfirmButton: false });
@@ -131,6 +142,41 @@ export default function DataRegister() {
     }
   };
 
+  const handleEdit = (row: any) => {
+    setEditingId(row.id);
+    const data = { ...row };
+    if (activeTab === 'meeting_room') {
+      data.meeting_room = row.room;
+      data.room_id = 'MR-' + row.id?.toString().padStart(3, '0');
+      data.room_status = row.status;
+    }
+    setFormData(data);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (row: any) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You want to delete this entry?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#065f46',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (result.isConfirmed) {
+      let type = activeTab;
+      if (activeTab === 'meals') type = 'meals_dp';
+      try {
+        await dataRegisterAPI.delete(type, row.id);
+        Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Entry has been deleted.', timer: 1500, showConfirmButton: false });
+        fetchData();
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete entry.', timer: 1500, showConfirmButton: false });
+      }
+    }
+  };
+
   const renderAddForm = () => {
     return (
       <div className="grid gap-4 py-4 text-emerald-950 max-h-[60vh] overflow-y-auto px-2">
@@ -138,11 +184,11 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Area Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIVING RESIDENCE 1" onChange={(e) => setFormData({ ...formData, area_name: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIVING RESIDENCE 1" value={formData.area_name ?? ''} onChange={(e) => setFormData({ ...formData, area_name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Area ID</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIV.RES.01" onChange={(e) => setFormData({ ...formData, area_id: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LIV.RES.01" value={formData.area_id ?? ''} onChange={(e) => setFormData({ ...formData, area_id: e.target.value })} />
             </div>
           </>
         )}
@@ -151,22 +197,22 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Mess Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LANDED HOUSE-01" onChange={(e) => setFormData({ ...formData, mess_name: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LANDED HOUSE-01" value={formData.mess_name ?? ''} onChange={(e) => setFormData({ ...formData, mess_name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Mess ID</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP.MES.LH.01" onChange={(e) => setFormData({ ...formData, mess_id: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP.MES.LH.01" value={formData.mess_id ?? ''} onChange={(e) => setFormData({ ...formData, mess_id: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Area</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.area_id ?? ''} onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
                 <option value="">Select Area</option>
                 {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Managed By</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" onChange={(e) => setFormData({ ...formData, managed_by: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" value={formData.managed_by ?? ''} onChange={(e) => setFormData({ ...formData, managed_by: e.target.value })} />
             </div>
           </>
         )}
@@ -175,18 +221,18 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room No</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LH.01.01" onChange={(e) => setFormData({ ...formData, room_no: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LH.01.01" value={formData.room_no ?? ''} onChange={(e) => setFormData({ ...formData, room_no: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Mess</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, mess_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.mess_id ?? ''} onChange={(e) => setFormData({ ...formData, mess_id: e.target.value })}>
                 <option value="">Select Mess</option>
                 {messes.map(m => <option key={m.id} value={m.id}>{m.mess_name}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Allocation</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, room_allocation: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_allocation ?? ''} onChange={(e) => setFormData({ ...formData, room_allocation: e.target.value })}>
                 <option value="">Select Allocation</option>
                 <option value="REGULAR GUEST">Regular Guest</option>
                 <option value="SPECIAL GUEST">Special Guest</option>
@@ -195,7 +241,7 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Beds</Label>
-              <Input type="number" className="col-span-3 border-emerald-200" placeholder="1" onChange={(e) => setFormData({ ...formData, beds: e.target.value })} />
+              <Input type="number" className="col-span-3 border-emerald-200" placeholder="1" value={formData.beds ?? ''} onChange={(e) => setFormData({ ...formData, beds: e.target.value })} />
             </div>
           </>
         )}
@@ -204,19 +250,19 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Meeting Room</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. TAMBORASI" onChange={(e) => setFormData({ ...formData, meeting_room: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. TAMBORASI" value={formData.meeting_room ?? ''} onChange={(e) => setFormData({ ...formData, meeting_room: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room ID</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP-MR-01" onChange={(e) => setFormData({ ...formData, room_id: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. CMP-MR-01" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Building</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U" onChange={(e) => setFormData({ ...formData, building: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U" value={formData.building ?? ''} onChange={(e) => setFormData({ ...formData, building: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Capacity</Label>
-              <Input type="number" className="col-span-3 border-emerald-200" placeholder="10" onChange={(e) => setFormData({ ...formData, capacity: e.target.value })} />
+              <Input type="number" className="col-span-3 border-emerald-200" placeholder="10" value={formData.capacity ?? ''} onChange={(e) => setFormData({ ...formData, capacity: e.target.value })} />
             </div>
           </>
         )}
@@ -225,11 +271,11 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Delivery Point</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({ ...formData, delivery_point: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" value={formData.delivery_point ?? ''} onChange={(e) => setFormData({ ...formData, delivery_point: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Area</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.area_id ?? ''} onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
                 <option value="">Select Area</option>
                 {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
               </select>
@@ -241,11 +287,11 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Point Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LDP SAMAENRE" onChange={(e) => setFormData({ ...formData, point_name: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. LDP SAMAENRE" value={formData.point_name ?? ''} onChange={(e) => setFormData({ ...formData, point_name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Area</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.area_id ?? ''} onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
                 <option value="">Select Area</option>
                 {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
               </select>
@@ -257,22 +303,22 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" value={formData.nama ?? ''} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
                 <option value="">Select Room</option>
                 {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Laundry Bag</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Bag Name/ID" onChange={(e) => setFormData({ ...formData, laundry_bag: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="Bag Name/ID" value={formData.laundry_bag ?? ''} onChange={(e) => setFormData({ ...formData, laundry_bag: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Laundry Box</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Box Name" onChange={(e) => setFormData({ ...formData, laundry_box: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="Box Name" value={formData.laundry_box ?? ''} onChange={(e) => setFormData({ ...formData, laundry_box: e.target.value })} />
             </div>
           </>
         )}
@@ -281,22 +327,22 @@ export default function DataRegister() {
           <>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Inst/Company</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" onChange={(e) => setFormData({ ...formData, institution_company: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" value={formData.institution_company ?? ''} onChange={(e) => setFormData({ ...formData, institution_company: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" value={formData.name ?? ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
                 <option value="">Select Room</option>
                 {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.occupants_category ?? ''} onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
                 <option value="REGULAR GUEST">Regular Guest</option>
                 <option value="SPECIAL GUEST">Special Guest</option>
                 <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
@@ -304,38 +350,38 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Job</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. EMPLOYEE" onChange={(e) => setFormData({ ...formData, job: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. EMPLOYEE" value={formData.job ?? ''} onChange={(e) => setFormData({ ...formData, job: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Position</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. MANAGER" onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. MANAGER" value={formData.position ?? ''} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Level</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SENIOR STAFF" onChange={(e) => setFormData({ ...formData, level_category: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SENIOR STAFF" value={formData.level_category ?? ''} onChange={(e) => setFormData({ ...formData, level_category: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Meals Pkg</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. STANDARD BUFFET" onChange={(e) => setFormData({ ...formData, meals_packages: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. STANDARD BUFFET" value={formData.meals_packages ?? ''} onChange={(e) => setFormData({ ...formData, meals_packages: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Breakfast DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({ ...formData, breakfast_dp: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" value={formData.breakfast_dp ?? ''} onChange={(e) => setFormData({ ...formData, breakfast_dp: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Lunch DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U SMELTER CANTEEN" onChange={(e) => setFormData({ ...formData, lunch_dp: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U SMELTER CANTEEN" value={formData.lunch_dp ?? ''} onChange={(e) => setFormData({ ...formData, lunch_dp: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Dinner DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" onChange={(e) => setFormData({ ...formData, dinner_dp: e.target.value })} />
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" value={formData.dinner_dp ?? ''} onChange={(e) => setFormData({ ...formData, dinner_dp: e.target.value })} />
             </div>
           </>
         )}
 
         <div className="grid grid-cols-4 items-center gap-4 mt-2">
           <Label className="text-right font-medium">Remarks</Label>
-          <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
+          <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." value={formData.remarks ?? ''} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
         </div>
       </div>
     );
@@ -343,72 +389,69 @@ export default function DataRegister() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
-
-
-      {/* Main Content */}
       <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full">
-        <CardHeader className="bg-white border-b border-emerald-100 pb-4 shrink-0">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <CardTitle className="text-lg text-emerald-950 uppercase">{getCardTitle()}</CardTitle>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0">
+          <div className="p-4 overflow-x-auto border-b border-emerald-100 bg-white shrink-0">
+            <TabsList className="bg-stone-100 p-1.5 rounded-2xl border border-stone-200 inline-flex w-max">
+              <TabsTrigger value="area" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <MapPin size={16} /> AREA
+              </TabsTrigger>
+              <TabsTrigger value="mess" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Home size={16} /> MESS
+              </TabsTrigger>
+              <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <BedDouble size={16} /> BEDROOM
+              </TabsTrigger>
+              <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Users size={16} /> MEETING ROOM
+              </TabsTrigger>
+              <TabsTrigger value="meals" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Utensils size={16} /> MEALS DROP POINT
+              </TabsTrigger>
+              <TabsTrigger value="laundry_dp" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Shirt size={16} /> LAUNDRY DROP & DELIVERY POINT
+              </TabsTrigger>
+              <TabsTrigger value="laundry_bag" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Package size={16} /> LAUNDRY BAG & BOX
+              </TabsTrigger>
+              <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Users size={16} /> GUEST
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="bg-white border-b border-emerald-100 p-4 shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <CardTitle className="text-lg text-emerald-950 uppercase font-bold">{getCardTitle()}</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
-                    <Plus size={18} /> Add New Entry
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-emerald-950 text-xl uppercase">Add New {activeTab.replace('_', ' ')}</DialogTitle>
-                  </DialogHeader>
-                  {renderAddForm()}
-                  <DialogFooter>
-                    <Button onClick={() => setIsModalOpen(false)} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
-                    <Button onClick={handleSave} className="bg-emerald-950 text-stone-50 hover:bg-emerald-900" disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Entry'}
+              {canInsert && (
+                <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingId(null); }}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingId(null); setFormData({}); }} className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
+                      <Plus size={18} /> Add New Entry
                     </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-emerald-950 text-xl uppercase">{editingId ? 'Edit' : 'Add New'} {activeTab.replace('_', ' ')}</DialogTitle>
+                    </DialogHeader>
+                    {renderAddForm()}
+                    <DialogFooter>
+                      <Button onClick={() => { setIsModalOpen(false); setEditingId(null); }} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
+                      <Button onClick={handleSave} className="bg-emerald-950 text-stone-50 hover:bg-emerald-900" disabled={isSaving}>
+                        {isSaving ? 'Saving...' : editingId ? 'Update Entry' : 'Save Entry'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
-        </CardHeader>
 
-        <CardContent className="flex flex-col flex-1 p-0 bg-stone-50/30 min-h-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0">
-            <div className="p-4 overflow-x-auto border-b border-emerald-100 bg-white shrink-0">
-              <TabsList className="bg-stone-100 p-1.5 rounded-2xl border border-stone-200 inline-flex w-max">
-                <TabsTrigger value="area" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <MapPin size={16} /> Area
-                </TabsTrigger>
-                <TabsTrigger value="mess" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Home size={16} /> Mess
-                </TabsTrigger>
-                <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <BedDouble size={16} /> Bedroom
-                </TabsTrigger>
-                <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Users size={16} /> Meeting Room
-                </TabsTrigger>
-                <TabsTrigger value="meals" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Utensils size={16} /> Meals Drop Point
-                </TabsTrigger>
-                <TabsTrigger value="laundry_dp" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Shirt size={16} /> Laundry Drop & Delivery Point
-                </TabsTrigger>
-                <TabsTrigger value="laundry_bag" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Package size={16} /> Laundry Bag & Box
-                </TabsTrigger>
-                <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                  <Users size={16} /> Guest
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
+          <CardContent className="flex flex-col flex-1 p-0 bg-stone-50/30 min-h-0">
             <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
               {/* TAB A: AREA */}
               <TabsContent value="area" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
@@ -422,6 +465,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">REGISTERED BY</th>
                         <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
+                        <th className="px-6 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -433,6 +477,16 @@ export default function DataRegister() {
                           <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-6 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -456,6 +510,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">REGISTERED BY</th>
                         <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
+                        <th className="px-4 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -471,6 +526,16 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -493,6 +558,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">REGISTERED BY</th>
                         <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
+                        <th className="px-4 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -507,6 +573,16 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -529,6 +605,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">REGISTERED BY</th>
                         <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
+                        <th className="px-4 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -543,10 +620,20 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600">{row.reserved_by || 'Admin'}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : new Date().toISOString().split('T')[0]}</td>
                           <td className="px-4 py-3 text-emerald-600">-</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                       {paginatedData.length === 0 && (
-                        <tr><td colSpan={9} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
+                        <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -566,6 +653,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">REGISTERED BY</th>
                         <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
+                        <th className="px-6 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -578,6 +666,16 @@ export default function DataRegister() {
                           <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-6 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -598,6 +696,7 @@ export default function DataRegister() {
                         <th className="px-6 py-4">REGISTERED BY</th>
                         <th className="px-6 py-4">LAST REGISTERED</th>
                         <th className="px-6 py-4">REMARKS</th>
+                        <th className="px-6 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -610,6 +709,16 @@ export default function DataRegister() {
                           <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-6 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -631,6 +740,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4">REGISTERED BY</th>
                         <th className="px-4 py-4">LAST REGISTERED</th>
                         <th className="px-4 py-4">REMARKS</th>
+                        <th className="px-4 py-4 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -644,6 +754,16 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
                           <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -673,6 +793,7 @@ export default function DataRegister() {
                         <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REGISTERED BY</th>
                         <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>LAST REGISTERED</th>
                         <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REMARKS</th>
+                        <th className="px-4 py-4 text-center border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>ACTION</th>
                       </tr>
                       <tr className="bg-emerald-900/50">
                         <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
@@ -701,6 +822,16 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.registered_by || '-'}</td>
                           <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
                           <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.remarks || '-'}</td>
+                          <td className="px-4 py-3 text-center border-l border-emerald-50">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -708,38 +839,38 @@ export default function DataRegister() {
                 </div>
               </TabsContent>
             </div>
-          </Tabs>
 
-          {/* Pagination Controls */}
-          <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl shrink-0">
-            <div className="text-sm text-emerald-600">
-              Showing <span className="font-medium text-emerald-950">{currentData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-emerald-950">{Math.min(currentPage * itemsPerPage, currentData.length)}</span> of <span className="font-medium text-emerald-950">{currentData.length}</span> entries
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="border-emerald-200 text-emerald-800"
-              >
-                <ChevronLeft size={16} /> Previous
-              </Button>
-              <div className="text-sm font-medium text-emerald-950 px-2">
-                Page {currentPage} of {totalPages}
+            {/* Pagination Controls */}
+            <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl shrink-0">
+              <div className="text-sm text-emerald-600">
+                Showing <span className="font-medium text-emerald-950">{currentData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-emerald-950">{Math.min(currentPage * itemsPerPage, currentData.length)}</span> of <span className="font-medium text-emerald-950">{currentData.length}</span> entries
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="border-emerald-200 text-emerald-800"
-              >
-                Next <ChevronRight size={16} />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="border-emerald-200 text-emerald-800"
+                >
+                  <ChevronLeft size={16} /> Previous
+                </Button>
+                <div className="text-sm font-medium text-emerald-950 px-2">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="border-emerald-200 text-emerald-800"
+                >
+                  Next <ChevronRight size={16} />
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        </Tabs>
       </Card>
     </div>
   );

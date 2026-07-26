@@ -8,23 +8,27 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
-  Info
+  Info,
+  UserCog
 } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { cn } from '@/lib/utils';
-
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Building2, label: 'Data Register', path: '/data-register' },
-  { icon: BedDouble, label: 'Reservations', path: '/reservations' },
-  { icon: Info, label: 'Information', path: '/information' },
-  { icon: UtensilsCrossed, label: 'Meals Services', path: '/meals' },
-  { icon: Shirt, label: 'Laundry Services', path: '/laundry' },
-];
+import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { sidebarOpen, toggleSidebar } = useAppStore();
+  const { user, sidebarOpen, toggleSidebar } = useAppStore();
+  const role = user?.role || 'super';
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/', allowed: hasPermission(role, ROLE_PERMISSIONS.dashboard.view) },
+    { icon: Building2, label: 'Data Register', path: '/data-register', allowed: hasPermission(role, ROLE_PERMISSIONS.dataRegister.view) },
+    { icon: BedDouble, label: 'Reservations', path: '/reservations', allowed: hasPermission(role, ROLE_PERMISSIONS.reservations.bedroomView) },
+    { icon: Info, label: 'Information', path: '/information', allowed: hasPermission(role, ROLE_PERMISSIONS.information.view) },
+    { icon: UtensilsCrossed, label: 'Meals Services', path: '/meals', allowed: hasPermission(role, ROLE_PERMISSIONS.meals.scheduleView) },
+    { icon: Shirt, label: 'Laundry Services', path: '/laundry', allowed: hasPermission(role, ROLE_PERMISSIONS.laundry.droppingView) },
+    { icon: UserCog, label: 'Manage Accounts', path: '/manage-accounts', allowed: hasPermission(role, ROLE_PERMISSIONS.manageAccounts.create) },
+  ].filter(item => item.allowed);
 
   return (
     <aside
@@ -93,3 +97,4 @@ const Sidebar: React.FC = () => {
 };
 
 export default Sidebar;
+

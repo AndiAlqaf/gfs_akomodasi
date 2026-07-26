@@ -9,6 +9,7 @@ import Laundry from './pages/Laundry';
 import Information from './pages/Information';
 import DataRegister from './pages/DataRegister';
 import Login from './pages/Login';
+import UserManagement from './pages/UserManagement';
 import { useAppStore } from './stores/useAppStore';
 
 const queryClient = new QueryClient({
@@ -40,6 +41,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
+            <Route path="manage-accounts" element={<UserManagement />} />
             <Route path="data-register" element={<DataRegister />} />
             <Route path="reservations" element={<Reservations />} />
             <Route path="meals" element={<Meals />} />

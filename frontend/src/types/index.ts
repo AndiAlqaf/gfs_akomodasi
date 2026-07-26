@@ -135,9 +135,12 @@ export interface DashboardStats {
   laundryInProcess: number;
 }
 
+import type { RoleCode } from '@/config/roles';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'front_desk' | 'office_boy' | 'driver' | 'laundry_coordinator' | 'laundry_officer' | 'laundry_crew' | 'canteen_officer';
+  role: RoleCode;
 }
+

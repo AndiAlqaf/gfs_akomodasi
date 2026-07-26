@@ -12,12 +12,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
+import { PRESET_ACCOUNTS } from '@/config/roles';
+
 const Header: React.FC = () => {
   const { user, logout } = useAppStore();
   const location = useLocation();
 
+  const currentAccount = PRESET_ACCOUNTS.find(a => a.role === user?.role);
+  const roleDisplay = currentAccount ? currentAccount.roleLabel : (user?.role?.toUpperCase() || 'SUPER');
+
   const pageTitles: Record<string, string> = {
     '/': 'Dashboard',
+    '/manage-accounts': 'Manage Access Accounts',
     '/data-register': 'Data Register',
     '/reservations': 'Reservation & Check-In/ Out',
     '/information': 'Information',
@@ -26,6 +32,7 @@ const Header: React.FC = () => {
   };
 
   const currentTitle = pageTitles[location.pathname] || '';
+
 
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-6 py-4 shadow-sm">
@@ -56,8 +63,8 @@ const Header: React.FC = () => {
                   <User size={18} className="text-lime-400" />
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-semibold text-emerald-950 leading-tight mb-0.5">{user?.name || 'Admin User'}</p>
-                  <p className="text-xs text-slate-500 font-medium leading-none">{user?.role || 'Administrator'}</p>
+                  <p className="text-sm font-semibold text-emerald-950 leading-tight mb-0.5">{user?.name || 'Super Admin'}</p>
+                  <p className="text-xs text-lime-600 font-semibold leading-none">{roleDisplay}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

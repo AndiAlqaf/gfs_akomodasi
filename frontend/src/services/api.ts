@@ -60,6 +60,10 @@ export const dataRegisterAPI = {
   getMeetingRooms: () => api.get('/data_register.php', { params: { action: 'get_meeting_rooms' } }),
   create: (type: string, data: any) =>
     api.post('/data_register.php', data, { params: { action: `add_${type}` } }),
+  update: (type: string, id: string | number, data: any) =>
+    api.post('/data_register.php', { id, ...data }, { params: { action: `update_${type}` } }),
+  delete: (type: string, id: string | number) =>
+    api.post('/data_register.php', { id }, { params: { action: `delete_${type}` } }),
 };
 
 export const messAPI = {
@@ -98,6 +102,7 @@ export const mealsAPI = {
 
 export const laundryAPI = {
   getAll: () => api.get('/laundry.php'),
+  getData: () => api.get('/laundry.php'),
   createDrop: (data: any) => api.post('/laundry.php?action=create_drop', data),
   deliverToLaundry: (boxId: string) => api.post('/laundry.php?action=deliver_to_laundry', { laundry_box_id: boxId }),
   receiveBag: (data: any) => api.post('/laundry.php?action=receive_bag', data),
@@ -105,6 +110,15 @@ export const laundryAPI = {
   completeProcess: (bagId: string) => api.post('/laundry.php?action=complete_process', { laundry_bag_id: bagId }),
   returnToDrop: (boxId: string) => api.post('/laundry.php?action=return_to_drop', { laundry_box_id: boxId }),
   distributeToRoom: (bagId: string) => api.post('/laundry.php?action=distribute_to_room', { laundry_bag_id: bagId }),
+  updateAction: (action: string, id: string, data?: any) => {
+    if (action === 'deliver') return api.post('/laundry.php?action=deliver_to_laundry', { laundry_box_id: id });
+    if (action === 'return') return api.post('/laundry.php?action=return_to_drop', { laundry_box_id: id });
+    if (action === 'receive') return api.post('/laundry.php?action=receive_bag', { laundry_bag_id: id, ...data });
+    if (action === 'add_details') return api.post('/laundry.php?action=add_details', data);
+    if (action === 'complete') return api.post('/laundry.php?action=complete_process', { laundry_bag_id: id });
+    if (action === 'distribute') return api.post('/laundry.php?action=distribute_to_room', { laundry_bag_id: id });
+    return api.get('/laundry.php');
+  }
 };
 
 export const dashboardAPI = {

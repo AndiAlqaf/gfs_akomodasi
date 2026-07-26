@@ -171,7 +171,7 @@ try {
                 break;
 
             case 'add_meeting_room':
-                requireFields($data, ['meeting_room', 'room_id', 'building', 'capacity']);
+                requireFields($data, ['meeting_room', 'building', 'capacity']);
                 $stmt = $pdo->prepare('INSERT INTO meeting_rooms (room, building, capacity, status) VALUES (?, ?, ?, ?)');
                 $stmt->execute([
                     $data['meeting_room'],
@@ -180,6 +180,116 @@ try {
                     $data['room_status'] ?? 'READY'
                 ]);
                 jsonResponse(['success' => true], 201);
+                break;
+
+            case 'update_area':
+                requireFields($data, ['id', 'area_name', 'area_id']);
+                $pdo->prepare('UPDATE areas SET area_name = ?, area_id = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['area_name'], $data['area_id'], $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_mess':
+                requireFields($data, ['id', 'mess_name', 'mess_id', 'area_id']);
+                $pdo->prepare('UPDATE messes SET mess_name = ?, mess_id = ?, area_id = ?, rooms_count = ?, mess_status = ?, managed_by = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['mess_name'], $data['mess_id'], $data['area_id'], $data['rooms_count'] ?? 0, $data['mess_status'] ?? 'OWNED BY CERIA', $data['managed_by'] ?? '', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_room':
+                requireFields($data, ['id', 'room_no', 'mess_id']);
+                $pdo->prepare('UPDATE rooms SET room_no = ?, mess_id = ?, room_allocation = ?, beds = ?, room_status = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['room_no'], $data['mess_id'], $data['room_allocation'] ?? 'REGULAR GUEST', $data['beds'] ?? 1, $data['room_status'] ?? 'READY', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_meals_dp':
+                requireFields($data, ['id', 'delivery_point', 'area_id']);
+                $pdo->prepare('UPDATE meals_dp SET delivery_point = ?, area_id = ?, canteen_status = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['delivery_point'], $data['area_id'], $data['canteen_status'] ?? 'READY', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_laundry_dp':
+                requireFields($data, ['id', 'point_name', 'area_id']);
+                $pdo->prepare('UPDATE laundry_dp SET point_name = ?, area_id = ?, dp_status = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['point_name'], $data['area_id'], $data['dp_status'] ?? 'READY', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_laundry_bag':
+                requireFields($data, ['id', 'nama', 'room_id']);
+                $pdo->prepare('UPDATE laundry_bag SET nama = ?, room_id = ?, laundry_bag = ?, laundry_box = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['nama'], $data['room_id'], $data['laundry_bag'] ?? '', $data['laundry_box'] ?? '', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_guest':
+                requireFields($data, ['id', 'room_id', 'name']);
+                $pdo->prepare('UPDATE guests SET room_id = ?, name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?')
+                    ->execute([$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $data['remarks'] ?? '', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'update_meeting_room':
+                requireFields($data, ['id', 'meeting_room', 'building', 'capacity']);
+                $pdo->prepare('UPDATE meeting_rooms SET room = ?, building = ?, capacity = ?, status = ? WHERE id = ?')
+                    ->execute([$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY', $data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_area':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM areas WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_mess':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM messes WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_room':
+                requireFields($data, ['id']);
+                $stmt = $pdo->prepare('SELECT mess_id FROM rooms WHERE id = ?');
+                $stmt->execute([$data['id']]);
+                $messId = $stmt->fetchColumn();
+                $pdo->prepare('DELETE FROM rooms WHERE id = ?')->execute([$data['id']]);
+                if ($messId) {
+                    $pdo->prepare('UPDATE messes SET rooms_count = GREATEST(0, rooms_count - 1) WHERE id = ?')->execute([$messId]);
+                }
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_meals_dp':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM meals_dp WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_laundry_dp':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM laundry_dp WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_laundry_bag':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM laundry_bag WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_guest':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM guests WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
+                break;
+
+            case 'delete_meeting_room':
+                requireFields($data, ['id']);
+                $pdo->prepare('DELETE FROM meeting_rooms WHERE id = ?')->execute([$data['id']]);
+                jsonResponse(['success' => true]);
                 break;
 
             default:

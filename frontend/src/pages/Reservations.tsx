@@ -4,8 +4,7 @@ import { reservationAPI, roomAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Calendar, User, MapPin, LogIn, LogOut, CheckCircle, Search, ChevronDown } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Plus, Search, ChevronDown } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -13,9 +12,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
 import { useAppStore } from '@/stores/useAppStore';
 
+import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
+
 const Reservations: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAppStore();
+  const canInsertBooking = hasPermission(user?.role, ROLE_PERMISSIONS.reservations.bedroomInsert);
 
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,9 +40,6 @@ const Reservations: React.FC = () => {
   const [mrAdditionalInfo, setMrAdditionalInfo] = useState('');
   const [mrAction, setMrAction] = useState('SCHEDULLED');
   const [mrRemark, setMrRemark] = useState('');
-
-  const [activeTab, setActiveTab] = useState('bedroom');
-
   const [isCheckInOutDialogOpen, setIsCheckInOutDialogOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState('');
 
@@ -51,15 +50,14 @@ const Reservations: React.FC = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [roomsCurrentPage, setRoomsCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: reservationsResp, isLoading: resLoading } = useQuery({
+  const { data: reservationsResp } = useQuery({
     queryKey: ['reservations'],
     queryFn: reservationAPI.getAll,
   });
 
-  const { data: roomsResp, isLoading: roomsLoading } = useQuery({
+  const { data: roomsResp } = useQuery({
     queryKey: ['rooms', guestCategory],
     queryFn: () => roomAPI.getAll(guestCategory),
   });
@@ -71,11 +69,6 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     }
-  });
-
-  const updateRoomMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => roomAPI.updateStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rooms'] })
   });
 
   const createReservationMutation = useMutation({
@@ -129,15 +122,6 @@ const Reservations: React.FC = () => {
   console.log('reservationsResp:', reservationsResp);
   console.log('reservations:', reservations);
 
-  const getStatusBadge = (status: string) => {
-    const variants: any = {
-      'ON SITE': 'success',
-      'SCHEDULED': 'warning',
-      'OFF SITE': 'secondary',
-    };
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
-  };
-
   const bedroomReservations = reservations.filter((r: any) => r.occupants_category !== 'REGULAR GUEST');
   const bedroomTotalPages = Math.ceil(bedroomReservations.length / itemsPerPage) || 1;
   const bedroomPaginatedData = bedroomReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -167,9 +151,11 @@ const Reservations: React.FC = () => {
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                     <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
-                  <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4" onClick={() => setIsDialogOpen(true)}>
-                    <Plus size={18} /> Book Room
-                  </Button>
+                  {canInsertBooking && (
+                    <Button className="gap-2 bg-lime-400 text-emerald-950 hover:bg-lime-500 font-bold shadow-sm rounded-full px-6" onClick={() => setIsDialogOpen(true)}>
+                      <Plus size={18} /> Book Room
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
