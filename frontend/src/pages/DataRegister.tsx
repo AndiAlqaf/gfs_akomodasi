@@ -273,12 +273,17 @@ export default function DataRegister() {
               <Input type="number" className="col-span-3 border-emerald-200" placeholder="10" value={formData.capacity ?? ''} onChange={(e) => setFormData({ ...formData, capacity: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-medium">Status</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_status ?? 'READY'} onChange={(e) => setFormData({ ...formData, room_status: e.target.value })}>
-                <option value="READY">READY</option>
-                <option value="UNDER REPAIRED">UNDER REPAIRED</option>
-                <option value="OUT OF ORDER">OUT OF ORDER</option>
+              <Label className="text-right font-medium">Room Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_status ?? ''} onChange={(e) => setFormData({ ...formData, room_status: e.target.value })}>
+                <option value="">Select Status</option>
+                <option value="Ready">Ready</option>
+                <option value="Under Repaired">Under Repaired</option>
+                <option value="Out of Order">Out of Order</option>
               </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Remarks</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." value={formData.remarks ?? ''} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
             </div>
           </>
         )}
@@ -296,6 +301,15 @@ export default function DataRegister() {
                 {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
               </select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Canteen Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.canteen_status ?? ''} onChange={(e) => setFormData({ ...formData, canteen_status: e.target.value })}>
+                <option value="">Select Status</option>
+                <option value="Ready">Ready</option>
+                <option value="Under Repaired">Under Repaired</option>
+                <option value="Out of Order">Out of Order</option>
+              </select>
+            </div>
           </>
         )}
 
@@ -310,6 +324,15 @@ export default function DataRegister() {
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.area_id ?? ''} onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}>
                 <option value="">Select Area</option>
                 {areas.map(a => <option key={a.id} value={a.id}>{a.area_name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium leading-tight">Drop & Delivery Point Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.dp_status ?? ''} onChange={(e) => setFormData({ ...formData, dp_status: e.target.value })}>
+                <option value="">Select Status</option>
+                <option value="Ready">Ready</option>
+                <option value="Under Repaired">Under Repaired</option>
+                <option value="Out of Order">Out of Order</option>
               </select>
             </div>
           </>
@@ -350,6 +373,16 @@ export default function DataRegister() {
               <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" value={formData.name ?? ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Personal ID</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.personal_identification ?? ''} onChange={(e) => setFormData({ ...formData, personal_identification: e.target.value })}>
+                <option value="">Select ID Type</option>
+                <option value="RESIDENCE CARD (NIK)">RESIDENCE CARD (NIK)</option>
+                <option value="DRIVING LICENSE">DRIVING LICENSE</option>
+                <option value="EMPLOYEE BADGE">EMPLOYEE BADGE</option>
+                <option value="PASSPORT">PASSPORT</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
                 <option value="">Select Room</option>
@@ -366,7 +399,15 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Job</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. EMPLOYEE" value={formData.job ?? ''} onChange={(e) => setFormData({ ...formData, job: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.job ?? ''} onChange={(e) => setFormData({ ...formData, job: e.target.value })}>
+                <option value="">Select Job</option>
+                <option value="EMPLOYEE">EMPLOYEE</option>
+                <option value="EXECUTIVE">EXECUTIVE</option>
+                <option value="GOVERNMENT OFFICER">GOVERNMENT OFFICER</option>
+                <option value="CONSULTANT">CONSULTANT</option>
+                <option value="CONTRACTOR">CONTRACTOR</option>
+                <option value="OTHERS">OTHERS</option>
+              </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Position</Label>
@@ -374,23 +415,43 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Level</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SENIOR STAFF" value={formData.level_category ?? ''} onChange={(e) => setFormData({ ...formData, level_category: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.level_category ?? ''} onChange={(e) => setFormData({ ...formData, level_category: e.target.value })}>
+                <option value="">Select Level</option>
+                <option value="NON STAFF">NON STAFF</option>
+                <option value="STAFF">STAFF</option>
+                <option value="SENIOR STAFF">SENIOR STAFF</option>
+                <option value="BOD">BOD</option>
+              </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Meals Pkg</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. STANDARD BUFFET" value={formData.meals_packages ?? ''} onChange={(e) => setFormData({ ...formData, meals_packages: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.meals_packages ?? ''} onChange={(e) => setFormData({ ...formData, meals_packages: e.target.value })}>
+                <option value="">Select Meals Pkg</option>
+                <option value="Standard Buffet">Standard Buffet</option>
+                <option value="Room Delivery">Room Delivery</option>
+                <option value="VIP Buffet">VIP Buffet</option>
+              </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Breakfast DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" value={formData.breakfast_dp ?? ''} onChange={(e) => setFormData({ ...formData, breakfast_dp: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.breakfast_dp ?? ''} onChange={(e) => setFormData({ ...formData, breakfast_dp: e.target.value })}>
+                <option value="">Select Breakfast DP</option>
+                {mealsDp.map(m => <option key={`bf-${m.id}`} value={m.delivery_point}>{m.delivery_point}</option>)}
+              </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Lunch DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. OFFICE U SMELTER CANTEEN" value={formData.lunch_dp ?? ''} onChange={(e) => setFormData({ ...formData, lunch_dp: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.lunch_dp ?? ''} onChange={(e) => setFormData({ ...formData, lunch_dp: e.target.value })}>
+                <option value="">Select Lunch DP</option>
+                {mealsDp.map(m => <option key={`lu-${m.id}`} value={m.delivery_point}>{m.delivery_point}</option>)}
+              </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Dinner DP</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="e.g. SATELIT CANTEEN" value={formData.dinner_dp ?? ''} onChange={(e) => setFormData({ ...formData, dinner_dp: e.target.value })} />
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.dinner_dp ?? ''} onChange={(e) => setFormData({ ...formData, dinner_dp: e.target.value })}>
+                <option value="">Select Dinner DP</option>
+                {mealsDp.map(m => <option key={`dn-${m.id}`} value={m.delivery_point}>{m.delivery_point}</option>)}
+              </select>
             </div>
           </>
         )}
@@ -634,10 +695,10 @@ export default function DataRegister() {
                           <td className="px-4 py-3 text-emerald-700">{'MR-' + row.id?.toString().padStart(3, '0')}</td>
                           <td className="px-4 py-3 text-emerald-800">{row.building}</td>
                           <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.capacity}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.status || 'READY'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.reserved_by || 'Admin'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : new Date().toISOString().split('T')[0]}</td>
-                          <td className="px-4 py-3 text-emerald-600">-</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.status || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.reserved_by || '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : '-'}</td>
+                          <td className="px-4 py-3 text-emerald-600">{row.remarks || '-'}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>

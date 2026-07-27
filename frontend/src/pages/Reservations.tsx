@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { reservationAPI, roomAPI } from '@/services/api';
+import { reservationAPI, roomAPI, dataRegisterAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,16 @@ const Reservations: React.FC = () => {
   const { data: roomsResp } = useQuery({
     queryKey: ['rooms', guestCategory],
     queryFn: () => roomAPI.getAll(guestCategory),
+  });
+
+  const { data: guestsResp } = useQuery({
+    queryKey: ['guests'],
+    queryFn: dataRegisterAPI.getGuests,
+  });
+
+  const { data: meetingRoomsResp } = useQuery({
+    queryKey: ['meetingRooms'],
+    queryFn: dataRegisterAPI.getMeetingRooms,
   });
 
   const updateReservationMutation = useMutation({
@@ -169,7 +179,7 @@ const Reservations: React.FC = () => {
                         <th className="px-4 py-3 text-center">NAME</th>
                         <th className="px-4 py-3 text-center">ESTIMATED ARRIVAL</th>
                         <th className="px-4 py-3 text-center">ESTIMATED DEPARTURE</th>
-                        <th className="px-4 py-3 text-center">GUEST STATUS</th>
+                        <th className="px-4 py-3 text-center">ACTION</th>
                         <th className="px-4 py-3 text-center">REMARK</th>
                       </tr>
                     </thead>
@@ -192,17 +202,17 @@ const Reservations: React.FC = () => {
                                     variant="outline"
                                     size="sm"
                                     className={`h-7 text-[10px] uppercase font-medium flex items-center gap-1 w-full justify-between
-                                      ${res.guest_status === 'CANCELLED' ? 'text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100' :
-                                        res.guest_status === 'RE-SCHEDULED' || res.guest_status === 'RE-SHEDULLED' ? 'text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100' :
+                                    ${res.guest_status === 'CANCELLED' ? 'text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100' :
+                                        res.guest_status === 'RE-SCHEDULED' || res.guest_status === 'RE-SCHEDULLED' ? 'text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100' :
                                           'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'}`}
                                   >
-                                    {res.guest_status || 'SCHEDULED'}
+                                    {res.guest_status || 'SCHEDULLED'}
                                     <ChevronDown size={12} className="opacity-50" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-32">
-                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'SCHEDULED' })}>
-                                    SCHEDULED
+                                  <DropdownMenuItem onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'SCHEDULLED' })}>
+                                    SCHEDULLED
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => {
                                     setRescheduleData(res);
@@ -210,7 +220,7 @@ const Reservations: React.FC = () => {
                                     setRescheduleDeparture(res.estimated_departure?.replace(' ', 'T') || '');
                                     setIsRescheduleDialogOpen(true);
                                   }}>
-                                    RE-SCHEDULED
+                                    RE-SCHEDULLED
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'CANCELLED' })}>
                                     CANCELLED
@@ -268,7 +278,14 @@ const Reservations: React.FC = () => {
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Date</label><Input type="date" value={mrDate} onChange={e => setMrDate(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Requested By</label><Input value={mrRequestedBy} onChange={e => setMrRequestedBy(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Departement</label><Input value={mrDepartement} onChange={e => setMrDepartement(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Meeting Room</label><Input value={mrMeetingRoom} onChange={e => setMrMeetingRoom(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Meeting Room</label>
+                          <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" value={mrMeetingRoom} onChange={e => setMrMeetingRoom(e.target.value)} required>
+                            <option value="">-- Select Room --</option>
+                            {meetingRoomsResp?.data?.data?.map((mr: any) => (
+                              <option key={mr.id} value={mr.room}>{mr.room}</option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Participants</label><Input value={mrParticipants} onChange={e => setMrParticipants(e.target.value)} type="number" /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Start</label><Input type="time" value={mrStart} onChange={e => setMrStart(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Finish</label><Input type="time" value={mrFinish} onChange={e => setMrFinish(e.target.value)} required /></div>
@@ -357,7 +374,7 @@ const Reservations: React.FC = () => {
                           <td className="px-4 py-3 uppercase font-medium text-[11px]">{res.guest_status}</td>
                           <td className="px-4 py-3">
                             <div className="flex justify-center gap-1">
-                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'OFF SITE') && (
+                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || res.guest_status === 'OFF SITE') && (
                                 <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>
                                   Check In
                                 </Button>
@@ -413,7 +430,28 @@ const Reservations: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Guest Name</label>
-              <Input placeholder="Enter guest name" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
+              <select className="w-full border p-2 rounded-md" value={guestName} onChange={(e) => setGuestName(e.target.value)}>
+                <option value="">-- Select guest --</option>
+                <option value="SUNARTO URJOYO PURBA">SUNARTO URJOYO PURBA</option>
+                <option value="CHRISTIAN BAMBANG KHRISNA MUKTI">CHRISTIAN BAMBANG KHRISNA MUKTI</option>
+                <option value="MR. ZHENG BU DONG">MR. ZHENG BU DONG</option>
+                <option value="TA'DUNG">TA'DUNG</option>
+                <option value="REINHARD SIAHAAN">REINHARD SIAHAAN</option>
+                <option value="SUWARTO PRAWIROATMODJO">SUWARTO PRAWIROATMODJO</option>
+                <option value="ANDRE CH MR DAENUWY">ANDRE CH MR DAENUWY</option>
+                <option value="SLAMET SURYANTO">SLAMET SURYANTO</option>
+                <option value="SYAMSI BUANG">SYAMSI BUANG</option>
+                <option value="ROIMON BARUS">ROIMON BARUS</option>
+                <option value="YARIS TANDI">YARIS TANDI</option>
+                <option value="ALIMUDDIN TOLA">ALIMUDDIN TOLA</option>
+                <option value="BUSYAIRI">BUSYAIRI</option>
+                <option value="IMRAN ROSJADI PABITJARA">IMRAN ROSJADI PABITJARA</option>
+                <option value="AGUSTINUS LONTOH">AGUSTINUS LONTOH</option>
+                <option value="ANDI MAPPASELA">ANDI MAPPASELA</option>
+                <option value="LUSYAN TADUNG">LUSYAN TADUNG</option>
+                <option value="ALFINA WIJANARNO">ALFINA WIJANARNO</option>
+                <option value="ALIM SIDDIQ SOLEH">ALIM SIDDIQ SOLEH</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Select Available Room</label>
@@ -454,7 +492,7 @@ const Reservations: React.FC = () => {
               <label className="block text-sm font-medium mb-1 text-emerald-900">Select Guest</label>
               <select className="w-full border border-emerald-200 p-2 rounded-lg focus:border-emerald-500" value={selectedReservationId} onChange={(e) => setSelectedReservationId(e.target.value)}>
                 <option value="">-- Choose Reservation --</option>
-                {reservations?.filter((r: any) => r.guest_status === 'SCHEDULED' || r.guest_status === 'ON SITE').map((r: any) => (
+                {reservations?.filter((r: any) => r.guest_status === 'SCHEDULED' || r.guest_status === 'SCHEDULLED' || r.guest_status === 'ON SITE').map((r: any) => (
                   <option key={r.id} value={r.id}>{r.guestName} - {r.roomNo} ({r.guest_status})</option>
                 ))}
               </select>
