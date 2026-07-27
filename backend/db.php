@@ -124,6 +124,47 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    jsonResponse(['error' => 'Connection failed: ' . $e->getMessage()], 500);
+    if (strpos($e->getMessage(), '1049') !== false || strpos($e->getMessage(), 'Unknown database') !== false || strpos($e->getMessage(), 'database') !== false) {
+        try {
+            // 1. Connect without dbname to create the database automatically in Laragon/XAMPP
+            $pdoNoDb = new PDO(sprintf('mysql:host=%s;port=%s;charset=%s', $host, $port, $charset), $user, $pass, $options);
+            $pdoNoDb->exec("CREATE DATABASE IF NOT EXISTS `$db` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;");
+            $pdoNoDb->exec("USE `$db`;");
+            
+            // 2. Import primary database dump if exists
+            $sqlFile = __DIR__ . '/gfs_akomodasi_db .sql';
+            if (file_exists($sqlFile)) {
+                $sql = file_get_contents($sqlFile);
+                if (substr($sql, 0, 3) === "\xEF\xBB\xBF") {
+                    $sql = substr($sql, 3);
+                }
+                try { $pdoNoDb->exec($sql); } catch (\Exception $ex) {}
+            }
+            
+            // 3. Import master schema if exists
+            $sqlFile2 = __DIR__ . '/master_schema.sql';
+            if (file_exists($sqlFile2)) {
+                $sql2 = file_get_contents($sqlFile2);
+                if (substr($sql2, 0, 3) === "\xEF\xBB\xBF") {
+                    $sql2 = substr($sql2, 3);
+                }
+                try { $pdoNoDb->exec($sql2); } catch (\Exception $ex) {}
+            }
+            
+            // 4. Run master migration script to ensure all 14 tables and user accounts exist
+            if (file_exists(__DIR__ . '/migrate_all.php')) {
+                ob_start();
+                include __DIR__ . '/migrate_all.php';
+                ob_end_clean();
+            }
+            
+            // 5. Reconnect to the newly restored database
+            $pdo = new PDO($dsn, $user, $pass, $options);
+        } catch (\Exception $exRecovery) {
+            jsonResponse(['error' => 'Auto-recovery failed: ' . $exRecovery->getMessage() . ' | Orig: ' . $e->getMessage()], 500);
+        }
+    } else {
+        jsonResponse(['error' => 'Connection failed: ' . $e->getMessage()], 500);
+    }
 }
 ?>
