@@ -234,14 +234,22 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Allocation</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_allocation ?? ''} onChange={(e) => setFormData({ ...formData, room_allocation: e.target.value })}>
                 <option value="">Select Allocation</option>
-                <option value="REGULAR GUEST">Regular Guest</option>
-                <option value="SPECIAL GUEST">Special Guest</option>
-                <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
+                <option value="REGULAR GUEST">REGULAR GUEST</option>
+                <option value="SPECIAL GUEST">SPECIAL GUEST</option>
+                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Beds</Label>
               <Input type="number" className="col-span-3 border-emerald-200" placeholder="1" value={formData.beds ?? ''} onChange={(e) => setFormData({ ...formData, beds: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_status ?? 'READY'} onChange={(e) => setFormData({ ...formData, room_status: e.target.value })}>
+                <option value="READY">READY</option>
+                <option value="UNDER REPAIRED">UNDER REPAIRED</option>
+                <option value="OUT OF ORDER">OUT OF ORDER</option>
+              </select>
             </div>
           </>
         )}
@@ -263,6 +271,14 @@ export default function DataRegister() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Capacity</Label>
               <Input type="number" className="col-span-3 border-emerald-200" placeholder="10" value={formData.capacity ?? ''} onChange={(e) => setFormData({ ...formData, capacity: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_status ?? 'READY'} onChange={(e) => setFormData({ ...formData, room_status: e.target.value })}>
+                <option value="READY">READY</option>
+                <option value="UNDER REPAIRED">UNDER REPAIRED</option>
+                <option value="OUT OF ORDER">OUT OF ORDER</option>
+              </select>
             </div>
           </>
         )}
@@ -343,9 +359,9 @@ export default function DataRegister() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.occupants_category ?? ''} onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
-                <option value="REGULAR GUEST">Regular Guest</option>
-                <option value="SPECIAL GUEST">Special Guest</option>
-                <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
+                <option value="REGULAR GUEST">REGULAR GUEST</option>
+                <option value="SPECIAL GUEST">SPECIAL GUEST</option>
+                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -379,10 +395,12 @@ export default function DataRegister() {
           </>
         )}
 
-        <div className="grid grid-cols-4 items-center gap-4 mt-2">
-          <Label className="text-right font-medium">Remarks</Label>
-          <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." value={formData.remarks ?? ''} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
-        </div>
+        {activeTab !== 'room' && activeTab !== 'meeting_room' && (
+          <div className="grid grid-cols-4 items-center gap-4 mt-2">
+            <Label className="text-right font-medium">Remarks</Label>
+            <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." value={formData.remarks ?? ''} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
+          </div>
+        )}
       </div>
     );
   };

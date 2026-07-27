@@ -406,9 +406,9 @@ const Reservations: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Guest Category</label>
               <select className="w-full border p-2 rounded-md" value={guestCategory} onChange={(e) => setGuestCategory(e.target.value)}>
-                <option value="REGULAR GUEST">Regular Guest</option>
-                <option value="SPECIAL GUEST">Special Guest</option>
-                <option value="EXECUTIVE/VIPs GUEST">Executive/VIPs Guest</option>
+                <option value="REGULAR GUEST">REGULAR GUEST</option>
+                <option value="SPECIAL GUEST">SPECIAL GUEST</option>
+                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
               </select>
             </div>
             <div>
