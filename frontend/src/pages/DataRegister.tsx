@@ -35,7 +35,7 @@ export default function DataRegister() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -499,7 +499,7 @@ export default function DataRegister() {
             </TabsList>
           </div>
 
-          <div className="bg-white border-b border-emerald-100 p-4 shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row  md:items-center justify-between gap-4">
             <CardTitle className="text-lg text-emerald-950 uppercase font-bold">{getCardTitle()}</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative">
@@ -531,32 +531,32 @@ export default function DataRegister() {
           </div>
 
           <CardContent className="flex flex-col flex-1 p-0 bg-stone-50/30 min-h-0">
-            <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+            <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden ">
               {/* TAB A: AREA */}
-              <TabsContent value="area" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="area" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-4 text-center">NO</th>
-                        <th className="px-6 py-4">AREA</th>
-                        <th className="px-6 py-4">AREA ID</th>
-                        <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTERED</th>
-                        <th className="px-6 py-4">REMARKS</th>
-                        <th className="px-6 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">AREA</th>
+                        <th className="px-3 py-3">AREA ID</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium">{row.area_name}</td>
-                          <td className="px-6 py-3 text-emerald-700">{row.area_id}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-6 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.area_name}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.area_id}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -574,38 +574,38 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB B: MESS */}
-              <TabsContent value="mess" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="mess" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center">NO</th>
-                        <th className="px-4 py-4">MESS</th>
-                        <th className="px-4 py-4">MESS ID</th>
-                        <th className="px-4 py-4">AREA</th>
-                        <th className="px-4 py-4 text-center">ROOMS</th>
-                        <th className="px-4 py-4">MESS STATUS</th>
-                        <th className="px-4 py-4">MANAGED BY</th>
-                        <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTERED</th>
-                        <th className="px-4 py-4">REMARKS</th>
-                        <th className="px-4 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">MESS</th>
+                        <th className="px-3 py-3">MESS ID</th>
+                        <th className="px-3 py-3">AREA</th>
+                        <th className="px-3 py-3 text-center">ROOMS</th>
+                        <th className="px-3 py-3">MESS STATUS</th>
+                        <th className="px-3 py-3">MANAGED BY</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.mess_id}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.area_name}</td>
-                          <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.rooms_count}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.mess_status}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.managed_by}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.mess_name}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.mess_id}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.rooms_count}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.mess_status}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.managed_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -623,36 +623,36 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB C: ROOM */}
-              <TabsContent value="room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center">NO</th>
-                        <th className="px-4 py-4">ROOM NO</th>
-                        <th className="px-4 py-4">MESS</th>
-                        <th className="px-4 py-4">ROOM ALLOCATION</th>
-                        <th className="px-4 py-4 text-center">BEDS</th>
-                        <th className="px-4 py-4">ROOM STATUS</th>
-                        <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTERED</th>
-                        <th className="px-4 py-4">REMARKS</th>
-                        <th className="px-4 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">ROOM NO</th>
+                        <th className="px-3 py-3">MESS</th>
+                        <th className="px-3 py-3">ROOM ALLOCATION</th>
+                        <th className="px-3 py-3 text-center">BEDS</th>
+                        <th className="px-3 py-3">ROOM STATUS</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.room_allocation}</td>
-                          <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.beds}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.room_status}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room_no}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.mess_name}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.room_allocation}</td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.beds}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.room_status}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -670,36 +670,36 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB H: MEETING ROOM */}
-              <TabsContent value="meeting_room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="meeting_room" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center">NO</th>
-                        <th className="px-4 py-4">MEETING ROOM</th>
-                        <th className="px-4 py-4">ROOM ID</th>
-                        <th className="px-4 py-4">BUILDING</th>
-                        <th className="px-4 py-4 text-center">CAPACITY</th>
-                        <th className="px-4 py-4">ROOM STATUS</th>
-                        <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTERED</th>
-                        <th className="px-4 py-4">REMARKS</th>
-                        <th className="px-4 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">MEETING ROOM</th>
+                        <th className="px-3 py-3">ROOM ID</th>
+                        <th className="px-3 py-3">BUILDING</th>
+                        <th className="px-3 py-3 text-center">CAPACITY</th>
+                        <th className="px-3 py-3">ROOM STATUS</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room}</td>
-                          <td className="px-4 py-3 text-emerald-700">{'MR-' + row.id?.toString().padStart(3, '0')}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.building}</td>
-                          <td className="px-4 py-3 text-center text-emerald-900 font-medium">{row.capacity}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-900">{row.status || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.reserved_by || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.remarks || '-'}</td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room}</td>
+                          <td className="px-1 py-1 text-emerald-700">{'MR-' + row.id?.toString().padStart(3, '0')}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.building}</td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.capacity}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.status || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.reserved_by || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks || '-'}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -720,32 +720,32 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB D: MEALS DELIVERY POINT */}
-              <TabsContent value="meals" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="meals" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-4 text-center">NO</th>
-                        <th className="px-6 py-4">DELIVERY POINT</th>
-                        <th className="px-6 py-4">AREA</th>
-                        <th className="px-6 py-4">CANTEEN STATUS</th>
-                        <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTERED</th>
-                        <th className="px-6 py-4">REMARKS</th>
-                        <th className="px-6 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">DELIVERY POINT</th>
+                        <th className="px-3 py-3">AREA</th>
+                        <th className="px-3 py-3">CANTEEN STATUS</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium">{row.delivery_point}</td>
-                          <td className="px-6 py-3 text-emerald-700">{row.area_name}</td>
-                          <td className="px-6 py-3 font-semibold text-emerald-900">{row.canteen_status}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-6 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.delivery_point}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.canteen_status}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -763,32 +763,32 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB E: LAUNDRY DELIVERY POINT */}
-              <TabsContent value="laundry_dp" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="laundry_dp" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-4 text-center">NO</th>
-                        <th className="px-6 py-4">POINT</th>
-                        <th className="px-6 py-4">AREA</th>
-                        <th className="px-6 py-4">DP STATUS</th>
-                        <th className="px-6 py-4">REGISTERED BY</th>
-                        <th className="px-6 py-4">LAST REGISTERED</th>
-                        <th className="px-6 py-4">REMARKS</th>
-                        <th className="px-6 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">POINT</th>
+                        <th className="px-3 py-3">AREA</th>
+                        <th className="px-3 py-3">DP STATUS</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-6 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-6 py-3 text-emerald-800 font-medium">{row.point_name}</td>
-                          <td className="px-6 py-3 text-emerald-700">{row.area_name}</td>
-                          <td className="px-6 py-3 font-semibold text-emerald-900">{row.dp_status}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-6 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-6 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.point_name}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.dp_status}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -806,34 +806,34 @@ export default function DataRegister() {
               </TabsContent>
 
               {/* TAB F: LAUNDRY BAG & BOX */}
-              <TabsContent value="laundry_bag" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <TabsContent value="laundry_bag" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center">NO</th>
-                        <th className="px-4 py-4">NAMA</th>
-                        <th className="px-4 py-4">ROOM</th>
-                        <th className="px-4 py-4">LAUNDRY BAG</th>
-                        <th className="px-4 py-4">LAUNDRY BOX</th>
-                        <th className="px-4 py-4">REGISTERED BY</th>
-                        <th className="px-4 py-4">LAST REGISTERED</th>
-                        <th className="px-4 py-4">REMARKS</th>
-                        <th className="px-4 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">NO</th>
+                        <th className="px-3 py-3">NAMA</th>
+                        <th className="px-3 py-3">ROOM</th>
+                        <th className="px-3 py-3">LAUNDRY BAG</th>
+                        <th className="px-3 py-3">LAUNDRY BOX</th>
+                        <th className="px-3 py-3">REGISTERED BY</th>
+                        <th className="px-3 py-3">LAST REGISTERED</th>
+                        <th className="px-3 py-3">REMARKS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.nama}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.room_no}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.laundry_bag}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.laundry_box}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.remarks}</td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.nama}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.room_no}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.laundry_bag}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.laundry_box}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -852,56 +852,56 @@ export default function DataRegister() {
 
               {/* TAB G: GUEST */}
               <TabsContent value="guest" className="m-0 animate-fade-in w-full max-w-full data-[state=active]:flex flex-col flex-1 min-h-0 overflow-hidden">
-                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-4 text-center border-b border-emerald-900" rowSpan={2}>NO</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>ROOM NO</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>MESS</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>NAME</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>PERSONAL ID</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>REG. ID CARD</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>JOB</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>POSITION</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
-                        <th className="px-4 py-4 border-b border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
+                        <th className="px-1 py-1 text-center border-b border-emerald-900" rowSpan={2}>NO</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>ROOM NO</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>MESS</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>NAME</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>PERSONAL ID</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>REG. ID CARD</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>JOB</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>POSITION</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
                         <th className="px-4 py-2 text-center border-b border-emerald-900 border-l border-emerald-800" colSpan={3}>MEALS DELIVERY POINT</th>
-                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REGISTERED BY</th>
-                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>LAST REGISTERED</th>
-                        <th className="px-4 py-4 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REMARKS</th>
-                        <th className="px-4 py-4 text-center border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>ACTION</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REGISTERED BY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>LAST REGISTERED</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REMARKS</th>
+                        <th className="px-1 py-1 text-center border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>ACTION</th>
                       </tr>
                       <tr className="bg-emerald-900/50">
-                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
-                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
-                        <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">LUNCH</th>
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">DINNER</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.room_no}</td>
-                          <td className="px-4 py-3 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-bold">{row.name}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.personal_identification || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600">{row.reg_id_card || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.job || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.position || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-900 font-semibold">{row.level_category || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.institution_company || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 font-medium">{row.occupants_category || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800">{row.meals_packages || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.breakfast_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.lunch_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-800 text-center border-l border-emerald-50">{row.dinner_dp || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.registered_by || '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
-                          <td className="px-4 py-3 text-emerald-600 border-l border-emerald-50">{row.remarks || '-'}</td>
-                          <td className="px-4 py-3 text-center border-l border-emerald-50">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room_no}</td>
+                          <td className="px-1 py-1 text-emerald-700">{row.mess_name}</td>
+                          <td className="px-1 py-1 text-emerald-900 font-bold">{row.name}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.personal_identification || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600">{row.reg_id_card || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.job || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.position || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-900 font-semibold">{row.level_category || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.institution_company || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.occupants_category || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800">{row.meals_packages || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.breakfast_dp || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.lunch_dp || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.dinner_dp || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.registered_by || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.remarks || '-'}</td>
+                          <td className="px-1 py-1 text-center border-l border-emerald-50">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
@@ -920,7 +920,7 @@ export default function DataRegister() {
             </div>
 
             {/* Pagination Controls */}
-            <div className="px-6 py-4 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl shrink-0">
+            <div className="px-6 py-2 border-t border-emerald-100 bg-white flex items-center justify-between rounded-b-xl shrink-0">
               <div className="text-sm text-emerald-600">
                 Showing <span className="font-medium text-emerald-950">{currentData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-emerald-950">{Math.min(currentPage * itemsPerPage, currentData.length)}</span> of <span className="font-medium text-emerald-950">{currentData.length}</span> entries
               </div>

@@ -7,7 +7,7 @@ import { Plus, Search, UserCheck, ShieldCheck, Edit, Trash2, Key, Mail, User } f
 import { PRESET_ACCOUNTS, UserAccount, RoleCode } from '@/config/roles';
 import Swal from 'sweetalert2';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const UserManagement: React.FC = () => {
   const [accounts, setAccounts] = useState<UserAccount[]>(PRESET_ACCOUNTS);
@@ -120,7 +120,7 @@ const UserManagement: React.FC = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
       <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-        <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+        <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-1.5 px-6">
           <div className="flex items-center gap-3">
             <CardTitle className="text-lg text-emerald-950 uppercase font-bold flex items-center gap-2">
               <UserCheck className="text-lime-600" /> Manage Access Accounts (User Name & Password)
@@ -211,35 +211,35 @@ const UserManagement: React.FC = () => {
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-          <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+        <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+          <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
             <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
               <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-center">NO</th>
-                    <th className="px-6 py-4">NAME</th>
-                    <th className="px-6 py-4">USERNAME</th>
-                    <th className="px-6 py-4">EMAIL</th>
-                    <th className="px-6 py-4 text-center">ROLE CODE</th>
-                    <th className="px-6 py-4">ROLE LEVEL</th>
-                    <th className="px-6 py-4 text-center">ACTION</th>
+                    <th className="px-3 py-3 text-center">NO</th>
+                    <th className="px-3 py-3">NAME</th>
+                    <th className="px-3 py-3">USERNAME</th>
+                    <th className="px-3 py-3">EMAIL</th>
+                    <th className="px-3 py-3 text-center">ROLE CODE</th>
+                    <th className="px-3 py-3">ROLE LEVEL</th>
+                    <th className="px-3 py-3 text-center">ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-emerald-50">
                   {paginatedAccounts.map((acc, idx) => (
                     <tr key={acc.id} className="hover:bg-emerald-50/50 transition-colors">
-                      <td className="px-6 py-3 text-center font-medium text-emerald-950">{(page - 1) * ITEMS_PER_PAGE + idx + 1}</td>
-                      <td className="px-6 py-3 font-semibold text-emerald-900">{acc.name}</td>
-                      <td className="px-6 py-3 text-emerald-800 font-mono">{acc.username}</td>
-                      <td className="px-6 py-3 text-emerald-700">{acc.email}</td>
-                      <td className="px-6 py-3 text-center">
+                      <td className="px-1 py-1 text-center font-medium text-emerald-950">{(page - 1) * ITEMS_PER_PAGE + idx + 1}</td>
+                      <td className="px-1 py-1 font-semibold text-emerald-900">{acc.name}</td>
+                      <td className="px-1 py-1 text-emerald-800 font-mono">{acc.username}</td>
+                      <td className="px-1 py-1 text-emerald-700">{acc.email}</td>
+                      <td className="px-1 py-1 text-center">
                         <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-lime-100 text-emerald-900 border border-lime-300">
                           {acc.role}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-emerald-800 font-medium">{acc.roleLabel}</td>
-                      <td className="px-6 py-3 text-center">
+                      <td className="px-1 py-1 text-emerald-800 font-medium">{acc.roleLabel}</td>
+                      <td className="px-1 py-1 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => handleOpenDialog(acc)}>
                             <Edit size={16} />
