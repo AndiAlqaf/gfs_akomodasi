@@ -55,8 +55,37 @@ const Laundry: React.FC = () => {
     queryFn: () => laundryAPI.getData(),
   });
 
-  const transactions = laundryDataResp?.data?.data?.transactions || [];
-  const boxList = laundryDataResp?.data?.data?.boxList || [];
+  const transactions = laundryDataResp?.data?.data || laundryDataResp?.data || [];
+
+  // Derive boxList from transactions grouped by laundry_box_id
+  const boxList = React.useMemo(() => {
+    const boxMap: Record<string, any> = {};
+    (transactions as any[]).forEach((t: any) => {
+      const key = t.laundry_box_id;
+      if (!boxMap[key]) {
+        boxMap[key] = {
+          boxId: key,
+          dropPoint: t.drop_point,
+          bagsCount: 0,
+          deliverDate: t.deliver_date,
+          returnDate: t.return_date,
+          isReadyToDeliver: false,
+          isReadyToReturn: false,
+          bags: [],
+        };
+      }
+      boxMap[key].bagsCount += 1;
+      boxMap[key].bags.push(t);
+      // If any bag in this box is DROPPED_AT_POINT, box is ready to deliver
+      if (t.current_status === 'DROPPED_AT_POINT') boxMap[key].isReadyToDeliver = true;
+      // If all bags are PROCESS_COMPLETED or bag_status Rejected, box is ready to return
+      const allDone = boxMap[key].bags.every((b: any) => b.current_status === 'PROCESS_COMPLETED' || b.bag_status === 'Rejected');
+      if (allDone && boxMap[key].bags.length > 0) boxMap[key].isReadyToReturn = true;
+      if (t.deliver_date) boxMap[key].deliverDate = t.deliver_date;
+      if (t.return_date) boxMap[key].returnDate = t.return_date;
+    });
+    return Object.values(boxMap);
+  }, [transactions]);
 
   const createDropMutation = useMutation({
     mutationFn: (data: any) => laundryAPI.createDrop(data),

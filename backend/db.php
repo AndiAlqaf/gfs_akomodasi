@@ -132,7 +132,7 @@ try {
             $pdoNoDb->exec("USE `$db`;");
             
             // 2. Import primary database dump if exists
-            $sqlFile = __DIR__ . '/gfs_akomodasi_db .sql';
+            $sqlFile = __DIR__ . '/database/sql_dumps/gfs_akomodasi_db .sql';
             if (file_exists($sqlFile)) {
                 $sql = file_get_contents($sqlFile);
                 if (substr($sql, 0, 3) === "\xEF\xBB\xBF") {
@@ -142,7 +142,7 @@ try {
             }
             
             // 3. Import master schema if exists
-            $sqlFile2 = __DIR__ . '/master_schema.sql';
+            $sqlFile2 = __DIR__ . '/database/sql_dumps/master_schema.sql';
             if (file_exists($sqlFile2)) {
                 $sql2 = file_get_contents($sqlFile2);
                 if (substr($sql2, 0, 3) === "\xEF\xBB\xBF") {
@@ -151,15 +151,15 @@ try {
                 try { $pdoNoDb->exec($sql2); } catch (\Exception $ex) {}
             }
             
-            // 4. Run master migration script to ensure all 14 tables and user accounts exist
-            if (file_exists(__DIR__ . '/migrate_all.php')) {
+            // 4. Reconnect to the newly restored database
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            
+            // 5. Run master migration script to ensure all 14 tables and user accounts exist
+            if (file_exists(__DIR__ . '/database/migrations/migrate_all.php')) {
                 ob_start();
-                include __DIR__ . '/migrate_all.php';
+                include __DIR__ . '/database/migrations/migrate_all.php';
                 ob_end_clean();
             }
-            
-            // 5. Reconnect to the newly restored database
-            $pdo = new PDO($dsn, $user, $pass, $options);
         } catch (\Exception $exRecovery) {
             jsonResponse(['error' => 'Auto-recovery failed: ' . $exRecovery->getMessage() . ' | Orig: ' . $e->getMessage()], 500);
         }

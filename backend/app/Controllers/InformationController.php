@@ -1,14 +1,16 @@
 <?php
-require __DIR__ . '/db.php';
 
-$method = $_SERVER['REQUEST_METHOD'];
+namespace App\Controllers;
 
-if ($method === 'GET') {
-    $type = $_GET['type'] ?? 'room';
+use App\Core\Database;
 
-    try {
+class InformationController
+{
+    public function index()
+    {
+        $type = $_GET['type'] ?? 'room';
+
         if ($type === 'room') {
-            // INFORMATION_ROOM query
             $query = "
                 SELECT 
                     r.id,
@@ -29,13 +31,9 @@ if ($method === 'GET') {
                 LEFT JOIN guests g ON res.guest_id = g.id
                 ORDER BY r.room_no
             ";
-            $stmt = $pdo->query($query);
-            $data = $stmt->fetchAll();
-            echo json_encode(["data" => $data]);
+            jsonResponse(["data" => Database::fetchAll($query)]);
             
         } elseif ($type === 'pob') {
-            // INFORMATION_PERSON_ON_BOARD query
-            // Including ON SITE and SCHEDULED as per the screenshot (though screenshot says boarding status ON BOARD / OFF BOARD)
             $query = "
                 SELECT 
                     COALESCE(res.check_in, res.check_out) as date,
@@ -60,23 +58,19 @@ if ($method === 'GET') {
                    OR (res.guest_status = 'OFF SITE' AND g.occupants_category IN ('REGULAR GUEST', 'SPECIAL GUEST', 'EXECUTIVE/VIPs GUEST'))
                 ORDER BY COALESCE(res.check_in, res.check_out) DESC
             ";
-            $stmt = $pdo->query($query);
-            $data = $stmt->fetchAll();
+            $data = Database::fetchAll($query);
             
-            // Map ON SITE to ON BOARD, OFF SITE to OFF BOARD just to match screenshot
             $mappedData = array_map(function($row) {
                 if ($row['boarding_status'] === 'ON SITE') $row['boarding_status'] = 'ON BOARD';
                 if ($row['boarding_status'] === 'OFF SITE') $row['boarding_status'] = 'OFF BOARD';
                 return $row;
             }, $data);
 
-            echo json_encode(["data" => $mappedData]);
+            jsonResponse(["data" => $mappedData]);
 
         } elseif ($type === 'meals_delivery' || $type === 'meals_info') {
-            // Aggregate meals for Meals Services Delivery Info or Overall Info
             $is_overall = ($type === 'meals_info');
             
-            // 1. Meals on Schedule (ON SITE guests) - These are for today
             $scheduleQuery = "
                 SELECT 
                     CURDATE() as date,
@@ -92,10 +86,8 @@ if ($method === 'GET') {
                 JOIN areas a ON m.area_id = a.id
                 WHERE res.guest_status = 'ON SITE'
             ";
-            $scheduleStmt = $pdo->query($scheduleQuery);
-            $scheduleData = $scheduleStmt->fetchAll(PDO::FETCH_ASSOC);
+            $scheduleData = Database::fetchAll($scheduleQuery);
 
-            // 2. Meals on Request (APPROVED requests)
             $requestQuery = "
                 SELECT 
                     mor.date,
@@ -109,20 +101,14 @@ if ($method === 'GET') {
                 LEFT JOIN areas a ON mdp.area_id = a.id
                 WHERE mor.status = 'APPROVED'
             ";
-            
             if (!$is_overall) {
                 $requestQuery .= " AND mor.date = CURDATE()";
             }
-            
-            $requestStmt = $pdo->query($requestQuery);
-            $requestData = $requestStmt->fetchAll(PDO::FETCH_ASSOC);
+            $requestData = Database::fetchAll($requestQuery);
 
-            // Grouping array
             $aggregated = [];
-
-            // Helper to add to aggregated
             $addAggregated = function(&$agg, $date, $package, $dp, $area, $meal_time, $packs, $status) {
-                if (!$dp) return; // Skip if no delivery point
+                if (!$dp) return; 
                 $key = $date . '|' . $dp . '|' . $package . '|' . $meal_time . '|' . $status;
                 if (!isset($agg[$key])) {
                     $agg[$key] = [
@@ -138,7 +124,6 @@ if ($method === 'GET') {
                 $agg[$key]['no_of_packs'] += $packs;
             };
 
-            // Process Schedule Data
             foreach ($scheduleData as $row) {
                 $pkg = $row['meals_packages'];
                 $area = $row['area'];
@@ -148,7 +133,6 @@ if ($method === 'GET') {
                 if ($row['dinner_dp']) $addAggregated($aggregated, $date, $pkg, $row['dinner_dp'], $area, 'DINNER', 1, 'PROVIDED');
             }
 
-            // Process Request Data
             foreach ($requestData as $row) {
                 $pkg = $row['meals_packages'];
                 $area = $row['area'];
@@ -159,26 +143,16 @@ if ($method === 'GET') {
                 $addAggregated($aggregated, $date, $pkg, $dp, $area, $time, $packs, 'NOT PROVIDED');
             }
 
-            // Flatten and return, optionally sorting by date desc
             $result = array_values($aggregated);
             usort($result, function($a, $b) {
                 return strtotime($b['date']) - strtotime($a['date']);
             });
-            echo json_encode(["data" => $result]);
-        } elseif ($type === 'meeting') {
-            // INFORMATION_MEETING_ROOMS query
-            $query = "SELECT * FROM meeting_rooms ORDER BY id ASC";
-            $stmt = $pdo->query($query);
-            $data = $stmt->fetchAll();
-            echo json_encode(["data" => $data]);
-        }
+            jsonResponse(["data" => $result]);
 
-    } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["error" => $e->getMessage()]);
+        } elseif ($type === 'meeting') {
+            jsonResponse(["data" => Database::fetchAll("SELECT * FROM meeting_rooms ORDER BY id ASC")]);
+        } else {
+            jsonResponse(["error" => "Invalid type parameter"], 400);
+        }
     }
-} else {
-    http_response_code(405);
-    echo json_encode(["error" => "Method not allowed"]);
 }
-?>

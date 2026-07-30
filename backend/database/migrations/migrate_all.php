@@ -10,7 +10,7 @@
  * 2. Melalui Web Browser: http://domain-anda.com/backend/migrate_all.php
  */
 
-require __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 echo "=== SILARIA (GFS CERIA) - MASTER DATABASE MIGRATION ===\n";
@@ -242,6 +242,23 @@ try {
             $insertMR->execute($rm);
         }
         echo "   -> Seeded 9 default meeting rooms.\n";
+    }
+
+    // Patch new columns for meeting_rooms if missing
+    $mrNewCols = [
+        "departement VARCHAR(100) NULL",
+        "participants INT NULL DEFAULT 0",
+        "start_time VARCHAR(10) NULL",
+        "finish_time VARCHAR(10) NULL",
+        "additional_info TEXT NULL",
+    ];
+    foreach ($mrNewCols as $colDef) {
+        $colName = explode(' ', trim($colDef))[0];
+        $check = $pdo->query("SHOW COLUMNS FROM `meeting_rooms` LIKE '$colName'");
+        if ($check->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `meeting_rooms` ADD COLUMN $colDef");
+            echo "   -> Added column '$colName' to 'meeting_rooms'.\n";
+        }
     }
 
     // 14. TABLE: users (User Management & Role Authentication)

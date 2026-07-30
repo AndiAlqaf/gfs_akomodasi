@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { reservationAPI, roomAPI, dataRegisterAPI } from '@/services/api';
+import { reservationAPI, roomAPI, dataRegisterAPI, meetingRoomAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,8 +69,10 @@ const Reservations: React.FC = () => {
 
   const { data: meetingRoomsResp } = useQuery({
     queryKey: ['meetingRooms'],
-    queryFn: dataRegisterAPI.getMeetingRooms,
+    queryFn: meetingRoomAPI.getAll,
   });
+
+  const meetingRoomsList = meetingRoomsResp?.data?.data || [];
 
   const updateReservationMutation = useMutation({
     mutationFn: ({ id, status, estimated_arrival, estimated_departure }: { id: string; status: string; estimated_arrival?: string; estimated_departure?: string }) => reservationAPI.updateStatus(id, status, estimated_arrival, estimated_departure),
@@ -88,6 +90,24 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setIsDialogOpen(false);
       Swal.fire({ icon: 'success', title: 'Booked!', text: 'Room successfully booked!', timer: 2000, showConfirmButton: false });
+    }
+  });
+
+  const bookMeetingRoomMutation = useMutation({
+    mutationFn: (data: any) => meetingRoomAPI.book(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
+      setIsMeetingDialogOpen(false);
+      Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
+      setMrDate(''); setMrRequestedBy(''); setMrDepartement(''); setMrMeetingRoom(''); setMrParticipants(''); setMrStart(''); setMrFinish(''); setMrAdditionalInfo(''); setMrRemark('');
+    }
+  });
+
+  const cancelMeetingRoomMutation = useMutation({
+    mutationFn: (id: string | number) => meetingRoomAPI.cancel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
+      Swal.fire({ icon: 'success', title: 'Cancelled', text: 'Booking cancelled successfully!', timer: 1500, showConfirmButton: false });
     }
   });
 
@@ -300,8 +320,19 @@ const Reservations: React.FC = () => {
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Remark</label><Input value={mrRemark} onChange={e => setMrRemark(e.target.value)} /></div>
                         <div className="md:col-span-2 flex justify-end mt-2">
                           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" onClick={() => {
-                            Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
-                            setIsMeetingDialogOpen(false);
+                            const selectedMR = meetingRoomsList.find((mr: any) => mr.room === mrMeetingRoom);
+                            if (!mrDate || !mrRequestedBy || !mrMeetingRoom) return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Date, Requested By, and Meeting Room are required.', timer: 2000, showConfirmButton: false });
+                            bookMeetingRoomMutation.mutate({
+                              id: selectedMR?.id,
+                              date: mrDate,
+                              reserved_by: mrRequestedBy,
+                              departement: mrDepartement,
+                              participants: mrParticipants,
+                              start_time: mrStart,
+                              finish_time: mrFinish,
+                              additional_info: mrAdditionalInfo,
+                              status: mrAction,
+                            });
                           }}>Submit Form</Button>
                         </div>
                       </div>
@@ -327,7 +358,31 @@ const Reservations: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting room reservations found.</td></tr>
+                      {meetingRoomsList.map((mr: any) => (
+                        <tr key={mr.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
+                          <td className="px-4 py-3">{mr.date !== '-' ? mr.date : '-'}</td>
+                          <td className="px-4 py-3 text-left">{mr.reserved_by !== '-' ? mr.reserved_by : '-'}</td>
+                          <td className="px-4 py-3">{mr.departement || '-'}</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-950">{mr.room}</td>
+                          <td className="px-4 py-3">{mr.participants || 0}</td>
+                          <td className="px-4 py-3">{mr.start_time || '-'}</td>
+                          <td className="px-4 py-3">{mr.finish_time || '-'}</td>
+                          <td className="px-4 py-3">{mr.additional_info || '-'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              mr.status === 'SCHEDULLED' ? 'bg-emerald-100 text-emerald-700' :
+                              mr.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700' :
+                              'bg-stone-100 text-stone-500'
+                            }`}>{mr.status || '-'}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {mr.booking_status === 'BOOKED' ? (
+                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => cancelMeetingRoomMutation.mutate(mr.id)}>Cancel</Button>
+                            ) : <span className="text-xs text-emerald-600 font-medium">OPEN</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      {meetingRoomsList.length === 0 && <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting room reservations found.</td></tr>}
                     </tbody>
                   </table>
                 </div>

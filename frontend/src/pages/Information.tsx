@@ -52,7 +52,7 @@ const Information: React.FC = () => {
 
 
   const mealsServicesData = mealsInfoResp?.data?.data || [];
-  const laundryItems = laundryResp?.data?.data || [];
+  const laundryItems = laundryResp?.data?.data || laundryResp?.data || [];
 
   const filteredRooms = rooms.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(roomSearch.toLowerCase())));
   const filteredPobs = pobs.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(pobSearch.toLowerCase())));
