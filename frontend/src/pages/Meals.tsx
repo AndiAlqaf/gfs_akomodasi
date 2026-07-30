@@ -12,7 +12,7 @@ import { formatDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const Meals: React.FC = () => {
   const queryClient = useQueryClient();
@@ -126,7 +126,7 @@ const Meals: React.FC = () => {
 
         <TabsContent value="request" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals on Request</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -210,55 +210,55 @@ const Meals: React.FC = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
                 {requestLoading ? (
                   <div className="text-center py-8 text-emerald-600">Loading requests...</div>
                 ) : (
-                  <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                  <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                     <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                       <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                        <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                        <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                           <tr>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>GUESTS</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>REQUEST BY</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>APPROVED BY</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
-                            <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
-                            <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>NO OF PACK</th>
-                            <th className="px-6 py-4 border-b border-emerald-900 text-center border-l border-emerald-800" rowSpan={2}>ACTION</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>GUESTS</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>REQUEST BY</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>APPROVED BY</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>NO OF PACK</th>
+                            <th className="px-1 py-1 border-b border-emerald-900 text-center border-l border-emerald-800" rowSpan={2}>ACTION</th>
                           </tr>
                           <tr className="bg-emerald-900/50">
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
-                            <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">LUNCH</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">DINNER</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">LUNCH</th>
+                            <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">DINNER</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-emerald-50">
                           {paginatedRequests.map((req: any, idx: number) => (
                             <tr key={req.id} className="hover:bg-emerald-50/50 transition-colors">
-                              <td className="px-6 py-3 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                              <td className="px-6 py-3 text-center text-emerald-700">{formatDate(req.date)}</td>
-                              <td className="px-6 py-3 font-semibold text-emerald-900">{req.guest_name}</td>
-                              <td className="px-6 py-3 text-center text-emerald-700">{req.request_by}</td>
-                              <td className="px-6 py-3 text-center text-emerald-700">{req.approved_by || '-'}</td>
-                              <td className="px-6 py-3 text-center">
+                              <td className="px-1 py-1 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                              <td className="px-1 py-1 text-center text-emerald-700">{formatDate(req.date)}</td>
+                              <td className="px-1 py-1 font-semibold text-emerald-900">{req.guest_name}</td>
+                              <td className="px-1 py-1 text-center text-emerald-700">{req.request_by}</td>
+                              <td className="px-1 py-1 text-center text-emerald-700">{req.approved_by || '-'}</td>
+                              <td className="px-1 py-1 text-center">
                                 <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{req.meals_package}</span>
                               </td>
 
-                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'BREAKFAST' ? req.delivery_point : '-'}</td>
-                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'LUNCH' ? req.delivery_point : '-'}</td>
-                              <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'DINNER' ? req.delivery_point : '-'}</td>
+                              <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'BREAKFAST' ? req.delivery_point : '-'}</td>
+                              <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'LUNCH' ? req.delivery_point : '-'}</td>
+                              <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'DINNER' ? req.delivery_point : '-'}</td>
 
-                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'BREAKFAST' ? req.no_of_packs : '-'}</td>
-                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'LUNCH' ? req.no_of_packs : '-'}</td>
-                              <td className="px-4 py-3 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'DINNER' ? req.no_of_packs : '-'}</td>
+                              <td className="px-1 py-1 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'BREAKFAST' ? req.no_of_packs : '-'}</td>
+                              <td className="px-1 py-1 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'LUNCH' ? req.no_of_packs : '-'}</td>
+                              <td className="px-1 py-1 text-center font-mono font-medium text-emerald-800 border-l border-emerald-50 bg-emerald-50/30">{req.meal_time === 'DINNER' ? req.no_of_packs : '-'}</td>
 
-                                <td className="px-6 py-3 text-center border-l border-emerald-50">
+                                <td className="px-1 py-1 text-center border-l border-emerald-50">
                                   {req.status === 'PENDING' ? (
                                     <div className="flex items-center justify-center gap-2">
                                       <span className="text-amber-600 font-semibold text-xs bg-amber-50 px-2.5 py-1 rounded border border-amber-200">PENDING</span>
@@ -301,7 +301,7 @@ const Meals: React.FC = () => {
 
         <TabsContent value="schedule" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals on Schedule</CardTitle>
                 <span className="text-xs font-normal text-emerald-700 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
@@ -315,43 +315,43 @@ const Meals: React.FC = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
               {scheduleLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading schedule...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                   <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>NAME</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
-                          <th className="px-6 py-3 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>NAME</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>MEALS PACKAGES</th>
+                          <th className="px-1 py-1 border-b border-emerald-900 text-center border-l border-emerald-800" colSpan={3}>DELIVERY POINT</th>
                         </tr>
                         <tr className="bg-emerald-900/50">
-                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">BREAKFAST</th>
-                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">LUNCH</th>
-                          <th className="px-4 py-2 text-center text-[10px] tracking-wider border-l border-emerald-800">DINNER</th>
+                          <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                          <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">LUNCH</th>
+                          <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">DINNER</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedSchedule.map((row: any, idx: number) => (
                           <tr key={idx} className="hover:bg-emerald-50/50 transition-colors text-center">
-                            <td className="px-6 py-3 font-medium text-emerald-950">{((schedulePage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                            <td className="px-6 py-3 text-emerald-700">{row.date ? new Date(row.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true }) : new Date().toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true })}</td>
-                            <td className="px-6 py-3 font-semibold text-emerald-950 text-left">{row.room}</td>
-                            <td className="px-6 py-3 text-emerald-700 text-left">{row.mess}</td>
-                            <td className="px-6 py-3 font-medium text-emerald-900 text-left">{row.name}</td>
-                            <td className="px-6 py-3 text-center">
+                            <td className="px-1 py-1 font-medium text-emerald-950">{((schedulePage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-1 py-1 text-emerald-700">{row.date ? new Date(row.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true }) : new Date().toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true })}</td>
+                            <td className="px-1 py-1 font-semibold text-emerald-950 text-left">{row.room}</td>
+                            <td className="px-1 py-1 text-emerald-700 text-left">{row.mess}</td>
+                            <td className="px-1 py-1 font-medium text-emerald-900 text-left">{row.name}</td>
+                            <td className="px-1 py-1 text-center">
                               <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{row.meals_packages}</span>
                             </td>
-                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.breakfast_dp || '-'}</td>
-                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.lunch_dp || '-'}</td>
-                            <td className="px-4 py-3 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.dinner_dp || '-'}</td>
+                            <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.breakfast_dp || '-'}</td>
+                            <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.lunch_dp || '-'}</td>
+                            <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50 bg-emerald-50/20">{row.dinner_dp || '-'}</td>
                           </tr>
                         ))}
                         {paginatedSchedule.length === 0 && (
@@ -381,7 +381,7 @@ const Meals: React.FC = () => {
 
         <TabsContent value="delivery" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals for Delivery</CardTitle>
                 <span className="text-xs font-normal text-emerald-700 normal-case bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
@@ -395,36 +395,36 @@ const Meals: React.FC = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
               {deliveryLoading ? (
                 <div className="text-center py-8 text-emerald-600">Loading delivery info...</div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                   <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                      <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">NO</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">DATE</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEALS PACKAGES</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEALS DELIVERY POINT</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">AREA</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">MEAL TIME</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">NO OF PACKS</th>
-                          <th className="px-6 py-4 border-b border-emerald-900 text-center">ACCOMODATION STATUS</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">NO</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">DATE</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">MEALS PACKAGES</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">MEALS DELIVERY POINT</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">AREA</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">MEAL TIME</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">NO OF PACKS</th>
+                          <th className="px-3 py-3 border-b border-emerald-900 text-center">ACCOMODATION STATUS</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedDelivery.map((row: any, idx: number) => (
                           <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-6 py-3 font-semibold text-emerald-950 text-center">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                            <td className="px-6 py-3 text-emerald-700 text-center">{formatDate(row.date)}</td>
-                            <td className="px-6 py-3 font-medium text-emerald-900">{row.meals_packages}</td>
-                            <td className="px-6 py-3 text-emerald-800">{row.delivery_point}</td>
-                            <td className="px-6 py-3 text-gray-500 text-center">{row.area}</td>
-                            <td className="px-6 py-3 text-emerald-700 font-medium text-center">{row.meal_time}</td>
-                            <td className="px-6 py-3 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
-                            <td className="px-6 py-3 text-emerald-700 text-center">{row.accommodation_status}</td>
+                            <td className="px-1 py-1 font-semibold text-emerald-950 text-center">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-1 py-1 text-emerald-700 text-center">{formatDate(row.date)}</td>
+                            <td className="px-1 py-1 font-medium text-emerald-900">{row.meals_packages}</td>
+                            <td className="px-1 py-1 text-emerald-800">{row.delivery_point}</td>
+                            <td className="px-1 py-1 text-gray-500 text-center">{row.area}</td>
+                            <td className="px-1 py-1 text-emerald-700 font-medium text-center">{row.meal_time}</td>
+                            <td className="px-1 py-1 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
+                            <td className="px-1 py-1 text-emerald-700 text-center">{row.accommodation_status}</td>
                           </tr>
                         ))}
                         {paginatedDelivery.length === 0 && (

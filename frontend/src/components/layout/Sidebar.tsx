@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BedDouble, 
-  UtensilsCrossed, 
+import {
+  LayoutDashboard,
+  BedDouble,
+  UtensilsCrossed,
   Shirt,
   ChevronLeft,
   ChevronRight,
@@ -11,14 +11,21 @@ import {
   Info,
   UserCog
 } from 'lucide-react';
-import { useAppStore } from '@/stores/useAppStore';
+import { useAppStore, useUIStore } from '@/stores/useAppStore';
 import { cn } from '@/lib/utils';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
 const Sidebar: React.FC = () => {
+  const [isHovered, setIsHovered] = React.useState(false);
   const location = useLocation();
-  const { user, sidebarOpen, toggleSidebar } = useAppStore();
+  const { user } = useAppStore();
+  const { setSidebarHovered } = useUIStore();
   const role = user?.role || 'super';
+  const isExpanded = isHovered;
+
+  useEffect(() => {
+    setSidebarHovered(isHovered);
+  }, [isHovered, setSidebarHovered]);
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', allowed: hasPermission(role, ROLE_PERMISSIONS.dashboard.view) },
@@ -32,40 +39,24 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'fixed left-0 top-0 h-full bg-emerald-950 border-r border-emerald-900/50 text-stone-300 transition-all duration-300 z-40 shadow-2xl',
-        sidebarOpen ? 'w-64' : 'w-20'
+        'fixed left-0 top-0 h-full bg-emerald-950 border-r border-emerald-900/50 text-stone-300 transition-all duration-300 z-40 shadow-2xl overflow-x-hidden',
+        isExpanded ? 'w-64' : 'w-20'
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between p-4 border-b border-emerald-900/50">
-        {sidebarOpen && (
-          <div className="flex items-center gap-3">
-            <div className="bg-lime-400 p-2 rounded-lg text-emerald-950 shadow-lg shadow-lime-400/20">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg text-white tracking-tight">SILARIA</h1>
-              <p className="text-[10px] uppercase tracking-wider text-lime-400 font-medium">SITE WOLO</p>
-            </div>
+      <div className="flex items-center p-4 border-b border-emerald-900/50 relative overflow-hidden h-[73px]">
+        <div className="flex items-center gap-3 w-full">
+          <div className="shrink-0 bg-lime-400 p-2 rounded-lg text-emerald-950 shadow-lg shadow-lime-400/20">
+            <Building2 className="w-6 h-6" />
           </div>
-        )}
-        {!sidebarOpen && (
-          <div className="flex items-center justify-center w-full">
-            <div className="bg-lime-400 p-2 rounded-lg text-emerald-950 shadow-lg shadow-lime-400/20">
-              <Building2 className="w-6 h-6" />
-            </div>
+          <div className={cn("transition-all duration-300 whitespace-nowrap", isExpanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4")}>
+            <h1 className="font-bold text-lg text-white tracking-tight">SILARIA</h1>
+            <p className="text-[10px] uppercase tracking-wider text-lime-400 font-medium">SITE WOLO</p>
           </div>
-        )}
-        <button
-          onClick={toggleSidebar}
-          className={cn(
-            "p-2 rounded-lg hover:bg-emerald-900 text-stone-400 hover:text-white transition-colors",
-            !sidebarOpen && "absolute -right-3 top-6 bg-emerald-900 border border-emerald-800 rounded-full shadow-lg"
-          )}
-        >
-          {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-        </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -84,10 +75,10 @@ const Sidebar: React.FC = () => {
                   ? 'bg-lime-400 text-emerald-950 shadow-md shadow-lime-400/20 font-medium'
                   : 'text-stone-400 hover:bg-emerald-900/50 hover:text-white'
               )}
-              title={!sidebarOpen ? item.label : undefined}
+              title={!isExpanded ? item.label : undefined}
             >
-              <Icon size={20} />
-              {sidebarOpen && <span className="font-medium">{item.label}</span>}
+              <div className="shrink-0"><Icon size={20} /></div>
+              <span className={cn("font-medium transition-all duration-300 whitespace-nowrap overflow-hidden", isExpanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 w-0")}>{item.label}</span>
             </Link>
           );
         })}
@@ -97,4 +88,3 @@ const Sidebar: React.FC = () => {
 };
 
 export default Sidebar;
-

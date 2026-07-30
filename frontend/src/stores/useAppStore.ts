@@ -16,7 +16,7 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      sidebarOpen: true,
+      sidebarOpen: false,
       login: (user) => set({ user, isAuthenticated: true }),
       logout: () => set({ user: null, isAuthenticated: false }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -27,3 +27,13 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+interface UIState {
+  isSidebarHovered: boolean;
+  setSidebarHovered: (hovered: boolean) => void;
+}
+
+export const useUIStore = create<UIState>((set) => ({
+  isSidebarHovered: false,
+  setSidebarHovered: (hovered) => set({ isSidebarHovered: hovered }),
+}));

@@ -153,9 +153,9 @@ const Laundry: React.FC = () => {
         </TabsList>
 
         {/* --- TAB 1: DROPPING & DISTRIBUTING --- */}
-        <TabsContent value="dropping" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+        <TabsContent value="dropping" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Dropping & Distributing</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -191,35 +191,35 @@ const Laundry: React.FC = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                 <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-4 text-center">ROOM</th>
-                        <th className="px-6 py-4 text-center">NAME</th>
-                        <th className="px-6 py-4 text-center">LAUNDRY BAG ID</th>
-                        <th className="px-6 py-4 text-center">LAUNDRY BOX</th>
-                        <th className="px-6 py-4 text-center">SERVICES PACKAGES</th>
-                        <th className="px-6 py-4 text-center">DROP POINT</th>
-                        <th className="px-6 py-4 text-center">DROPPING DATE</th>
-                        <th className="px-6 py-4 text-center">DISTRIBUTING DATE</th>
-                        <th className="px-6 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">ROOM</th>
+                        <th className="px-3 py-3 text-center">NAME</th>
+                        <th className="px-3 py-3 text-center">LAUNDRY BAG ID</th>
+                        <th className="px-3 py-3 text-center">LAUNDRY BOX</th>
+                        <th className="px-3 py-3 text-center">SERVICES PACKAGES</th>
+                        <th className="px-3 py-3 text-center">DROP POINT</th>
+                        <th className="px-3 py-3 text-center">DROPPING DATE</th>
+                        <th className="px-3 py-3 text-center">DISTRIBUTING DATE</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {transactions.map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-6 py-3">{t.room}</td>
-                          <td className="px-6 py-3">{t.guest_name}</td>
-                          <td className="px-6 py-3 font-medium">{t.laundry_bag_id}</td>
-                          <td className="px-6 py-3">{t.laundry_box_id}</td>
-                          <td className="px-6 py-3">{t.services_package}</td>
-                          <td className="px-6 py-3">{t.drop_point}</td>
-                          <td className="px-6 py-3 text-xs">{formatDate(t.drop_date)}</td>
-                          <td className="px-6 py-3 text-xs">{formatDate(t.distribute_date)}</td>
-                          <td className="px-6 py-3">
+                          <td className="px-1 py-1">{t.room}</td>
+                          <td className="px-1 py-1">{t.guest_name}</td>
+                          <td className="px-1 py-1 font-medium">{t.laundry_bag_id}</td>
+                          <td className="px-1 py-1">{t.laundry_box_id}</td>
+                          <td className="px-1 py-1">{t.services_package}</td>
+                          <td className="px-1 py-1">{t.drop_point}</td>
+                          <td className="px-1 py-1 text-xs">{formatDate(t.drop_date)}</td>
+                          <td className="px-1 py-1 text-xs">{formatDate(t.distribute_date)}</td>
+                          <td className="px-1 py-1">
                             {t.current_status === 'RETURNED_TO_DROP' ? (
                               <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={() => actionMutation.mutate({ action: 'distribute', id: t.laundry_bag_id })}>Distribute</Button>
                             ) : <span className="text-xs text-emerald-600 font-semibold">{t.current_status}</span>}
@@ -236,9 +236,9 @@ const Laundry: React.FC = () => {
         </TabsContent>
 
         {/* --- TAB 2: DELIVERING & RETURNING --- */}
-        <TabsContent value="delivering" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+        <TabsContent value="delivering" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Delivering & Returning</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -277,19 +277,19 @@ const Laundry: React.FC = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                 <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
-                      <tr><th className="px-6 py-4">LAUNDRY BOX</th><th className="px-6 py-4">BAGS</th><th className="px-6 py-4">DELIVER POINT</th><th className="px-6 py-4">DELIVER DATE</th><th className="px-6 py-4">RETURN DATE</th><th className="px-6 py-4">ACTION</th></tr>
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
+                      <tr><th className="px-3 py-3">LAUNDRY BOX</th><th className="px-3 py-3">BAGS</th><th className="px-3 py-3">DELIVER POINT</th><th className="px-3 py-3">DELIVER DATE</th><th className="px-3 py-3">RETURN DATE</th><th className="px-3 py-3">ACTION</th></tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {boxList.map((b: any) => (
                         <tr key={b.boxId} className="hover:bg-emerald-50/50">
-                          <td className="px-6 py-3 font-bold text-emerald-900">{b.boxId}</td><td className="px-6 py-3">{b.dropPoint}</td><td className="px-6 py-3 text-emerald-600 font-mono">{b.bagsCount} bags</td>
-                          <td className="px-6 py-3 text-xs">{formatDate(b.deliverDate)}</td><td className="px-6 py-3 text-xs">{formatDate(b.returnDate)}</td>
-                          <td className="px-6 py-3">
+                          <td className="px-1 py-1 font-bold text-emerald-900">{b.boxId}</td><td className="px-1 py-1">{b.dropPoint}</td><td className="px-1 py-1 text-emerald-600 font-mono">{b.bagsCount} bags</td>
+                          <td className="px-1 py-1 text-xs">{formatDate(b.deliverDate)}</td><td className="px-1 py-1 text-xs">{formatDate(b.returnDate)}</td>
+                          <td className="px-1 py-1">
                             {b.isReadyToDeliver ? (
                               <Button size="sm" className="bg-amber-500 hover:bg-amber-600 h-7 text-xs px-3" onClick={() => actionMutation.mutate({ action: 'deliver', id: b.boxId })}><Truck size={14} className="mr-1" /> To Laundry</Button>
                             ) : b.isReadyToReturn && !b.returnDate ? (
@@ -308,9 +308,9 @@ const Laundry: React.FC = () => {
         </TabsContent>
 
         {/* --- TAB 3: RECEIVING & CLEANING --- */}
-        <TabsContent value="receiving" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
+        <TabsContent value="receiving" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 flex flex-row items-center justify-between shrink-0 py-4 px-6">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Receiving & Cleaning</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -354,33 +354,33 @@ const Laundry: React.FC = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start space-y-4">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden  space-y-4">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
                 <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-xs font-semibold sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
-                        <th className="px-6 py-4 text-center">LAUNDRY BAG ID</th>
-                        <th className="px-6 py-4 text-center">LAUNDRY BAG STATUS</th>
-                        <th className="px-6 py-4 text-center">RECEIVING DATE</th>
-                        <th className="px-6 py-4 text-center">WEIGHT</th>
-                        <th className="px-6 py-4 text-center">NO OF PCS</th>
-                        <th className="px-6 py-4 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">LAUNDRY BAG ID</th>
+                        <th className="px-3 py-3 text-center">LAUNDRY BAG STATUS</th>
+                        <th className="px-3 py-3 text-center">RECEIVING DATE</th>
+                        <th className="px-3 py-3 text-center">WEIGHT</th>
+                        <th className="px-3 py-3 text-center">NO OF PCS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-6 py-3 font-bold text-emerald-900">{t.laundry_bag_id}</td>
-                          <td className="px-6 py-3 font-semibold text-emerald-700">{t.bag_status}</td>
-                          <td className="px-6 py-3 text-xs">{formatDate(t.receiving_date)}</td>
-                          <td className="px-6 py-3">
+                          <td className="px-1 py-1 font-bold text-emerald-900">{t.laundry_bag_id}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-700">{t.bag_status}</td>
+                          <td className="px-1 py-1 text-xs">{formatDate(t.receiving_date)}</td>
+                          <td className="px-1 py-1">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex justify-center"><Input type="number" step="0.1" className="w-20 h-8 text-center" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} /></div>
                             ) : <span className="font-mono">{t.weight || '-'}</span>}
                           </td>
-                          <td className="px-6 py-3 font-mono">{t.no_of_pcs_total}</td>
-                          <td className="px-6 py-3 text-center">
+                          <td className="px-1 py-1 font-mono">{t.no_of_pcs_total}</td>
+                          <td className="px-1 py-1 text-center">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex gap-2 justify-center">
                                 <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-7 px-2" onClick={() => actionMutation.mutate({ action: 'receive', id: t.laundry_bag_id, data: { bag_status: 'Accepted', weight: weightInput[t.id] } })}>Accept</Button>

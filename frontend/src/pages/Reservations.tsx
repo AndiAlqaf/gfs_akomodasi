@@ -50,7 +50,7 @@ const Reservations: React.FC = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   const { data: reservationsResp } = useQuery({
     queryKey: ['reservations'],
@@ -174,7 +174,7 @@ const Reservations: React.FC = () => {
 
           <TabsContent value="bedroom" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
             <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle className="text-lg text-emerald-950 uppercase">BEDROOM</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -188,31 +188,31 @@ const Reservations: React.FC = () => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-3 text-center">DATE</th>
-                        <th className="px-4 py-3 text-center">ROOM NO</th>
-                        <th className="px-4 py-3 text-center">MESS</th>
-                        <th className="px-4 py-3 text-center">NAME</th>
-                        <th className="px-4 py-3 text-center">ESTIMATED ARRIVAL</th>
-                        <th className="px-4 py-3 text-center">ESTIMATED DEPARTURE</th>
-                        <th className="px-4 py-3 text-center">ACTION</th>
-                        <th className="px-4 py-3 text-center">REMARK</th>
+                        <th className="px-3 py-3 text-center">DATE</th>
+                        <th className="px-3 py-3 text-center">ROOM NO</th>
+                        <th className="px-3 py-3 text-center">MESS</th>
+                        <th className="px-3 py-3 text-center">NAME</th>
+                        <th className="px-3 py-3 text-center">ESTIMATED ARRIVAL</th>
+                        <th className="px-3 py-3 text-center">ESTIMATED DEPARTURE</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">REMARK</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {bedroomPaginatedData.map((res: any) => (
                         <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                          <td className="px-4 py-3">{res.created_at ? formatDate(res.created_at) : '-'}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-950">{res.roomNo}</td>
-                          <td className="px-4 py-3 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
-                          <td className="px-4 py-3 text-[11px] text-left">{res.guestName}</td>
-                          <td className="px-4 py-3 text-emerald-700">{res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
-                          <td className="px-4 py-3 text-emerald-700">{res.estimated_departure ? formatDate(res.estimated_departure) : '-'}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-1 py-1">{res.created_at ? formatDate(res.created_at) : '-'}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-950">{res.roomNo}</td>
+                          <td className="px-1 py-1 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
+                          <td className="px-1 py-1 text-[11px] text-left">{res.guestName}</td>
+                          <td className="px-1 py-1 text-emerald-700">{res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
+                          <td className="px-1 py-1 text-emerald-700">{res.estimated_departure ? formatDate(res.estimated_departure) : '-'}</td>
+                          <td className="px-1 py-1">
                             {res.guest_status === 'ON SITE' || res.guest_status === 'OFF SITE' ? (
                               <span className="uppercase text-emerald-800 font-medium text-[11px] px-2">{res.guest_status}</span>
                             ) : (
@@ -249,7 +249,7 @@ const Reservations: React.FC = () => {
                               </DropdownMenu>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-left max-w-xs truncate" title={res.remark || ''}>{res.remark || '-'}</td>
+                          <td className="px-1 py-1 text-left max-w-xs truncate" title={res.remark || ''}>{res.remark || '-'}</td>
                         </tr>
                       ))}
                       {bedroomPaginatedData.length === 0 && (
@@ -279,7 +279,7 @@ const Reservations: React.FC = () => {
 
           <TabsContent value="meeting" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
             <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle className="text-lg text-emerald-950 uppercase">MEETING ROOM</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -340,21 +340,21 @@ const Reservations: React.FC = () => {
                   </Dialog>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-3 text-center">DATE</th>
-                        <th className="px-4 py-3 text-center">REQUESTED BY</th>
-                        <th className="px-4 py-3 text-center">DEPARTEMENT</th>
-                        <th className="px-4 py-3 text-center">MEETING ROOM</th>
-                        <th className="px-4 py-3 text-center">PARTICIPANTS</th>
-                        <th className="px-4 py-3 text-center">START</th>
-                        <th className="px-4 py-3 text-center">FINISH</th>
-                        <th className="px-4 py-3 text-center">ADDITIONAL INFO</th>
-                        <th className="px-4 py-3 text-center">ACTION</th>
-                        <th className="px-4 py-3 text-center">REMARK</th>
+                        <th className="px-3 py-3 text-center">DATE</th>
+                        <th className="px-3 py-3 text-center">REQUESTED BY</th>
+                        <th className="px-3 py-3 text-center">DEPARTEMENT</th>
+                        <th className="px-3 py-3 text-center">MEETING ROOM</th>
+                        <th className="px-3 py-3 text-center">PARTICIPANTS</th>
+                        <th className="px-3 py-3 text-center">START</th>
+                        <th className="px-3 py-3 text-center">FINISH</th>
+                        <th className="px-3 py-3 text-center">ADDITIONAL INFO</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">REMARK</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -392,7 +392,7 @@ const Reservations: React.FC = () => {
 
           <TabsContent value="checkinout" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
             <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-              <CardHeader className="bg-white border-b border-emerald-100 py-4 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle className="text-lg text-emerald-950 uppercase">CHECK-IN/ OUT</CardTitle>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -404,30 +404,30 @@ const Reservations: React.FC = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden items-start">
-                <div className="w-full bg-white rounded-xl border border-emerald-100 overflow-auto max-h-full min-h-0 shadow-sm relative">
+              <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
+                <div className="w-full bg-white rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-[11px] font-semibold tracking-wider sticky top-0 z-10">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold tracking-wider sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-3 text-center">ROOM NO</th>
-                        <th className="px-4 py-3 text-center">MESS</th>
-                        <th className="px-4 py-3 text-center">NAME</th>
-                        <th className="px-4 py-3 text-center">CHECK-IN</th>
-                        <th className="px-4 py-3 text-center">CHECK-OUT</th>
-                        <th className="px-4 py-3 text-center">GUEST STATUS</th>
-                        <th className="px-4 py-3 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">ROOM NO</th>
+                        <th className="px-3 py-3 text-center">MESS</th>
+                        <th className="px-3 py-3 text-center">NAME</th>
+                        <th className="px-3 py-3 text-center">CHECK-IN</th>
+                        <th className="px-3 py-3 text-center">CHECK-OUT</th>
+                        <th className="px-3 py-3 text-center">GUEST STATUS</th>
+                        <th className="px-3 py-3 text-center">ACTION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {checkInOutPaginatedData.map((res: any) => (
                         <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                          <td className="px-4 py-3 font-semibold text-emerald-950">{res.roomNo}</td>
-                          <td className="px-4 py-3 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
-                          <td className="px-4 py-3 text-[11px] text-left">{res.guestName}</td>
-                          <td className="px-4 py-3 text-emerald-700">{res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
-                          <td className="px-4 py-3 text-emerald-700">{res.check_out ? formatDate(res.check_out) : '-'}</td>
-                          <td className="px-4 py-3 uppercase font-medium text-[11px]">{res.guest_status}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-1 py-1 font-semibold text-emerald-950">{res.roomNo}</td>
+                          <td className="px-1 py-1 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
+                          <td className="px-1 py-1 text-[11px] text-left">{res.guestName}</td>
+                          <td className="px-1 py-1 text-emerald-700">{res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
+                          <td className="px-1 py-1 text-emerald-700">{res.check_out ? formatDate(res.check_out) : '-'}</td>
+                          <td className="px-1 py-1 uppercase font-medium text-[11px]">{res.guest_status}</td>
+                          <td className="px-1 py-1">
                             <div className="flex justify-center gap-1">
                               {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || res.guest_status === 'OFF SITE') && (
                                 <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>

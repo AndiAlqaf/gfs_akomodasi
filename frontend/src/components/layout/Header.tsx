@@ -41,7 +41,7 @@ const Header: React.FC = () => {
         <div className="flex flex-1 items-center">
           <h1 className="text-xl font-bold text-emerald-950 tracking-tight uppercase">{currentTitle}</h1>
         </div>
-        
+
         {/* Main System Title */}
         <div className="hidden lg:flex flex-1 justify-center items-center whitespace-nowrap">
           <h2 className="text-lg font-bold text-emerald-600 tracking-tight uppercase">SISTEM INFORMASI LAYANAN AKOMODASI GFS PT CERIA</h2>
@@ -58,11 +58,11 @@ const Header: React.FC = () => {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 bg-emerald-50/60 hover:bg-emerald-100/60 border border-emerald-100/50 rounded-full py-1.5 pl-1.5 pr-5 h-auto transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)]">
-                <div className="w-9 h-9 rounded-full bg-emerald-950 flex items-center justify-center shadow-sm">
+              <Button variant="ghost" className="group flex justify-start items-center gap-3 bg-emerald-50/60 hover:bg-emerald-100/60 border border-emerald-100/50 rounded-full py-1.5 pl-1.5 pr-1.5 hover:pr-5 h-auto transition-all duration-300 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] overflow-hidden max-w-[48px] hover:max-w-[400px]">
+                <div className="w-9 h-9 shrink-0 rounded-full bg-emerald-950 flex items-center justify-center shadow-sm">
                   <User size={18} className="text-lime-400" />
                 </div>
-                <div className="text-left hidden md:block">
+                <div className="text-left hidden md:block whitespace-nowrap">
                   <p className="text-sm font-semibold text-emerald-950 leading-tight mb-0.5">{user?.name || 'Super Admin'}</p>
                   <p className="text-xs text-lime-600 font-semibold leading-none">{roleDisplay}</p>
                 </div>
