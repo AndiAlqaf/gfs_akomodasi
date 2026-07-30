@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search, Edit, Trash2, Download } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 import { dataRegisterAPI } from '@/services/api';
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
+import { exportToExcel } from '@/lib/exportUtils';
 
 export default function DataRegister() {
   const { user } = useAppStore();
@@ -22,6 +23,7 @@ export default function DataRegister() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState<any>({});
+  const [showGuestSuggestions, setShowGuestSuggestions] = useState(false);
 
   // Real Data States
   const [areas, setAreas] = useState<any[]>([]);
@@ -152,6 +154,12 @@ export default function DataRegister() {
     }
     setFormData(data);
     setIsModalOpen(true);
+  };
+
+  const handleExport = () => {
+    const dataToExport = currentData.map(({ created_at, updated_at, ...rest }) => rest);
+    const fileName = `${getCardTitle()}_Data_${new Date().toISOString().split('T')[0]}`;
+    exportToExcel(dataToExport, fileName, getCardTitle());
   };
 
   const handleDelete = async (row: any) => {
@@ -340,13 +348,62 @@ export default function DataRegister() {
 
         {activeTab === 'laundry_bag' && (
           <>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 relative">
               <Label className="text-right font-medium">Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" value={formData.nama ?? ''} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
+              <div className="col-span-3 relative">
+                <Input
+                  className="border-emerald-200 w-full"
+                  placeholder="Guest Name"
+                  value={formData.nama ?? ''}
+                  onChange={(e) => {
+                    setFormData({ ...formData, nama: e.target.value });
+                    setShowGuestSuggestions(true);
+                  }}
+                  onFocus={() => setShowGuestSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowGuestSuggestions(false), 200)}
+                />
+                {showGuestSuggestions && formData.nama && (
+                  <div className="absolute z-50 w-full bg-white border border-emerald-100 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg divide-y divide-emerald-50 text-xs">
+                    {guests.filter((g: any) => g.name?.toLowerCase().includes((formData.nama || '').toLowerCase())).map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="px-3 py-2 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer flex justify-between items-center transition-colors"
+                        onMouseDown={() => {
+                          const existingBag = laundryBag.find((b: any) => b.nama?.toLowerCase() === item.name?.toLowerCase());
+                          if (existingBag) {
+                            Swal.fire({
+                              title: 'Guest Already Registered',
+                              text: 'This guest already has a Laundry Bag & Box registered. Do you want to edit the existing data or create a new one?',
+                              icon: 'info',
+                              showCancelButton: true,
+                              confirmButtonText: 'Edit Existing',
+                              cancelButtonText: 'Create New',
+                            }).then((result) => {
+                              if (result.isConfirmed) {
+                                setEditingId(existingBag.id);
+                                setFormData({ ...existingBag, nama: item.name, room_id: item.room_id });
+                              } else {
+                                setEditingId(null);
+                                setFormData({ ...formData, nama: item.name, room_id: item.room_id });
+                              }
+                            });
+                          } else {
+                            setFormData({ ...formData, nama: item.name, room_id: item.room_id });
+                          }
+                          setShowGuestSuggestions(false);
+                        }}
+                      >
+                        <span className="font-semibold text-emerald-900">{item.name}</span>
+                        <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono text-[10px]">Room: {rooms.find(r => r.id === item.room_id)?.room_no || '-'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm bg-stone-50 cursor-not-allowed" value={formData.room_id ?? ''} disabled>
                 <option value="">Select Room</option>
                 {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
               </select>
@@ -481,20 +538,20 @@ export default function DataRegister() {
               <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <BedDouble size={16} /> BEDROOM
               </TabsTrigger>
+              <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Users size={16} /> GUEST
+              </TabsTrigger>
               <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Users size={16} /> MEETING ROOM
               </TabsTrigger>
               <TabsTrigger value="meals" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <Utensils size={16} /> MEALS DROP POINT
+                <Utensils size={16} /> MEALS DP
               </TabsTrigger>
               <TabsTrigger value="laundry_dp" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <Shirt size={16} /> LAUNDRY DROP & DELIVERY POINT
+                <Shirt size={16} /> LAUNDRY DDP
               </TabsTrigger>
               <TabsTrigger value="laundry_bag" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <Package size={16} /> LAUNDRY BAG & BOX
-              </TabsTrigger>
-              <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <Users size={16} /> GUEST
+                <Package size={16} /> LAUNDRY B&B
               </TabsTrigger>
             </TabsList>
           </div>
@@ -506,6 +563,9 @@ export default function DataRegister() {
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
                 <Input placeholder="Search..." value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
               </div>
+              <Button onClick={handleExport} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50">
+                <Download size={18} /> Export Excel
+              </Button>
               {canInsert && (
                 <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingId(null); }}>
                   <DialogTrigger asChild>

@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Download } from 'lucide-react';
+import { exportToExcel } from '@/lib/exportUtils';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -22,6 +23,15 @@ const Information: React.FC = () => {
   const [mealsSearch, setMealsSearch] = useState('');
   const [laundrySearch, setLaundrySearch] = useState('');
   const [meetingSearch, setMeetingSearch] = useState('');
+
+  const [roomDateFrom, setRoomDateFrom] = useState('');
+  const [roomDateTo, setRoomDateTo] = useState('');
+  const [pobDateFrom, setPobDateFrom] = useState('');
+  const [pobDateTo, setPobDateTo] = useState('');
+  const [mealsDateFrom, setMealsDateFrom] = useState('');
+  const [mealsDateTo, setMealsDateTo] = useState('');
+  const [laundryDateFrom, setLaundryDateFrom] = useState('');
+  const [laundryDateTo, setLaundryDateTo] = useState('');
   const { data: roomInfoResp, isLoading: roomLoading } = useQuery({
     queryKey: ['info-rooms'],
     queryFn: informationAPI.getRooms,
@@ -52,12 +62,55 @@ const Information: React.FC = () => {
 
 
   const mealsServicesData = mealsInfoResp?.data?.data || [];
-  const laundryItems = laundryResp?.data?.data || [];
+  const laundryItems = laundryResp?.data?.data?.transactions || [];
 
-  const filteredRooms = rooms.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(roomSearch.toLowerCase())));
-  const filteredPobs = pobs.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(pobSearch.toLowerCase())));
-  const filteredMeals = mealsServicesData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(mealsSearch.toLowerCase())));
-  const filteredLaundry = laundryItems.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(laundrySearch.toLowerCase())));
+  const isDateInRange = (dateStr: string, from: string, to: string) => {
+    if (!dateStr || dateStr === '-') return true; // If no date, don't filter it out unless we enforce date
+    if (!from && !to) return true;
+    
+    // Parse 'YYYY-MM-DD' properly
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return true;
+    
+    // Set time to 00:00:00 for fair comparison
+    d.setHours(0, 0, 0, 0);
+
+    if (from) {
+      const f = new Date(from);
+      f.setHours(0, 0, 0, 0);
+      if (d < f) return false;
+    }
+    if (to) {
+      const t = new Date(to);
+      t.setHours(0, 0, 0, 0);
+      if (d > t) return false;
+    }
+    return true;
+  };
+
+  const filteredRooms = rooms.filter((r: any) => {
+    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(roomSearch.toLowerCase()));
+    // Bedroom doesn't have a date field, so we just return matchSearch
+    return matchSearch;
+  });
+
+  const filteredPobs = pobs.filter((r: any) => {
+    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(pobSearch.toLowerCase()));
+    const matchDate = isDateInRange(r.date, pobDateFrom, pobDateTo);
+    return matchSearch && matchDate;
+  });
+
+  const filteredMeals = mealsServicesData.filter((r: any) => {
+    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(mealsSearch.toLowerCase()));
+    const matchDate = isDateInRange(r.date, mealsDateFrom, mealsDateTo);
+    return matchSearch && matchDate;
+  });
+
+  const filteredLaundry = laundryItems.filter((r: any) => {
+    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(laundrySearch.toLowerCase()));
+    const matchDate = isDateInRange(r.receiving_date, laundryDateFrom, laundryDateTo);
+    return matchSearch && matchDate;
+  });
 
   const meetingRoomsData = meetingResp?.data?.data || [];
   const filteredMeetingRooms = meetingRoomsData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(meetingSearch.toLowerCase())));
@@ -65,28 +118,28 @@ const Information: React.FC = () => {
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
   const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
 
-  const totalBedsAvailable = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_total) || 0), 0);
-  const totalBedsOccupied = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
-  const totalBedsVacant = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
+  const totalBedsAvailable = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_total) || 0), 0);
+  const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
+  const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const onBoardCount = pobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
-  const offBoardCount = pobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
+  const onBoardCount = filteredPobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
+  const offBoardCount = filteredPobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
 
-  const totalWeight = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.weight) || 0), 0);
+  const totalWeight = filteredLaundry.reduce((sum: number, r: any) => sum + (Number(r.weight) || 0), 0);
   const formattedWeight = Number.isInteger(totalWeight) ? totalWeight : Number(totalWeight.toFixed(2));
-  const totalAmount = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.no_of_pcs_total || r.no_of_pcs || r.pcs) || 0), 0);
+  const totalAmount = filteredLaundry.reduce((sum: number, r: any) => sum + (Number(r.no_of_pcs_total || r.no_of_pcs || r.pcs) || 0), 0);
 
   const laundryTotalPages = Math.max(1, Math.ceil(filteredLaundry.length / ITEMS_PER_PAGE));
   const paginatedLaundryItems = filteredLaundry.slice((laundryPage - 1) * ITEMS_PER_PAGE, laundryPage * ITEMS_PER_PAGE);
 
-  const accommodatedCount = mealsServicesData
+  const accommodatedCount = filteredMeals
     .filter((r: any) => r.accommodation_status === 'PROVIDED' || r.accommodation_status === 'ACCOMODATED')
     .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
 
-  const nonAccommodatedCount = mealsServicesData
+  const nonAccommodatedCount = filteredMeals
     .filter((r: any) => r.accommodation_status !== 'PROVIDED' && r.accommodation_status !== 'ACCOMODATED')
     .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
 
@@ -95,6 +148,12 @@ const Information: React.FC = () => {
 
   const meetingTotalPages = Math.max(1, Math.ceil(filteredMeetingRooms.length / ITEMS_PER_PAGE));
   const paginatedMeetingRooms = filteredMeetingRooms.slice((meetingPage - 1) * ITEMS_PER_PAGE, meetingPage * ITEMS_PER_PAGE);
+
+  const handleExportRooms = () => exportToExcel(filteredRooms, `Rooms_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportMeeting = () => exportToExcel(filteredMeetingRooms, `Meeting_Rooms_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportPob = () => exportToExcel(filteredPobs, `POB_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportMeals = () => exportToExcel(filteredMeals, `Meals_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportLaundry = () => exportToExcel(filteredLaundry, `Laundry_Info_${new Date().toISOString().split('T')[0]}`);
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
@@ -112,9 +171,20 @@ const Information: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Bedroom Information</CardTitle>
               <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="font-medium whitespace-nowrap">Filter Date:</span>
+                    <Input type="date" value={roomDateFrom} onChange={e => {setRoomDateFrom(e.target.value); setRoomPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <span>to</span>
+                    <Input type="date" value={roomDateTo} onChange={e => {setRoomDateTo(e.target.value); setRoomPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button onClick={handleExportRooms} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
+                    <Download size={18} /> Export
+                  </Button>
                 </div>
                 <div className="flex flex-row flex-wrap gap-6 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
                   <div className="flex items-center justify-end gap-2.5">
@@ -150,7 +220,7 @@ const Information: React.FC = () => {
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-1 py-1" rowSpan={2}>NO</th>
+                          <th className="px-4 py-1 text-center w-16" rowSpan={2}>NO</th>
                           <th className="px-1 py-1" rowSpan={2}>ROOM</th>
                           <th className="px-1 py-1" rowSpan={2}>MESS</th>
                           <th className="px-1 py-1" rowSpan={2}>AREA</th>
@@ -167,7 +237,7 @@ const Information: React.FC = () => {
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedRooms.map((r: any, idx: number) => (
                           <tr key={r.id} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-1 py-1 font-medium text-emerald-950">{((roomPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-4 py-1 text-center font-medium text-emerald-950">{((roomPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
                             <td className="px-1 py-1 text-emerald-800 font-medium">{r.room}</td>
                             <td className="px-1 py-1 text-emerald-700">{r.mess}</td>
                             <td className="px-1 py-1 text-emerald-700">{r.area}</td>
@@ -212,9 +282,14 @@ const Information: React.FC = () => {
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <Button onClick={handleExportMeeting} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
+                  <Download size={18} /> Export
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -280,9 +355,20 @@ const Information: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Person On Board (POB) Information</CardTitle>
               <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="font-medium whitespace-nowrap">Filter Date:</span>
+                    <Input type="date" value={pobDateFrom} onChange={e => {setPobDateFrom(e.target.value); setPobPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <span>to</span>
+                    <Input type="date" value={pobDateTo} onChange={e => {setPobDateTo(e.target.value); setPobPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button onClick={handleExportPob} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
+                    <Download size={18} /> Export
+                  </Button>
                 </div>
                 <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
                   <div className="flex items-center justify-end gap-2.5">
@@ -311,7 +397,7 @@ const Information: React.FC = () => {
                     <table className="w-full min-w-max text-xs text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-3">NO</th>
+                          <th className="px-4 py-3 text-center w-16">NO</th>
                           <th className="px-3 py-3">DATE</th>
                           <th className="px-3 py-3">ROOM NO</th>
                           <th className="px-3 py-3">MESS</th>
@@ -326,9 +412,9 @@ const Information: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
-                        {paginatedPobs.map((p: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-1 py-1 font-medium text-emerald-950">{((pobPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                        {paginatedPobs.map((p: any, i: number) => (
+                          <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
+                            <td className="px-4 py-1 text-center font-medium text-emerald-950">{((pobPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
                             <td className="px-1 py-1 text-emerald-700">{formatDate(p.date)}</td>
                             <td className="px-1 py-1 text-emerald-800 font-medium">{p.room_no}</td>
                             <td className="px-1 py-1 text-emerald-700">{p.mess}</td>
@@ -379,9 +465,20 @@ const Information: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Meals Services Info</CardTitle>
               <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="font-medium whitespace-nowrap">Filter Date:</span>
+                    <Input type="date" value={mealsDateFrom} onChange={e => {setMealsDateFrom(e.target.value); setMealsPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <span>to</span>
+                    <Input type="date" value={mealsDateTo} onChange={e => {setMealsDateTo(e.target.value); setMealsPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button onClick={handleExportMeals} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
+                    <Download size={18} /> Export
+                  </Button>
                 </div>
                 <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
                   <div className="flex items-center justify-end gap-2.5">
@@ -410,7 +507,7 @@ const Information: React.FC = () => {
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-3">NO</th>
+                          <th className="px-3 py-3 text-center">NO</th>
                           <th className="px-3 py-3">DATE</th>
                           <th className="px-3 py-3">MEALS PACKAGES</th>
                           <th className="px-3 py-3">MEALS DELIVERY POINT</th>
@@ -427,7 +524,7 @@ const Information: React.FC = () => {
                         ) : (
                           paginatedMeals.map((row: any, i: number) => (
                             <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
-                              <td className="px-1 py-1 font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
+                              <td className="px-4 py-1 text-center font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
                               <td className="px-1 py-1 text-emerald-700">{formatDate(row.date)}</td>
                               <td className="px-1 py-1 font-medium text-emerald-900">{row.meals_packages}</td>
                               <td className="px-1 py-1 text-emerald-800">{row.delivery_point}</td>
@@ -467,9 +564,20 @@ const Information: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Laundry Services Info</CardTitle>
               <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="font-medium whitespace-nowrap">Filter Date:</span>
+                    <Input type="date" value={laundryDateFrom} onChange={e => {setLaundryDateFrom(e.target.value); setLaundryPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <span>to</span>
+                    <Input type="date" value={laundryDateTo} onChange={e => {setLaundryDateTo(e.target.value); setLaundryPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button onClick={handleExportLaundry} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
+                    <Download size={18} /> Export
+                  </Button>
                 </div>
                 <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
                   <div className="flex items-center justify-end gap-2.5">

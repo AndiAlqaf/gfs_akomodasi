@@ -62,10 +62,11 @@ const Reservations: React.FC = () => {
     queryFn: () => roomAPI.getAll(guestCategory),
   });
 
-  const { data: guestsResp } = useQuery({
-    queryKey: ['guests'],
-    queryFn: dataRegisterAPI.getGuests,
+  const { data: meetingBookingsResp } = useQuery({
+    queryKey: ['meetingBookings'],
+    queryFn: reservationAPI.getMeetingRoomBookings,
   });
+
 
   const { data: meetingRoomsResp } = useQuery({
     queryKey: ['meetingRooms'],
@@ -88,6 +89,27 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setIsDialogOpen(false);
       Swal.fire({ icon: 'success', title: 'Booked!', text: 'Room successfully booked!', timer: 2000, showConfirmButton: false });
+    }
+  });
+
+  const createMeetingRoomMutation = useMutation({
+    mutationFn: (data: any) => reservationAPI.createMeetingRoomBooking(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetingBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
+      setIsMeetingDialogOpen(false);
+      Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
+      
+      // Reset meeting room form
+      setMrDate('');
+      setMrDepartement('');
+      setMrMeetingRoom('');
+      setMrParticipants('');
+      setMrStart('');
+      setMrFinish('');
+      setMrAdditionalInfo('');
+      setMrAction('SCHEDULLED');
+      setMrRemark('');
     }
   });
 
@@ -300,8 +322,21 @@ const Reservations: React.FC = () => {
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Remark</label><Input value={mrRemark} onChange={e => setMrRemark(e.target.value)} /></div>
                         <div className="md:col-span-2 flex justify-end mt-2">
                           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" onClick={() => {
-                            Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
-                            setIsMeetingDialogOpen(false);
+                            if(!mrDate || !mrMeetingRoom || !mrStart || !mrFinish) {
+                              return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Please fill in required fields.', timer: 2000, showConfirmButton: false });
+                            }
+                            createMeetingRoomMutation.mutate({
+                              booking_date: mrDate,
+                              requested_by: mrRequestedBy,
+                              department: mrDepartement,
+                              meeting_room: mrMeetingRoom,
+                              participants: mrParticipants ? parseInt(mrParticipants) : 0,
+                              start_time: mrStart,
+                              finish_time: mrFinish,
+                              additional_info: mrAdditionalInfo,
+                              action_status: mrAction,
+                              remark: mrRemark
+                            });
                           }}>Submit Form</Button>
                         </div>
                       </div>
@@ -327,7 +362,28 @@ const Reservations: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting room reservations found.</td></tr>
+                      {meetingBookingsResp?.data?.data?.length > 0 ? (
+                        meetingBookingsResp?.data?.data?.map((mb: any) => (
+                          <tr key={mb.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
+                            <td className="px-1 py-1">{mb.booking_date ? formatDate(mb.booking_date) : '-'}</td>
+                            <td className="px-1 py-1 font-semibold text-emerald-950 text-left">{mb.requested_by}</td>
+                            <td className="px-1 py-1 text-emerald-800">{mb.department || '-'}</td>
+                            <td className="px-1 py-1 font-semibold text-emerald-900">{mb.meeting_room}</td>
+                            <td className="px-1 py-1">{mb.participants}</td>
+                            <td className="px-1 py-1 text-emerald-700 font-medium">{mb.start_time}</td>
+                            <td className="px-1 py-1 text-emerald-700 font-medium">{mb.finish_time}</td>
+                            <td className="px-1 py-1 text-emerald-800">{mb.additional_info || '-'}</td>
+                            <td className="px-1 py-1">
+                              <span className="uppercase font-medium text-[11px] px-2 text-emerald-800 bg-emerald-50 rounded border border-emerald-200">
+                                {mb.action_status}
+                              </span>
+                            </td>
+                            <td className="px-1 py-1 text-left max-w-xs truncate" title={mb.remark}>{mb.remark || '-'}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting room reservations found.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -380,7 +436,21 @@ const Reservations: React.FC = () => {
                                 </Button>
                               )}
                               {res.guest_status === 'ON SITE' && (
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" onClick={() => updateReservationMutation.mutate({ id: res.id, status: 'OFF SITE' })}>
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" onClick={() => {
+                                  Swal.fire({
+                                    title: 'Confirm Check Out',
+                                    text: `Are you sure you want to check out ${res.guestName}?`,
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#059669',
+                                    cancelButtonColor: '#d33',
+                                    confirmButtonText: 'Yes, Check Out'
+                                  }).then((result) => {
+                                    if (result.isConfirmed) {
+                                      updateReservationMutation.mutate({ id: res.id, status: 'OFF SITE' });
+                                    }
+                                  });
+                                }}>
                                   Check Out
                                 </Button>
                               )}

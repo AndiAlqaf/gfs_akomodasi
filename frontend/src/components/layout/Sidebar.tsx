@@ -5,8 +5,6 @@ import {
   BedDouble,
   UtensilsCrossed,
   Shirt,
-  ChevronLeft,
-  ChevronRight,
   Building2,
   Info,
   UserCog

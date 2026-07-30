@@ -90,6 +90,10 @@ export const reservationAPI = {
   create: (data: any) => api.post('/reservations.php', data),
   updateStatus: (id: string, status: string, estimated_arrival?: string, estimated_departure?: string) =>
     api.post(`/reservations.php`, { action: 'update_status', id, status, estimated_arrival, estimated_departure }),
+  getMeetingRoomBookings: () => api.get('/meeting_rooms_booking.php'),
+  createMeetingRoomBooking: (data: any) => api.post('/meeting_rooms_booking.php', data),
+  updateMeetingRoomBooking: (id: string, status: string) => 
+    api.post('/meeting_rooms_booking.php', { action: 'update_status', id, status }),
 };
 
 export const mealsAPI = {

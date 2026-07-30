@@ -167,9 +167,21 @@ if ($method === 'GET') {
             echo json_encode(["data" => $result]);
         } elseif ($type === 'meeting') {
             // INFORMATION_MEETING_ROOMS query
-            $query = "SELECT * FROM meeting_rooms ORDER BY id ASC";
+            $query = "
+                SELECT 
+                    COALESCE(b.booking_date, '-') as date,
+                    m.room,
+                    m.building,
+                    m.capacity,
+                    COALESCE(b.action_status, 'OPEN') as booking_status,
+                    COALESCE(b.requested_by, '-') as reserved_by,
+                    '-' as status
+                FROM meeting_rooms m
+                LEFT JOIN meeting_room_bookings b ON m.room = b.meeting_room AND b.booking_date >= CURDATE()
+                ORDER BY m.room ASC, b.booking_date ASC
+            ";
             $stmt = $pdo->query($query);
-            $data = $stmt->fetchAll();
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(["data" => $data]);
         }
 

@@ -23,7 +23,44 @@ if ($method === 'GET') {
             $tx['details'] = $detailsByTx[$tx['id']] ?? [];
         }
 
-        echo json_encode(["data" => $transactions]);
+        // Group by laundry_box_id to create boxList
+        $boxListMap = [];
+        foreach ($transactions as $tx) {
+            $boxId = $tx['laundry_box_id'];
+            if (!$boxId) continue;
+            if (!isset($boxListMap[$boxId])) {
+                $boxListMap[$boxId] = [
+                    'boxId' => $boxId,
+                    'dropPoint' => $tx['drop_point'],
+                    'bagsCount' => 0,
+                    'deliverDate' => $tx['deliver_date'],
+                    'returnDate' => $tx['return_date'],
+                    'isReadyToDeliver' => false,
+                    'isReadyToReturn' => false
+                ];
+            }
+            $boxListMap[$boxId]['bagsCount']++;
+            if ($tx['current_status'] === 'DROPPED_AT_POINT') {
+                $boxListMap[$boxId]['isReadyToDeliver'] = true;
+            }
+            if (($tx['current_status'] === 'PROCESS_COMPLETED' || $tx['bag_status'] === 'Rejected') && $tx['current_status'] !== 'RETURNED_TO_DROP' && $tx['current_status'] !== 'DISTRIBUTED_TO_ROOM') {
+                $boxListMap[$boxId]['isReadyToReturn'] = true;
+            }
+            if ($tx['return_date'] && !$boxListMap[$boxId]['returnDate']) {
+                $boxListMap[$boxId]['returnDate'] = $tx['return_date'];
+            }
+            if ($tx['deliver_date'] && !$boxListMap[$boxId]['deliverDate']) {
+                $boxListMap[$boxId]['deliverDate'] = $tx['deliver_date'];
+            }
+        }
+        $boxList = array_values($boxListMap);
+
+        echo json_encode([
+            "data" => [
+                "transactions" => $transactions,
+                "boxList" => $boxList
+            ]
+        ]);
     } catch (\PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => $e->getMessage()]);

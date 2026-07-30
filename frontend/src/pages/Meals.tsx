@@ -219,7 +219,7 @@ const Meals: React.FC = () => {
                       <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                         <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                           <tr>
-                            <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                            <th className="px-4 py-1 border-b border-emerald-900 text-center w-16" rowSpan={2}>NO</th>
                             <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
                             <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>GUESTS</th>
                             <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>REQUEST BY</th>
@@ -241,7 +241,7 @@ const Meals: React.FC = () => {
                         <tbody className="divide-y divide-emerald-50">
                           {paginatedRequests.map((req: any, idx: number) => (
                             <tr key={req.id} className="hover:bg-emerald-50/50 transition-colors">
-                              <td className="px-1 py-1 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                              <td className="px-4 py-1 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
                               <td className="px-1 py-1 text-center text-emerald-700">{formatDate(req.date)}</td>
                               <td className="px-1 py-1 font-semibold text-emerald-900">{req.guest_name}</td>
                               <td className="px-1 py-1 text-center text-emerald-700">{req.request_by}</td>
@@ -324,7 +324,7 @@ const Meals: React.FC = () => {
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>NO</th>
+                          <th className="px-4 py-1 border-b border-emerald-900 text-center w-16" rowSpan={2}>NO</th>
                           <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>DATE</th>
                           <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>ROOM</th>
                           <th className="px-1 py-1 border-b border-emerald-900 text-center" rowSpan={2}>MESS</th>
@@ -341,7 +341,7 @@ const Meals: React.FC = () => {
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedSchedule.map((row: any, idx: number) => (
                           <tr key={idx} className="hover:bg-emerald-50/50 transition-colors text-center">
-                            <td className="px-1 py-1 font-medium text-emerald-950">{((schedulePage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-4 py-1 text-center font-medium text-emerald-950">{((schedulePage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
                             <td className="px-1 py-1 text-emerald-700">{row.date ? new Date(row.date).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true }) : new Date().toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true })}</td>
                             <td className="px-1 py-1 font-semibold text-emerald-950 text-left">{row.room}</td>
                             <td className="px-1 py-1 text-emerald-700 text-left">{row.mess}</td>
@@ -404,7 +404,7 @@ const Meals: React.FC = () => {
                     <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                       <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-3 border-b border-emerald-900 text-center">NO</th>
+                          <th className="px-4 py-3 border-b border-emerald-900 text-center w-16">NO</th>
                           <th className="px-3 py-3 border-b border-emerald-900 text-center">DATE</th>
                           <th className="px-3 py-3 border-b border-emerald-900 text-center">MEALS PACKAGES</th>
                           <th className="px-3 py-3 border-b border-emerald-900 text-center">MEALS DELIVERY POINT</th>
@@ -417,7 +417,7 @@ const Meals: React.FC = () => {
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedDelivery.map((row: any, idx: number) => (
                           <tr key={idx} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-1 py-1 font-semibold text-emerald-950 text-center">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
+                            <td className="px-4 py-1 text-center font-semibold text-emerald-950">{((deliveryPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
                             <td className="px-1 py-1 text-emerald-700 text-center">{formatDate(row.date)}</td>
                             <td className="px-1 py-1 font-medium text-emerald-900">{row.meals_packages}</td>
                             <td className="px-1 py-1 text-emerald-800">{row.delivery_point}</td>

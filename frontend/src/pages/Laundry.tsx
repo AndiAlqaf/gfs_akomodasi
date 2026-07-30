@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { laundryAPI } from '@/services/api';
+import { laundryAPI, dataRegisterAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -48,6 +48,7 @@ const Laundry: React.FC = () => {
   const [weightInput, setWeightInput] = useState<{ [key: string]: string }>({});
   const [selectedTxForDetails, setSelectedTxForDetails] = useState<any | null>(null);
   const [clothesList, setClothesList] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Fetch Laundry Data
   const { data: laundryDataResp } = useQuery({
@@ -55,8 +56,23 @@ const Laundry: React.FC = () => {
     queryFn: () => laundryAPI.getData(),
   });
 
+  const { data: laundryBagsResp } = useQuery({
+    queryKey: ['register_laundry_bags'],
+    queryFn: () => dataRegisterAPI.getLaundryBag(),
+  });
+  const registerLaundryBags = laundryBagsResp?.data?.data || [];
+
   const transactions = laundryDataResp?.data?.data?.transactions || [];
   const boxList = laundryDataResp?.data?.data?.boxList || [];
+
+  const guestSuggestions = guestName.trim()
+    ? registerLaundryBags.filter((b: any) =>
+        b.nama?.toLowerCase().includes(guestName.toLowerCase())
+      )
+    : [];
+
+  const uniqueBoxesFromDropping = Array.from(new Set(transactions.map((t: any) => t.laundry_box_id).filter(Boolean)));
+  const uniqueBagsFromDropping = Array.from(new Set(transactions.map((t: any) => t.laundry_bag_id).filter(Boolean)));
 
   const createDropMutation = useMutation({
     mutationFn: (data: any) => laundryAPI.createDrop(data),
@@ -145,8 +161,44 @@ const Laundry: React.FC = () => {
                         <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Drop Form</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleDropSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5"><label className="text-xs font-semibold">ROOM</label><Input value={room} onChange={e => setRoom(e.target.value)} required /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold">NAME</label><Input value={guestName} onChange={e => setGuestName(e.target.value)} required /></div>
+                        <div className="space-y-1.5 relative">
+                          <label className="text-xs font-semibold">NAME</label>
+                          <Input
+                            value={guestName}
+                            onChange={e => {
+                              setGuestName(e.target.value);
+                              setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            placeholder="Type guest name..."
+                            required
+                          />
+                          {showSuggestions && guestSuggestions.length > 0 && (
+                            <div className="absolute z-50 w-full bg-white border border-emerald-100 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg divide-y divide-emerald-50 text-xs">
+                              {guestSuggestions.map((item: any) => (
+                                <div
+                                  key={item.id}
+                                  className="px-3 py-2 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer flex justify-between items-center transition-colors"
+                                  onMouseDown={() => {
+                                    setGuestName(item.nama);
+                                    setRoom(item.room_no || '');
+                                    setBagId(item.laundry_bag || '');
+                                    setBoxId(item.laundry_box || '');
+                                    setShowSuggestions(false);
+                                  }}
+                                >
+                                  <span className="font-semibold text-emerald-900">{item.nama}</span>
+                                  <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono text-[10px]">Room: {item.room_no}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold">ROOM</label>
+                          <Input value={room} readOnly className="bg-stone-50 cursor-not-allowed" placeholder="Select Guest to fill" required />
+                        </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">BAG ID</label><Input value={bagId} onChange={e => setBagId(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">BOX ID</label><Input value={boxId} onChange={e => setBoxId(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
@@ -154,7 +206,7 @@ const Laundry: React.FC = () => {
                         </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e => setDropPoint(e.target.value)} required /></div>
                         <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
-                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Add to Drop Point</Button>
+                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Submit Form</Button>
                         </div>
                       </form>
                     </DialogContent>
@@ -163,8 +215,8 @@ const Laundry: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
-                <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="overflow-auto max-h-full min-h-0 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
@@ -228,7 +280,20 @@ const Laundry: React.FC = () => {
                         <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Delivering & Returning Form</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleDispatcherSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Box</label><Input value={dispBox} onChange={e => setDispBox(e.target.value)} required /></div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold uppercase">Laundry Box</label>
+                          <select
+                            value={dispBox}
+                            onChange={e => setDispBox(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                          >
+                            <option value="">Select Laundry Box</option>
+                            {uniqueBoxesFromDropping.map((boxId: any) => (
+                              <option key={boxId} value={boxId}>{boxId}</option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Bags</label><Input value={dispBags} onChange={e => setDispBags(e.target.value)} /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Deliver Point</label><Input value={dispPoint} onChange={e => setDispPoint(e.target.value)} /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Delivering Date</label><Input type="date" value={dispDeliverDate} onChange={e => setDispDeliverDate(e.target.value)} /></div>
@@ -249,8 +314,8 @@ const Laundry: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
-                <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="overflow-auto max-h-full min-h-0 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr><th className="px-3 py-3">LAUNDRY BOX</th><th className="px-3 py-3">BAGS</th><th className="px-3 py-3">DELIVER POINT</th><th className="px-3 py-3">DELIVER DATE</th><th className="px-3 py-3">RETURN DATE</th><th className="px-3 py-3">ACTION</th></tr>
@@ -300,7 +365,20 @@ const Laundry: React.FC = () => {
                         <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Receiving Form</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleOfficerDetailSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Bag ID</label><Input value={offBagId} onChange={e => setOffBagId(e.target.value)} required /></div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold uppercase">Laundry Bag ID</label>
+                          <select
+                            value={offBagId}
+                            onChange={e => setOffBagId(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                          >
+                            <option value="">Select Laundry Bag</option>
+                            {uniqueBagsFromDropping.map((bagId: any) => (
+                              <option key={bagId} value={bagId}>{bagId}</option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Bag Status</label>
                           <select value={offBagStatus} onChange={e => setOffBagStatus(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
                             <option value="ACCEPTED">ACCEPTED</option>
@@ -326,8 +404,8 @@ const Laundry: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden  space-y-4">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex-1 flex flex-col max-h-full min-h-0">
-                <div className="overflow-auto max-h-full min-h-0 flex-1 w-full relative">
+              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
+                <div className="overflow-auto max-h-full min-h-0 w-full relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
                     <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
                       <tr>
