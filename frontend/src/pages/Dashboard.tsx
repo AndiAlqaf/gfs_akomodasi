@@ -99,7 +99,7 @@ const Dashboard: React.FC = () => {
               <PieChart>
                 <Pie
                   data={occupancyData}
-                  cx="50%"
+                  cx="40%"
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}

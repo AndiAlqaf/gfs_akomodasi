@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { laundryAPI } from '@/services/api';
+import { laundryAPI, dataRegisterAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -28,6 +28,7 @@ const Laundry: React.FC = () => {
   const [boxId, setBoxId] = useState('');
   const [pkg, setPkg] = useState('Regular');
   const [dropPoint, setDropPoint] = useState('');
+  const [dropAction, setDropAction] = useState('DROPPING');
 
   // States for Dispatcher Form
   const [dispBox, setDispBox] = useState('');
@@ -55,7 +56,33 @@ const Laundry: React.FC = () => {
     queryFn: () => laundryAPI.getData(),
   });
 
+  const { data: bagDataResp } = useQuery({
+    queryKey: ['data-register-laundry-bag'],
+    queryFn: dataRegisterAPI.getLaundryBag,
+  });
+
   const transactions = laundryDataResp?.data?.data || laundryDataResp?.data || [];
+  const laundryBagRegister = bagDataResp?.data?.data || [];
+
+  const handleRoomChange = (val: string) => {
+    setRoom(val);
+    const match = laundryBagRegister.find((b: any) => (b.room || b.room_no) === val);
+    if (match) {
+      if (!guestName && match.nama) setGuestName(match.nama);
+      if (!bagId && match.laundry_bag) setBagId(match.laundry_bag);
+      if (!boxId && match.laundry_box) setBoxId(match.laundry_box);
+    }
+  };
+
+  const handleNameChange = (val: string) => {
+    setGuestName(val);
+    const match = laundryBagRegister.find((b: any) => b.nama === val);
+    if (match) {
+      if (!room && (match.room || match.room_no)) setRoom(match.room || match.room_no);
+      if (!bagId && match.laundry_bag) setBagId(match.laundry_bag);
+      if (!boxId && match.laundry_box) setBoxId(match.laundry_box);
+    }
+  };
 
   // Derive boxList from transactions grouped by laundry_box_id
   const boxList = React.useMemo(() => {
@@ -92,7 +119,7 @@ const Laundry: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['laundry_data'] });
       Swal.fire({ icon: 'success', title: 'Success!', text: 'Laundry Drop Record Created!', timer: 2000, showConfirmButton: false });
-      setRoom(''); setGuestName(''); setBagId(''); setBoxId(''); setDropPoint('');
+      setRoom(''); setGuestName(''); setBagId(''); setBoxId(''); setDropPoint(''); setDropAction('DROPPING');
     }
   });
 
@@ -107,7 +134,7 @@ const Laundry: React.FC = () => {
 
   const handleDropSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
+    createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint, action: dropAction });
   };
 
   const handleDispatcherSubmit = (e: React.FormEvent) => {
@@ -174,16 +201,38 @@ const Laundry: React.FC = () => {
                         <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Drop Form</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleDropSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5"><label className="text-xs font-semibold">ROOM</label><Input value={room} onChange={e => setRoom(e.target.value)} required /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold">NAME</label><Input value={guestName} onChange={e => setGuestName(e.target.value)} required /></div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold">ROOM</label>
+                          <Input list="room-list" value={room} onChange={e => handleRoomChange(e.target.value)} required autoComplete="off" />
+                          <datalist id="room-list">
+                            {Array.from(new Set(laundryBagRegister.map((b: any) => b.room || b.room_no))).filter(Boolean).map((r: any) => (
+                              <option key={r} value={r} />
+                            ))}
+                          </datalist>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold">NAME</label>
+                          <Input list="name-list" value={guestName} onChange={e => handleNameChange(e.target.value)} required autoComplete="off" />
+                          <datalist id="name-list">
+                            {Array.from(new Set(laundryBagRegister.map((b: any) => b.nama))).filter(Boolean).map((n: any) => (
+                              <option key={n} value={n} />
+                            ))}
+                          </datalist>
+                        </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">BAG ID</label><Input value={bagId} onChange={e => setBagId(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">BOX ID</label><Input value={boxId} onChange={e => setBoxId(e.target.value)} required /></div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
                           <select value={pkg} onChange={e => setPkg(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="Regular">Regular</option><option value="Express">Express</option></select>
                         </div>
                         <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e => setDropPoint(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
+                          <select value={dropAction} onChange={e => setDropAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <option value="DROPPING">DROPPING</option>
+                            <option value="DISTRIBUTING">DISTRIBUTING</option>
+                          </select>
+                        </div>
                         <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
-                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Add to Drop Point</Button>
+                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Submit Form</Button>
                         </div>
                       </form>
                     </DialogContent>

@@ -481,6 +481,9 @@ export default function DataRegister() {
               <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <BedDouble size={16} /> BEDROOM
               </TabsTrigger>
+              <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <Users size={16} /> GUEST
+              </TabsTrigger>
               <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Users size={16} /> MEETING ROOM
               </TabsTrigger>
@@ -492,9 +495,6 @@ export default function DataRegister() {
               </TabsTrigger>
               <TabsTrigger value="laundry_bag" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Package size={16} /> LAUNDRY BAG & BOX
-              </TabsTrigger>
-              <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <Users size={16} /> GUEST
               </TabsTrigger>
             </TabsList>
           </div>

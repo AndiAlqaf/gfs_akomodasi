@@ -42,7 +42,7 @@ class MeetingRoomController
         } elseif ($action === 'cancel') {
             requireFields($input, ['id']);
             Database::execute(
-                "UPDATE meeting_rooms SET booking_status='OPEN', reserved_by='-', date='-', status='-', departement=NULL, participants=0, start_time=NULL, finish_time=NULL, additional_info=NULL WHERE id=?",
+                "UPDATE meeting_rooms SET booking_status='OPEN', status='CANCELLED' WHERE id=?",
                 [$input['id']]
             );
             jsonResponse(["success" => true]);
