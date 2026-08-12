@@ -9,8 +9,8 @@ class GuestModel extends BaseModel
     {
         return \App\Core\Database::fetchAll('
             SELECT g.*, 
-                   m.mess_name as current_mess, 
-                   r.room_no as current_room 
+                   m.mess_name, 
+                   r.room_no 
             FROM guests g 
             LEFT JOIN rooms r ON g.room_id = r.id 
             LEFT JOIN messes m ON r.mess_id = m.id 

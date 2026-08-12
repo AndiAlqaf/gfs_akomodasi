@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search, Edit, Trash2 } from 'lucide-react';
+import { HighlightText } from '@/components/ui/HighlightText';
 import Swal from 'sweetalert2';
 
 import { dataRegisterAPI } from '@/services/api';
@@ -502,9 +503,12 @@ export default function DataRegister() {
           <div className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row  md:items-center justify-between gap-4">
             <CardTitle className="text-lg text-emerald-950 uppercase font-bold">{getCardTitle()}</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                <Input placeholder="Search..." value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                  <Input placeholder="Search..." value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                </div>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setCurrentPage(1)}>Search</Button>
               </div>
               {canInsert && (
                 <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingId(null); }}>
@@ -551,11 +555,11 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.area_name}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.area_id}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.area_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.area_id} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -596,15 +600,15 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.mess_name}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.mess_id}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
-                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.rooms_count}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.mess_status}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.managed_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.mess_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.mess_id} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.area_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium"><HighlightText text={row.rooms_count} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.mess_status} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.managed_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -644,14 +648,14 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room_no}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.room_allocation}</td>
-                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.beds}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.room_status}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.room_no} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.mess_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.room_allocation} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium"><HighlightText text={row.beds} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={row.room_status} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -691,14 +695,14 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room}</td>
-                          <td className="px-1 py-1 text-emerald-700">{'MR-' + row.id?.toString().padStart(3, '0')}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.building}</td>
-                          <td className="px-1 py-1 text-center text-emerald-900 font-medium">{row.capacity}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.status || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.reserved_by || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.created_at ? row.created_at.split(' ')[0] : '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.room} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={"MR-" + row.id?.toString().padStart(3, "0")} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.building} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-center text-emerald-900 font-medium"><HighlightText text={row.capacity} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={row.status || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.reserved_by || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.created_at ? row.created_at.split(" ")[0] : "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -739,12 +743,12 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.delivery_point}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.canteen_status}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.delivery_point} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.area_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={row.canteen_status} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -782,12 +786,12 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.point_name}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.area_name}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-900">{row.dp_status}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.point_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.area_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={row.dp_status} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -826,13 +830,13 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.nama}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.room_no}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.laundry_bag}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.laundry_box}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.registered_by}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.last_registration}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.remarks}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.nama} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.room_no} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.laundry_bag} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.laundry_box} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.registered_by} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.last_registration} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -884,23 +888,23 @@ export default function DataRegister() {
                       {paginatedData.map((row, idx) => (
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.room_no}</td>
-                          <td className="px-1 py-1 text-emerald-700">{row.mess_name}</td>
-                          <td className="px-1 py-1 text-emerald-900 font-bold">{row.name}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.personal_identification || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600">{row.reg_id_card || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.job || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.position || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-900 font-semibold">{row.level_category || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.institution_company || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800 font-medium">{row.occupants_category || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800">{row.meals_packages || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.breakfast_dp || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.lunch_dp || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50">{row.dinner_dp || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.registered_by || '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.last_registration ? new Date(row.last_registration).toLocaleDateString() : '-'}</td>
-                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50">{row.remarks || '-'}</td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.room_no} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.mess_name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-900 font-bold"><HighlightText text={row.name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.personal_identification || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.reg_id_card || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.job || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.position || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-900 font-semibold"><HighlightText text={row.level_category || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.institution_company || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.occupants_category || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.meals_packages || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.breakfast_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.lunch_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.dinner_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.registered_by || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.last_registration ? new Date(row.last_registration).toLocaleDateString() : "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.remarks || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center border-l border-emerald-50">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>

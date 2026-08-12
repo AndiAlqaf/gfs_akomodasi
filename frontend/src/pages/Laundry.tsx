@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
 import { Truck, RotateCcw, Search, Plus, Shirt, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { HighlightText } from '@/components/ui/HighlightText';
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 
@@ -21,6 +22,10 @@ const Laundry: React.FC = () => {
   const canInsertReceive = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.receivingInsert);
 
   const [activeTab, setActiveTab] = useState('dropping');
+
+  const [dropSearch, setDropSearch] = useState('');
+  const [deliverSearch, setDeliverSearch] = useState('');
+  const [receiveSearch, setReceiveSearch] = useState('');
 
   const [room, setRoom] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -63,6 +68,9 @@ const Laundry: React.FC = () => {
 
   const transactions = laundryDataResp?.data?.data || laundryDataResp?.data || [];
   const laundryBagRegister = bagDataResp?.data?.data || [];
+
+  const filteredTransactions = transactions.filter((t: any) => Object.values(t).some(val => String(val).toLowerCase().includes(dropSearch.toLowerCase())));
+  const filteredReceive = transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').filter((t: any) => Object.values(t).some(val => String(val).toLowerCase().includes(receiveSearch.toLowerCase())));
 
   const handleRoomChange = (val: string) => {
     setRoom(val);
@@ -113,6 +121,8 @@ const Laundry: React.FC = () => {
     });
     return Object.values(boxMap);
   }, [transactions]);
+
+  const filteredDeliver = boxList.filter((b: any) => Object.values(b).some(val => String(val).toLowerCase().includes(deliverSearch.toLowerCase())));
 
   const createDropMutation = useMutation({
     mutationFn: (data: any) => laundryAPI.createDrop(data),
@@ -185,9 +195,12 @@ const Laundry: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Dropping & Distributing</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={dropSearch} onChange={e => setDropSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4">Search</Button>
                 </div>
                 {canInsertDrop && (
                   <Dialog>
@@ -258,14 +271,14 @@ const Laundry: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {transactions.map((t: any) => (
+                      {filteredTransactions.map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-1 py-1">{t.room}</td>
-                          <td className="px-1 py-1">{t.guest_name}</td>
-                          <td className="px-1 py-1 font-medium">{t.laundry_bag_id}</td>
-                          <td className="px-1 py-1">{t.laundry_box_id}</td>
-                          <td className="px-1 py-1">{t.services_package}</td>
-                          <td className="px-1 py-1">{t.drop_point}</td>
+                          <td className="px-1 py-1"><HighlightText text={t.room} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.guest_name} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1 font-medium"><HighlightText text={t.laundry_bag_id} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.laundry_box_id} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.services_package} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.drop_point} highlight={dropSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.drop_date)}</td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.distribute_date)}</td>
                           <td className="px-1 py-1">
@@ -290,9 +303,12 @@ const Laundry: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Delivering & Returning</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={deliverSearch} onChange={e => setDeliverSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4">Search</Button>
                 </div>
                 {canInsertDeliver && (
                   <Dialog>
@@ -334,9 +350,9 @@ const Laundry: React.FC = () => {
                       <tr><th className="px-3 py-3">LAUNDRY BOX</th><th className="px-3 py-3">BAGS</th><th className="px-3 py-3">DELIVER POINT</th><th className="px-3 py-3">DELIVER DATE</th><th className="px-3 py-3">RETURN DATE</th><th className="px-3 py-3">ACTION</th></tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {boxList.map((b: any) => (
+                      {filteredDeliver.map((b: any) => (
                         <tr key={b.boxId} className="hover:bg-emerald-50/50">
-                          <td className="px-1 py-1 font-bold text-emerald-900">{b.boxId}</td><td className="px-1 py-1">{b.dropPoint}</td><td className="px-1 py-1 text-emerald-600 font-mono">{b.bagsCount} bags</td>
+                          <td className="px-1 py-1 font-bold text-emerald-900"><HighlightText text={b.boxId} highlight={deliverSearch} /></td><td className="px-1 py-1"><HighlightText text={b.dropPoint} highlight={deliverSearch} /></td><td className="px-1 py-1 text-emerald-600 font-mono">{b.bagsCount} bags</td>
                           <td className="px-1 py-1 text-xs">{formatDate(b.deliverDate)}</td><td className="px-1 py-1 text-xs">{formatDate(b.returnDate)}</td>
                           <td className="px-1 py-1">
                             {b.isReadyToDeliver ? (
@@ -362,9 +378,12 @@ const Laundry: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Receiving & Cleaning</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4">Search</Button>
                 </div>
                 {canInsertReceive && (
                   <Dialog>
@@ -418,17 +437,17 @@ const Laundry: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
+                      {filteredReceive.map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-1 py-1 font-bold text-emerald-900">{t.laundry_bag_id}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-700">{t.bag_status}</td>
+                          <td className="px-1 py-1 font-bold text-emerald-900"><HighlightText text={t.laundry_bag_id} highlight={receiveSearch} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-700"><HighlightText text={t.bag_status} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.receiving_date)}</td>
                           <td className="px-1 py-1">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex justify-center"><Input type="number" step="0.1" className="w-20 h-8 text-center" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} /></div>
                             ) : <span className="font-mono">{t.weight || '-'}</span>}
                           </td>
-                          <td className="px-1 py-1 font-mono">{t.no_of_pcs_total}</td>
+                          <td className="px-1 py-1 font-mono"><HighlightText text={t.no_of_pcs_total} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 text-center">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex gap-2 justify-center">
