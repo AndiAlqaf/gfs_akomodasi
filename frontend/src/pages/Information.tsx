@@ -42,8 +42,11 @@ const Information: React.FC = () => {
     queryFn: informationAPI.getPob,
   });
 
-  const rooms = roomInfoResp?.data?.data || [];
-  const pobs = pobInfoResp?.data?.data || [];
+  const roomsData = roomInfoResp?.data?.data;
+  const rooms = Array.isArray(roomsData) ? roomsData : [];
+  
+  const pobsData = pobInfoResp?.data?.data;
+  const pobs = Array.isArray(pobsData) ? pobsData : [];
 
   const { data: mealsInfoResp, isLoading: mealsLoading } = useQuery({
     queryKey: ['info-meals'],
@@ -60,9 +63,13 @@ const Information: React.FC = () => {
     queryFn: informationAPI.getMeetingRooms,
   });
 
-
-  const mealsServicesData = mealsInfoResp?.data?.data || [];
-  const laundryItems = laundryResp?.data?.data?.transactions || [];
+  const mealsData = mealsInfoResp?.data?.data;
+  const mealsServicesData = Array.isArray(mealsData) ? mealsData : [];
+  
+  const laundryRawData = laundryResp?.data?.data;
+  const laundryItems = Array.isArray(laundryRawData?.transactions) 
+    ? laundryRawData.transactions 
+    : (Array.isArray(laundryRawData) ? laundryRawData : []);
 
   const isDateInRange = (dateStr: string, from: string, to: string) => {
     if (!dateStr || dateStr === '-') return true; // If no date, don't filter it out unless we enforce date
@@ -112,7 +119,8 @@ const Information: React.FC = () => {
     return matchSearch && matchDate;
   });
 
-  const meetingRoomsData = meetingResp?.data?.data || [];
+  const meetingRawData = meetingResp?.data?.data;
+  const meetingRoomsData = Array.isArray(meetingRawData) ? meetingRawData : [];
   const filteredMeetingRooms = meetingRoomsData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(meetingSearch.toLowerCase())));
 
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));

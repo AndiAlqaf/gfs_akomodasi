@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, CheckCircle, Plus, Search, Truck, Utensils } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { HighlightText } from '@/components/ui/HighlightText';
 
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
@@ -129,10 +130,14 @@ const Meals: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Meals on Request</CardTitle>
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={requestSearch} onChange={e => { setRequestSearch(e.target.value); setRequestPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setRequestPage(1)}>Search</Button>
                 </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setRequestPage(1)}>Search</Button>
                 {canInsertRequest && (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -243,11 +248,11 @@ const Meals: React.FC = () => {
                             <tr key={req.id} className="hover:bg-emerald-50/50 transition-colors">
                               <td className="px-4 py-1 text-center font-medium text-emerald-950">{((requestPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
                               <td className="px-1 py-1 text-center text-emerald-700">{formatDate(req.date)}</td>
-                              <td className="px-1 py-1 font-semibold text-emerald-900">{req.guest_name}</td>
-                              <td className="px-1 py-1 text-center text-emerald-700">{req.request_by}</td>
-                              <td className="px-1 py-1 text-center text-emerald-700">{req.approved_by || '-'}</td>
+                              <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={req.guest_name} highlight={requestSearch} /></td>
+                              <td className="px-1 py-1 text-center text-emerald-700"><HighlightText text={req.request_by} highlight={requestSearch} /></td>
+                              <td className="px-1 py-1 text-center text-emerald-700"><HighlightText text={req.approved_by || "-"} highlight={requestSearch} /></td>
                               <td className="px-1 py-1 text-center">
-                                <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium">{req.meals_package}</span>
+                                <span className="bg-stone-100 text-emerald-800 border border-stone-200 px-2 py-1 rounded text-xs font-medium"><HighlightText text={req.meals_package} highlight={requestSearch} /></span>
                               </td>
 
                               <td className="px-1 py-1 text-center text-xs text-emerald-700 border-l border-emerald-50">{req.meal_time === 'BREAKFAST' ? req.delivery_point : '-'}</td>
@@ -309,9 +314,12 @@ const Meals: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={scheduleSearch} onChange={e => { setScheduleSearch(e.target.value); setSchedulePage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={scheduleSearch} onChange={e => { setScheduleSearch(e.target.value); setSchedulePage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setSchedulePage(1)}>Search</Button>
                 </div>
               </div>
             </CardHeader>
@@ -389,9 +397,12 @@ const Meals: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={deliverySearch} onChange={e => { setDeliverySearch(e.target.value); setDeliveryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={deliverySearch} onChange={e => { setDeliverySearch(e.target.value); setDeliveryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setDeliveryPage(1)}>Search</Button>
                 </div>
               </div>
             </CardHeader>

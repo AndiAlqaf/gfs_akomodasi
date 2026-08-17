@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { reservationAPI, roomAPI, dataRegisterAPI } from '@/services/api';
+import { reservationAPI, roomAPI, dataRegisterAPI, meetingRoomAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +64,7 @@ const Reservations: React.FC = () => {
 
   const { data: meetingBookingsResp } = useQuery({
     queryKey: ['meetingBookings'],
-    queryFn: reservationAPI.getMeetingRoomBookings,
+    queryFn: meetingRoomAPI.getAll,
   });
 
 
@@ -93,7 +93,7 @@ const Reservations: React.FC = () => {
   });
 
   const createMeetingRoomMutation = useMutation({
-    mutationFn: (data: any) => reservationAPI.createMeetingRoomBooking(data),
+    mutationFn: (data: any) => meetingRoomAPI.book(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetingBookings'] });
       queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
