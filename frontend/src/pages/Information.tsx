@@ -81,28 +81,28 @@ const Information: React.FC = () => {
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
   const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
 
-  const totalBedsAvailable = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_total) || 0), 0);
-  const totalBedsOccupied = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
-  const totalBedsVacant = rooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
+  const totalBedsAvailable = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_total) || 0), 0);
+  const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
+  const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const onBoardCount = pobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
-  const offBoardCount = pobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
+  const onBoardCount = filteredPobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
+  const offBoardCount = filteredPobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
 
-  const totalWeight = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.weight) || 0), 0);
+  const totalWeight = filteredLaundry.reduce((sum: number, r: any) => sum + (Number(r.weight) || 0), 0);
   const formattedWeight = Number.isInteger(totalWeight) ? totalWeight : Number(totalWeight.toFixed(2));
-  const totalAmount = laundryItems.reduce((sum: number, r: any) => sum + (Number(r.no_of_pcs_total || r.no_of_pcs || r.pcs) || 0), 0);
+  const totalAmount = filteredLaundry.reduce((sum: number, r: any) => sum + (Number(r.no_of_pcs_total || r.no_of_pcs || r.pcs) || 0), 0);
 
   const laundryTotalPages = Math.max(1, Math.ceil(filteredLaundry.length / ITEMS_PER_PAGE));
   const paginatedLaundryItems = filteredLaundry.slice((laundryPage - 1) * ITEMS_PER_PAGE, laundryPage * ITEMS_PER_PAGE);
 
-  const accommodatedCount = mealsServicesData
+  const accommodatedCount = filteredMeals
     .filter((r: any) => r.accommodation_status === 'PROVIDED' || r.accommodation_status === 'ACCOMODATED')
     .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
 
-  const nonAccommodatedCount = mealsServicesData
+  const nonAccommodatedCount = filteredMeals
     .filter((r: any) => r.accommodation_status !== 'PROVIDED' && r.accommodation_status !== 'ACCOMODATED')
     .reduce((sum: number, r: any) => sum + (Number(r.no_of_packs) || 0), 0);
 
