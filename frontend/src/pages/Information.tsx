@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { informationAPI, laundryAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDate } from '@/lib/utils';
+import { formatDate, toTitleCase } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Download } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportUtils';
-
+import { HighlightText } from '@/components/ui/HighlightText';
 const ITEMS_PER_PAGE = 20;
 
 const Information: React.FC = () => {
@@ -44,7 +44,7 @@ const Information: React.FC = () => {
 
   const roomsData = roomInfoResp?.data?.data;
   const rooms = Array.isArray(roomsData) ? roomsData : [];
-  
+
   const pobsData = pobInfoResp?.data?.data;
   const pobs = Array.isArray(pobsData) ? pobsData : [];
 
@@ -65,20 +65,20 @@ const Information: React.FC = () => {
 
   const mealsData = mealsInfoResp?.data?.data;
   const mealsServicesData = Array.isArray(mealsData) ? mealsData : [];
-  
+
   const laundryRawData = laundryResp?.data?.data;
-  const laundryItems = Array.isArray(laundryRawData?.transactions) 
-    ? laundryRawData.transactions 
+  const laundryItems = Array.isArray(laundryRawData?.transactions)
+    ? laundryRawData.transactions
     : (Array.isArray(laundryRawData) ? laundryRawData : []);
 
   const isDateInRange = (dateStr: string, from: string, to: string) => {
     if (!dateStr || dateStr === '-') return true; // If no date, don't filter it out unless we enforce date
     if (!from && !to) return true;
-    
+
     // Parse 'YYYY-MM-DD' properly
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return true;
-    
+
     // Set time to 00:00:00 for fair comparison
     d.setHours(0, 0, 0, 0);
 
@@ -96,32 +96,47 @@ const Information: React.FC = () => {
   };
 
   const filteredRooms = rooms.filter((r: any) => {
-    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(roomSearch.toLowerCase()));
+    const visibleKeys = ['room', 'mess', 'area', 'room_allocation', 'status'];
+    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(roomSearch.toLowerCase()));
     // Bedroom doesn't have a date field, so we just return matchSearch
     return matchSearch;
   });
 
-  const filteredPobs = pobs.filter((r: any) => {
-    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(pobSearch.toLowerCase()));
-    const matchDate = isDateInRange(r.date, pobDateFrom, pobDateTo);
-    return matchSearch && matchDate;
+  const filteredPobs = pobs.filter((p: any) => {
+    const visibleKeys = ['room_no', 'mess', 'name', 'reg_id_card', 'job', 'position', 'level_category', 'institution_company', 'occupants_category', 'boarding_status', 'date'];
+    const searchLower = pobSearch.toLowerCase();
+    const matchSearch = visibleKeys.some(k => String(p[k] || '').toLowerCase().includes(searchLower)) ||
+                        (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
+    return matchSearch && isDateInRange(p.date, pobDateFrom, pobDateTo);
   });
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
-    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(mealsSearch.toLowerCase()));
+    const visibleKeys = ['meals_packages', 'delivery_point', 'meal_time', 'accommodation_status', 'date'];
+    const searchLower = mealsSearch.toLowerCase();
+    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
+                        (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
     const matchDate = isDateInRange(r.date, mealsDateFrom, mealsDateTo);
     return matchSearch && matchDate;
   });
 
   const filteredLaundry = laundryItems.filter((r: any) => {
-    const matchSearch = Object.values(r).some(v => String(v).toLowerCase().includes(laundrySearch.toLowerCase()));
+    const visibleKeys = ['name', 'room', 'laundry_bag_id', 'laundry_box', 'services_package', 'receiving_date'];
+    const searchLower = laundrySearch.toLowerCase();
+    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
+                        (r.receiving_date ? formatDate(r.receiving_date).toLowerCase().includes(searchLower) : false);
     const matchDate = isDateInRange(r.receiving_date, laundryDateFrom, laundryDateTo);
     return matchSearch && matchDate;
   });
 
   const meetingRawData = meetingResp?.data?.data;
   const meetingRoomsData = Array.isArray(meetingRawData) ? meetingRawData : [];
-  const filteredMeetingRooms = meetingRoomsData.filter((r: any) => Object.values(r).some(v => String(v).toLowerCase().includes(meetingSearch.toLowerCase())));
+  const filteredMeetingRooms = meetingRoomsData.filter((r: any) => {
+    const visibleKeys = ['room', 'building', 'booking_status', 'reserved_by', 'status', 'date'];
+    const searchLower = meetingSearch.toLowerCase();
+    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
+                        (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
+    return matchSearch;
+  });
 
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
   const paginatedRooms = filteredRooms.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE);
@@ -176,45 +191,48 @@ const Information: React.FC = () => {
 
         <TabsContent value="rooms" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Bedroom Information</CardTitle>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-row items-center justify-between gap-4 overflow-x-auto">
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold whitespace-nowrap">Bedroom Information</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-100">
                     <span className="font-medium whitespace-nowrap">Filter Date:</span>
-                    <Input type="date" value={roomDateFrom} onChange={e => {setRoomDateFrom(e.target.value); setRoomPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <Input type="date" value={roomDateFrom} onChange={e => { setRoomDateFrom(e.target.value); setRoomPage(1); }} className="h-8 w-32 px-1.5 py-0 border-emerald-200 text-xs" title="From" />
                     <span>to</span>
-                    <Input type="date" value={roomDateTo} onChange={e => {setRoomDateTo(e.target.value); setRoomPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                    <Input type="date" value={roomDateTo} onChange={e => { setRoomDateTo(e.target.value); setRoomPage(1); }} className="h-8 w-32 px-1.5 py-0 border-emerald-200 text-xs" title="To" />
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <div className="relative flex items-center gap-1.5">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2 h-4 w-4 text-emerald-600" />
+                      <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setRoomPage(1); }} className="pl-8 w-40 border-emerald-200 focus:border-emerald-500 rounded-lg h-8" />
+                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 h-8 text-xs" onClick={() => setRoomPage(1)}>Search</Button>
                   </div>
-                  <Button onClick={handleExportRooms} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
-                    <Download size={18} /> Export
+                  <Button onClick={handleExportRooms} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-1.5 hover:bg-emerald-50 h-8 px-3 text-xs shrink-0">
+                    <Download size={16} /> Export
                   </Button>
                 </div>
-                <div className="flex flex-row flex-wrap gap-6 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span className="w-24 text-right uppercase tracking-wide">AVAILABLE</span>
-                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                <div className="flex flex-row flex-nowrap gap-3 font-bold text-[10px] text-slate-800 shrink-0 border-l border-emerald-100 pl-3">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="w-16 text-right uppercase tracking-wide">AVAILABLE</span>
+                    <div className="w-10 h-6 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-xs">
                       {totalBedsAvailable}
                     </div>
-                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                    <span className="w-8 text-left uppercase text-slate-600">BEDS</span>
                   </div>
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span className="w-24 text-right uppercase tracking-wide">OCCUPIED</span>
-                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="w-16 text-right uppercase tracking-wide">OCCUPIED</span>
+                    <div className="w-10 h-6 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-xs">
                       {totalBedsOccupied}
                     </div>
-                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                    <span className="w-8 text-left uppercase text-slate-600">BEDS</span>
                   </div>
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span className="w-24 text-right uppercase tracking-wide">VACANT</span>
-                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="w-14 text-right uppercase tracking-wide">VACANT</span>
+                    <div className="w-10 h-6 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-xs">
                       {totalBedsVacant}
                     </div>
-                    <span className="w-10 text-left uppercase text-slate-600">BEDS</span>
+                    <span className="w-8 text-left uppercase text-slate-600">BEDS</span>
                   </div>
                 </div>
               </div>
@@ -246,15 +264,15 @@ const Information: React.FC = () => {
                         {paginatedRooms.map((r: any, idx: number) => (
                           <tr key={r.id} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="px-4 py-1 text-center font-medium text-emerald-950">{((roomPage - 1) * ITEMS_PER_PAGE) + idx + 1}</td>
-                            <td className="px-1 py-1 text-emerald-800 font-medium">{r.room}</td>
-                            <td className="px-1 py-1 text-emerald-700">{r.mess}</td>
-                            <td className="px-1 py-1 text-emerald-700">{r.area}</td>
-                            <td className="px-1 py-1 text-emerald-700">{r.room_allocation}</td>
+                            <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={r.room} highlight={roomSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={r.mess} highlight={roomSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={r.area} highlight={roomSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={r.room_allocation} highlight={roomSearch} /></td>
                             <td className="px-1 py-1 text-center font-semibold bg-emerald-50/50 text-emerald-800 border-x border-emerald-100">{r.beds_total}</td>
                             <td className="px-1 py-1 text-center font-semibold bg-lime-50/50 text-lime-800 border-x border-emerald-100">{r.beds_occupied}</td>
                             <td className="px-1 py-1 text-center font-semibold bg-stone-50 text-stone-800 border-x border-emerald-100">{r.beds_vacant}</td>
                             <td className="px-1 py-1">
-                              <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{r.status}</span>
+                              <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{toTitleCase(r.status)}</span>
                             </td>
                           </tr>
                         ))}
@@ -291,9 +309,12 @@ const Information: React.FC = () => {
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
               <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                <div className="relative flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                    <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setMeetingPage(1)}>Search</Button>
                 </div>
                 <Button onClick={handleExportMeeting} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                   <Download size={18} /> Export
@@ -321,13 +342,13 @@ const Information: React.FC = () => {
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedMeetingRooms.map((r: any, i: number) => (
                           <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-1 py-1 text-emerald-800 font-medium text-center">{r.date}</td>
-                            <td className="px-1 py-1 text-emerald-800 font-medium text-left">{r.room}</td>
-                            <td className="px-1 py-1 text-emerald-700 text-left">{r.building}</td>
+                            <td className="px-1 py-1 text-emerald-800 font-medium text-center"><HighlightText text={r.date} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-800 font-medium text-left"><HighlightText text={r.room} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 text-left"><HighlightText text={r.building} highlight={meetingSearch} /></td>
                             <td className="px-1 py-1 text-emerald-700 text-center">{r.capacity}</td>
-                            <td className="px-1 py-1 text-emerald-700 text-center font-semibold">{r.booking_status}</td>
-                            <td className="px-1 py-1 text-emerald-700 text-center">{r.reserved_by}</td>
-                            <td className="px-1 py-1 text-emerald-700 text-center">{r.status}</td>
+                            <td className="px-1 py-1 text-emerald-700 text-center font-semibold"><HighlightText text={r.booking_status} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 text-center"><HighlightText text={r.reserved_by} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 text-center"><HighlightText text={toTitleCase(r.status)} highlight={meetingSearch} /></td>
                           </tr>
                         ))}
                         {paginatedMeetingRooms.length === 0 && (
@@ -366,13 +387,16 @@ const Information: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                     <span className="font-medium whitespace-nowrap">Filter Date:</span>
-                    <Input type="date" value={pobDateFrom} onChange={e => {setPobDateFrom(e.target.value); setPobPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <Input type="date" value={pobDateFrom} onChange={e => { setPobDateFrom(e.target.value); setPobPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
                     <span>to</span>
-                    <Input type="date" value={pobDateTo} onChange={e => {setPobDateTo(e.target.value); setPobPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                    <Input type="date" value={pobDateTo} onChange={e => { setPobDateTo(e.target.value); setPobPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                      <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setPobPage(1)}>Search</Button>
                   </div>
                   <Button onClick={handleExportPob} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                     <Download size={18} /> Export
@@ -409,7 +433,7 @@ const Information: React.FC = () => {
                           <th className="px-3 py-3">DATE</th>
                           <th className="px-3 py-3">ROOM NO</th>
                           <th className="px-3 py-3">MESS</th>
-                          <th className="px-3 py-3">AREA</th>
+                          <th className="px-3 py-3">NAMA</th>
                           <th className="px-3 py-3">REG. ID</th>
                           <th className="px-3 py-3">JOB</th>
                           <th className="px-3 py-3">POSITION</th>
@@ -423,20 +447,20 @@ const Information: React.FC = () => {
                         {paginatedPobs.map((p: any, i: number) => (
                           <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="px-4 py-1 text-center font-medium text-emerald-950">{((pobPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
-                            <td className="px-1 py-1 text-emerald-700">{formatDate(p.date)}</td>
-                            <td className="px-1 py-1 text-emerald-800 font-medium">{p.room_no}</td>
-                            <td className="px-1 py-1 text-emerald-700">{p.mess}</td>
-                            <td className="px-1 py-1 text-emerald-700">{p.area}</td>
-                            <td className="px-1 py-1 text-emerald-600">{p.reg_id_card || '-'}</td>
-                            <td className="px-1 py-1 text-emerald-600">{p.job || '-'}</td>
-                            <td className="px-1 py-1 text-emerald-600">{p.position || '-'}</td>
-                            <td className="px-1 py-1 text-emerald-600">{p.level_category || '-'}</td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={formatDate(p.date)} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={p.room_no} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={p.mess} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 font-semibold"><HighlightText text={p.name} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.reg_id_card || '-'} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.job || '-'} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.position || '-'} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.level_category || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-emerald-700">
-                              <span className="bg-stone-100 text-emerald-800 px-2 py-1 rounded-md border border-stone-200">{p.institution_company || '-'}</span>
+                              <span className="bg-stone-100 text-emerald-800 px-2 py-1 rounded-md border border-stone-200"><HighlightText text={p.institution_company || '-'} highlight={pobSearch} /></span>
                             </td>
-                            <td className="px-1 py-1 text-emerald-700">{p.occupants_category || '-'}</td>
+                            <td className="px-1 py-1 text-emerald-700"><HighlightText text={p.occupants_category || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-center">
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}>{p.boarding_status}</span>
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}><HighlightText text={toTitleCase(p.boarding_status)} highlight={pobSearch} /></span>
                             </td>
                           </tr>
                         ))}
@@ -476,13 +500,16 @@ const Information: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                     <span className="font-medium whitespace-nowrap">Filter Date:</span>
-                    <Input type="date" value={mealsDateFrom} onChange={e => {setMealsDateFrom(e.target.value); setMealsPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <Input type="date" value={mealsDateFrom} onChange={e => { setMealsDateFrom(e.target.value); setMealsPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
                     <span>to</span>
-                    <Input type="date" value={mealsDateTo} onChange={e => {setMealsDateTo(e.target.value); setMealsPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                    <Input type="date" value={mealsDateTo} onChange={e => { setMealsDateTo(e.target.value); setMealsPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                      <Input placeholder="Search..." value={mealsSearch} onChange={e => { setMealsSearch(e.target.value); setMealsPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setMealsPage(1)}>Search</Button>
                   </div>
                   <Button onClick={handleExportMeals} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                     <Download size={18} /> Export
@@ -533,12 +560,12 @@ const Information: React.FC = () => {
                           paginatedMeals.map((row: any, i: number) => (
                             <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
                               <td className="px-4 py-1 text-center font-medium text-emerald-950">{((mealsPage - 1) * ITEMS_PER_PAGE) + i + 1}</td>
-                              <td className="px-1 py-1 text-emerald-700">{formatDate(row.date)}</td>
-                              <td className="px-1 py-1 font-medium text-emerald-900">{row.meals_packages}</td>
-                              <td className="px-1 py-1 text-emerald-800">{row.delivery_point}</td>
-                              <td className="px-1 py-1 text-emerald-700 font-medium">{row.meal_time}</td>
+                              <td className="px-1 py-1 text-emerald-700"><HighlightText text={formatDate(row.date)} highlight={mealsSearch} /></td>
+                              <td className="px-1 py-1 font-medium text-emerald-900"><HighlightText text={row.meals_packages} highlight={mealsSearch} /></td>
+                              <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.delivery_point} highlight={mealsSearch} /></td>
+                              <td className="px-1 py-1 text-emerald-700 font-medium"><HighlightText text={row.meal_time} highlight={mealsSearch} /></td>
                               <td className="px-1 py-1 text-center font-bold text-lg text-emerald-800 bg-emerald-50/50 border-x border-emerald-100">{row.no_of_packs}</td>
-                              <td className="px-1 py-1 text-emerald-700">{row.accommodation_status}</td>
+                              <td className="px-1 py-1 text-emerald-700"><HighlightText text={row.accommodation_status} highlight={mealsSearch} /></td>
                             </tr>
                           ))
                         )}
@@ -575,13 +602,16 @@ const Information: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                     <span className="font-medium whitespace-nowrap">Filter Date:</span>
-                    <Input type="date" value={laundryDateFrom} onChange={e => {setLaundryDateFrom(e.target.value); setLaundryPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <Input type="date" value={laundryDateFrom} onChange={e => { setLaundryDateFrom(e.target.value); setLaundryPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
                     <span>to</span>
-                    <Input type="date" value={laundryDateTo} onChange={e => {setLaundryDateTo(e.target.value); setLaundryPage(1);}} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                    <Input type="date" value={laundryDateTo} onChange={e => { setLaundryDateTo(e.target.value); setLaundryPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                      <Input placeholder="Search..." value={laundrySearch} onChange={e => { setLaundrySearch(e.target.value); setLaundryPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setLaundryPage(1)}>Search</Button>
                   </div>
                   <Button onClick={handleExportLaundry} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                     <Download size={18} /> Export

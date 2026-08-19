@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronDown } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { HighlightText } from '@/components/ui/HighlightText';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -51,6 +52,10 @@ const Reservations: React.FC = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  const [roomSearch, setRoomSearch] = useState('');
+  const [meetingSearch, setMeetingSearch] = useState('');
+  const [checkInOutSearch, setCheckInOutSearch] = useState('');
 
   const { data: reservationsResp } = useQuery({
     queryKey: ['reservations'],
@@ -110,6 +115,9 @@ const Reservations: React.FC = () => {
       setMrAdditionalInfo('');
       setMrAction('SCHEDULLED');
       setMrRemark('');
+    },
+    onError: (error: any) => {
+      Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Failed to book meeting room' });
     }
   });
 
@@ -151,16 +159,17 @@ const Reservations: React.FC = () => {
   const reservations = reservationsResp?.data?.data || [];
   const rooms = roomsResp?.data?.data || [];
 
-  console.log('reservationsResp:', reservationsResp);
-  console.log('reservations:', reservations);
-
-  const bedroomReservations = reservations.filter((r: any) => r.occupants_category !== 'REGULAR GUEST');
+  const bedroomReservations = reservations.filter((r: any) => r.occupants_category !== 'REGULAR GUEST')
+    .filter((r: any) => !roomSearch || Object.values(r).some(val => String(val).toLowerCase().includes(roomSearch.toLowerCase())));
   const bedroomTotalPages = Math.ceil(bedroomReservations.length / itemsPerPage) || 1;
   const bedroomPaginatedData = bedroomReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const checkInOutReservations = reservations;
+  const checkInOutReservations = reservations.filter((r: any) => !checkInOutSearch || Object.values(r).some(val => String(val).toLowerCase().includes(checkInOutSearch.toLowerCase())));
   const checkInOutTotalPages = Math.ceil(checkInOutReservations.length / itemsPerPage) || 1;
   const checkInOutPaginatedData = checkInOutReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const meetingBookings = meetingBookingsResp?.data?.data || [];
+  const filteredMeetingBookings = meetingBookings.filter((mb: any) => !meetingSearch || Object.values(mb).some(val => String(val).toLowerCase().includes(meetingSearch.toLowerCase())));
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-full min-w-0 overflow-hidden">
@@ -181,8 +190,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
                   {canInsertBooking && (
                     <Button className="gap-2 bg-lime-400 text-emerald-950 hover:bg-lime-500 font-bold shadow-sm rounded-full px-6" onClick={() => setIsDialogOpen(true)}>
                       <Plus size={18} /> Book Room
@@ -208,12 +218,12 @@ const Reservations: React.FC = () => {
                     <tbody className="divide-y divide-emerald-50">
                       {bedroomPaginatedData.map((res: any) => (
                         <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                          <td className="px-1 py-1">{res.created_at ? formatDate(res.created_at) : '-'}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-950">{res.roomNo}</td>
-                          <td className="px-1 py-1 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
-                          <td className="px-1 py-1 text-[11px] text-left">{res.guestName}</td>
-                          <td className="px-1 py-1 text-emerald-700">{res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
-                          <td className="px-1 py-1 text-emerald-700">{res.estimated_departure ? formatDate(res.estimated_departure) : '-'}</td>
+                          <td className="px-1 py-1"><HighlightText text={res.created_at ? formatDate(res.created_at) : '-'} highlight={roomSearch} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-950"><HighlightText text={res.roomNo} highlight={roomSearch} /></td>
+                          <td className="px-1 py-1 text-[11px]"><HighlightText text={`LANDED HOUSE-${res.roomNo?.split('.')[1] || '01'}`} highlight={roomSearch} /></td>
+                          <td className="px-1 py-1 text-[11px] text-left"><HighlightText text={res.guestName} highlight={roomSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'} highlight={roomSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.estimated_departure ? formatDate(res.estimated_departure) : '-'} highlight={roomSearch} /></td>
                           <td className="px-1 py-1">
                             {res.guest_status === 'ON SITE' || res.guest_status === 'OFF SITE' ? (
                               <span className="uppercase text-emerald-800 font-medium text-[11px] px-2">{res.guest_status}</span>
@@ -251,7 +261,7 @@ const Reservations: React.FC = () => {
                               </DropdownMenu>
                             )}
                           </td>
-                          <td className="px-1 py-1 text-left max-w-xs truncate" title={res.remark || ''}>{res.remark || '-'}</td>
+                          <td className="px-1 py-1 text-left max-w-xs truncate" title={res.remark || ''}><HighlightText text={res.remark || '-'} highlight={roomSearch} /></td>
                         </tr>
                       ))}
                       {bedroomPaginatedData.length === 0 && (
@@ -286,8 +296,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
                   <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
                     <DialogTrigger asChild>
                       <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
@@ -304,7 +315,7 @@ const Reservations: React.FC = () => {
                           <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" value={mrMeetingRoom} onChange={e => setMrMeetingRoom(e.target.value)} required>
                             <option value="">-- Select Room --</option>
                             {meetingRoomsResp?.data?.data?.map((mr: any) => (
-                              <option key={mr.id} value={mr.room}>{mr.room}</option>
+                              <option key={mr.id} value={mr.room}>{mr.room} (max {mr.capacity} Person)</option>
                             ))}
                           </select>
                         </div>
@@ -362,23 +373,46 @@ const Reservations: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {meetingBookingsResp?.data?.data?.length > 0 ? (
-                        meetingBookingsResp?.data?.data?.map((mb: any) => (
+                      {filteredMeetingBookings.length > 0 ? (
+                        filteredMeetingBookings.map((mb: any) => (
                           <tr key={mb.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                            <td className="px-1 py-1">{mb.booking_date ? formatDate(mb.booking_date) : '-'}</td>
-                            <td className="px-1 py-1 font-semibold text-emerald-950 text-left">{mb.requested_by}</td>
-                            <td className="px-1 py-1 text-emerald-800">{mb.department || '-'}</td>
-                            <td className="px-1 py-1 font-semibold text-emerald-900">{mb.meeting_room}</td>
-                            <td className="px-1 py-1">{mb.participants}</td>
-                            <td className="px-1 py-1 text-emerald-700 font-medium">{mb.start_time}</td>
-                            <td className="px-1 py-1 text-emerald-700 font-medium">{mb.finish_time}</td>
-                            <td className="px-1 py-1 text-emerald-800">{mb.additional_info || '-'}</td>
+                            <td className="px-1 py-1"><HighlightText text={mb.booking_date ? formatDate(mb.booking_date) : '-'} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 font-semibold text-emerald-950 text-left"><HighlightText text={mb.requested_by} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-800"><HighlightText text={mb.department || '-'} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={mb.meeting_room} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1"><HighlightText text={mb.participants} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 font-medium"><HighlightText text={mb.start_time} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-700 font-medium"><HighlightText text={mb.finish_time} highlight={meetingSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-800"><HighlightText text={mb.additional_info || '-'} highlight={meetingSearch} /></td>
                             <td className="px-1 py-1">
-                              <span className="uppercase font-medium text-[11px] px-2 text-emerald-800 bg-emerald-50 rounded border border-emerald-200">
-                                {mb.action_status}
-                              </span>
+                              {mb.action_status === 'CANCELLED' ? (
+                                <span className="uppercase font-medium text-[11px] px-2 text-rose-800 bg-rose-50 rounded border border-rose-200">
+                                  <HighlightText text={mb.action_status} highlight={meetingSearch} />
+                                </span>
+                              ) : (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-7 text-[10px] uppercase font-medium flex items-center gap-1 text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">
+                                      {mb.action_status || 'SCHEDULLED'} <ChevronDown size={12} className="opacity-50" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-32">
+                                    <DropdownMenuItem onClick={() => {
+                                      meetingRoomAPI.cancel(mb.id, mb.meeting_room).then(() => {
+                                        queryClient.invalidateQueries({queryKey: ['meetingBookings']});
+                                        queryClient.invalidateQueries({queryKey: ['meetingRooms']});
+                                        Swal.fire({ icon: 'success', title: 'Cancelled', text: 'Reservation cancelled successfully!', timer: 1500, showConfirmButton: false });
+                                      }).catch(err => {
+                                        Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to cancel reservation' });
+                                      });
+                                    }}>
+                                      CANCELLED
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                             </td>
-                            <td className="px-1 py-1 text-left max-w-xs truncate" title={mb.remark}>{mb.remark || '-'}</td>
+                            <td className="px-1 py-1 text-left max-w-xs truncate" title={mb.remark}><HighlightText text={mb.remark || '-'} highlight={meetingSearch} /></td>
                           </tr>
                         ))
                       ) : (
@@ -398,8 +432,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={checkInOutSearch} onChange={e => { setCheckInOutSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
                   <Button className="bg-emerald-950 hover:bg-emerald-900 text-white rounded-lg px-6 shadow-sm" onClick={() => setIsCheckInOutDialogOpen(true)}>
                     Check In/ Out
                   </Button>
@@ -422,12 +457,12 @@ const Reservations: React.FC = () => {
                     <tbody className="divide-y divide-emerald-50">
                       {checkInOutPaginatedData.map((res: any) => (
                         <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
-                          <td className="px-1 py-1 font-semibold text-emerald-950">{res.roomNo}</td>
-                          <td className="px-1 py-1 text-[11px]">LANDED HOUSE-{res.roomNo?.split('.')[1] || '01'}</td>
-                          <td className="px-1 py-1 text-[11px] text-left">{res.guestName}</td>
-                          <td className="px-1 py-1 text-emerald-700">{res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'}</td>
-                          <td className="px-1 py-1 text-emerald-700">{res.check_out ? formatDate(res.check_out) : '-'}</td>
-                          <td className="px-1 py-1 uppercase font-medium text-[11px]">{res.guest_status}</td>
+                          <td className="px-1 py-1 font-semibold text-emerald-950"><HighlightText text={res.roomNo} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-[11px]"><HighlightText text={`LANDED HOUSE-${res.roomNo?.split('.')[1] || '01'}`} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-[11px] text-left"><HighlightText text={res.guestName} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_out ? formatDate(res.check_out) : '-'} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 uppercase font-medium text-[11px]"><HighlightText text={res.guest_status} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1">
                             <div className="flex justify-center gap-1">
                               {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || res.guest_status === 'OFF SITE') && (

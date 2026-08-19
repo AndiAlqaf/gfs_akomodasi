@@ -26,3 +26,11 @@ export function formatDateTime(date: Date | string): string {
     minute: '2-digit',
   });
 }
+
+export function toTitleCase(text: string | null | undefined): string {
+  if (!text) return '';
+  const str = String(text);
+  const isCode = /^[A-Z0-9.-]+$/.test(str) && /\d/.test(str) && /\./.test(str);
+  if (isCode) return str;
+  return str.toLowerCase().replace(/(?:^|\s|-|\/)\S/g, (c) => c.toUpperCase());
+}

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { toTitleCase } from '@/lib/utils';
+
 interface HighlightTextProps {
   text: string | number | null | undefined;
   highlight: string;
@@ -7,7 +9,14 @@ interface HighlightTextProps {
 
 export const HighlightText: React.FC<HighlightTextProps> = ({ text, highlight }) => {
   if (text === null || text === undefined) return null;
-  const textStr = String(text);
+  
+  let textStr = String(text);
+  
+  // Title case conversion for text (ignoring codes with dots/numbers)
+  if (typeof text === 'string') {
+    textStr = toTitleCase(textStr);
+  }
+
   if (!highlight.trim()) return <>{textStr}</>;
 
   const escapeRegExp = (string: string) => {

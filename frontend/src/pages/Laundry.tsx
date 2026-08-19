@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
 import { Truck, RotateCcw, Search, Plus, Shirt, Package } from 'lucide-react';
+import { HighlightText } from '@/components/ui/HighlightText';
 import { formatDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
@@ -21,6 +22,11 @@ const Laundry: React.FC = () => {
   const canInsertReceive = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.receivingInsert);
 
   const [activeTab, setActiveTab] = useState('dropping');
+
+  const [dropSearch, setDropSearch] = useState('');
+  const [deliverSearch, setDeliverSearch] = useState('');
+  const [receiveSearch, setReceiveSearch] = useState('');
+
 
   const [room, setRoom] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -62,8 +68,24 @@ const Laundry: React.FC = () => {
   });
   const registerLaundryBags = laundryBagsResp?.data?.data || [];
 
+  const { data: laundryDpResp } = useQuery({
+    queryKey: ['register_laundry_dp'],
+    queryFn: () => dataRegisterAPI.getLaundryDp(),
+  });
+  const registerLaundryDp = laundryDpResp?.data?.data || [];
+
   const transactions = laundryDataResp?.data?.data?.transactions || [];
   const boxList = laundryDataResp?.data?.data?.boxList || [];
+
+  const filteredDropTransactions = transactions.filter((t: any) =>
+    !dropSearch || Object.values(t).some(val => String(val).toLowerCase().includes(dropSearch.toLowerCase()))
+  );
+  const filteredBoxList = boxList.filter((b: any) =>
+    !deliverSearch || Object.values(b).some(val => String(val).toLowerCase().includes(deliverSearch.toLowerCase()))
+  );
+  const filteredReceiveTransactions = transactions.filter((t: any) =>
+    !receiveSearch || Object.values(t).some(val => String(val).toLowerCase().includes(receiveSearch.toLowerCase()))
+  );
 
   const guestSuggestions = guestName.trim()
     ? registerLaundryBags.filter((b: any) =>
@@ -147,8 +169,9 @@ const Laundry: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <Input placeholder="Search..." value={dropSearch} onChange={e => setDropSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
                 {canInsertDrop && (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -204,7 +227,14 @@ const Laundry: React.FC = () => {
                         <div className="space-y-1.5"><label className="text-xs font-semibold">PKG</label>
                           <select value={pkg} onChange={e => setPkg(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="Regular">Regular</option><option value="Express">Express</option></select>
                         </div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label><Input value={dropPoint} onChange={e => setDropPoint(e.target.value)} required /></div>
+                        <div className="space-y-1.5"><label className="text-xs font-semibold">DROP POINT</label>
+                          <select value={dropPoint} onChange={e => setDropPoint(e.target.value)} required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                            <option value="" disabled>Select Drop Point</option>
+                            {registerLaundryDp.map((dp: any) => (
+                              <option key={dp.id} value={dp.point_name}>{dp.point_name}</option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
                           <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={createDropMutation.isPending}>Submit Form</Button>
                         </div>
@@ -232,14 +262,14 @@ const Laundry: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {transactions.map((t: any) => (
+                      {filteredDropTransactions.map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-1 py-1">{t.room}</td>
-                          <td className="px-1 py-1">{t.guest_name}</td>
-                          <td className="px-1 py-1 font-medium">{t.laundry_bag_id}</td>
-                          <td className="px-1 py-1">{t.laundry_box_id}</td>
-                          <td className="px-1 py-1">{t.services_package}</td>
-                          <td className="px-1 py-1">{t.drop_point}</td>
+                          <td className="px-1 py-1"><HighlightText text={t.room} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.guest_name} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1 font-bold text-emerald-950"><HighlightText text={t.laundry_bag_id} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1 font-mono text-emerald-800 bg-emerald-50"><HighlightText text={t.laundry_box_id} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={t.services_package} highlight={dropSearch} /></td>
+                          <td className="px-1 py-1"><HighlightText text={t.drop_point} highlight={dropSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.drop_date)}</td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.distribute_date)}</td>
                           <td className="px-1 py-1">
@@ -249,7 +279,7 @@ const Laundry: React.FC = () => {
                           </td>
                         </tr>
                       ))}
-                      {transactions.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-gray-500">No data found</td></tr>}
+                      {filteredDropTransactions.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-gray-500">No data found</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -266,8 +296,9 @@ const Laundry: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <Input placeholder="Search..." value={deliverSearch} onChange={e => setDeliverSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
                 {canInsertDeliver && (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -321,9 +352,12 @@ const Laundry: React.FC = () => {
                       <tr><th className="px-3 py-3">LAUNDRY BOX</th><th className="px-3 py-3">BAGS</th><th className="px-3 py-3">DELIVER POINT</th><th className="px-3 py-3">DELIVER DATE</th><th className="px-3 py-3">RETURN DATE</th><th className="px-3 py-3">ACTION</th></tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {boxList.map((b: any) => (
-                        <tr key={b.boxId} className="hover:bg-emerald-50/50">
-                          <td className="px-1 py-1 font-bold text-emerald-900">{b.boxId}</td><td className="px-1 py-1">{b.dropPoint}</td><td className="px-1 py-1 text-emerald-600 font-mono">{b.bagsCount} bags</td>
+                      {filteredBoxList.map((b: any) => (
+                        <tr key={b.laundry_box_id} className="hover:bg-emerald-50/50 text-center">
+                          <td className="px-1 py-1 font-bold text-emerald-950"><HighlightText text={b.laundry_box_id} highlight={deliverSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-700 font-semibold"><HighlightText text={b.total_bags} highlight={deliverSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={b.drop_point} highlight={deliverSearch} /></td>
+                          <td className="px-1 py-1 text-emerald-800 bg-emerald-50 border-x border-emerald-100 font-medium"><HighlightText text={b.delivery_point || '-'} highlight={deliverSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(b.deliverDate)}</td><td className="px-1 py-1 text-xs">{formatDate(b.returnDate)}</td>
                           <td className="px-1 py-1">
                             {b.isReadyToDeliver ? (
@@ -334,7 +368,7 @@ const Laundry: React.FC = () => {
                           </td>
                         </tr>
                       ))}
-                      {boxList.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No boxes found</td></tr>}
+                      {filteredBoxList.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No boxes found</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -351,8 +385,9 @@ const Laundry: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                  <Input placeholder="Search..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
                 {canInsertReceive && (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -420,8 +455,8 @@ const Laundry: React.FC = () => {
                     <tbody className="divide-y divide-emerald-50">
                       {transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-1 py-1 font-bold text-emerald-900">{t.laundry_bag_id}</td>
-                          <td className="px-1 py-1 font-semibold text-emerald-700">{t.bag_status}</td>
+                          <td className="px-1 py-1 font-bold text-emerald-900"><HighlightText text={t.laundry_bag_id} highlight={receiveSearch} /></td>
+                          <td className="px-1 py-1 font-semibold text-emerald-700"><HighlightText text={t.bag_status} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.receiving_date)}</td>
                           <td className="px-1 py-1">
                             {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
@@ -443,7 +478,7 @@ const Laundry: React.FC = () => {
                           </td>
                         </tr>
                       ))}
-                      {transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT').length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No bags arrived yet.</td></tr>}
+                      {filteredReceiveTransactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT').length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No bags arrived yet.</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -453,13 +488,13 @@ const Laundry: React.FC = () => {
                 <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm p-4">
                   <p className="text-xs font-bold text-emerald-950 uppercase mb-2">Select Bag to Add Item Details:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {transactions.filter((t: any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').map((t: any) => (
+                    {filteredReceiveTransactions.filter((t: any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').map((t: any) => (
                       <Button key={t.id} variant="outline" className="h-14 flex flex-col items-center justify-center border-emerald-200 text-emerald-800 hover:bg-emerald-50" onClick={() => { setSelectedTxForDetails(t); setClothesList([{ clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }]); }}>
                         <span className="font-bold text-xs">{t.laundry_bag_id}</span>
                         <span className="text-[10px] text-emerald-600">{t.room} - {t.guest_name}</span>
                       </Button>
                     ))}
-                    {transactions.filter((t: any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').length === 0 && <p className="text-xs text-gray-500 col-span-full">No bags waiting for item details.</p>}
+                    {filteredReceiveTransactions.filter((t: any) => t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted').length === 0 && <p className="text-xs text-gray-500 col-span-full">No bags waiting for item details.</p>}
                   </div>
                 </div>
               ) : (

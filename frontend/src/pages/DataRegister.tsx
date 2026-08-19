@@ -60,11 +60,10 @@ export default function DataRegister() {
     }
 
     if (searchTerm) {
-      return data.filter((item: any) =>
-        Object.values(item).some(val =>
-          String(val).toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
+      return data.filter(item => {
+        const searchKeys = Object.keys(item).filter(k => !k.endsWith('_at') && k !== 'id' && !k.endsWith('_id') && k !== 'password');
+        return searchKeys.some(k => String(item[k]).toLowerCase().includes(searchTerm.toLowerCase()));
+      });
     }
     return data;
   };

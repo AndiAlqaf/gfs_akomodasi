@@ -95,7 +95,7 @@ export const reservationAPI = {
 export const meetingRoomAPI = {
   getAll: () => api.get('/meeting-rooms'),
   book: (data: any) => api.post('/meeting-rooms', { action: 'book', ...data }),
-  cancel: (id: string | number) => api.post('/meeting-rooms', { action: 'cancel', id }),
+  cancel: (id: string | number, room?: string) => api.post('/meeting-rooms', { action: 'cancel', id, room }),
 };
 
 export const mealsAPI = {

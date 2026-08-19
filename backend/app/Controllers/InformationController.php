@@ -34,6 +34,7 @@ class InformationController
                         LEFT JOIN areas a ON m.area_id = a.id
                         LEFT JOIN reservations res ON res.room_id = r.id AND res.guest_status = 'ON SITE'
                         LEFT JOIN guests g ON res.guest_id = g.id
+                        GROUP BY r.id
                         ORDER BY r.room_no
                     ";
                     $data = Database::fetchAll($query);
@@ -43,7 +44,7 @@ class InformationController
                     // INFORMATION_PERSON_ON_BOARD query
                     $query = "
                         SELECT 
-                            COALESCE(res.check_in, res.check_out) as date,
+                            CURDATE() as date,
                             r.room_no,
                             m.mess_name as mess,
                             a.area_name as area,

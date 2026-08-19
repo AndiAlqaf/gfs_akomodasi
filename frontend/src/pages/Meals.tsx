@@ -137,7 +137,6 @@ const Meals: React.FC = () => {
                   </div>
                   <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setRequestPage(1)}>Search</Button>
                 </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4" onClick={() => setRequestPage(1)}>Search</Button>
                 {canInsertRequest && (
                   <Dialog>
                     <DialogTrigger asChild>
