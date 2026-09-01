@@ -12,24 +12,21 @@ class Database
 
     private function __construct()
     {
-        $host = envValue('DB_HOST', '127.0.0.1');
-        $port = envValue('DB_PORT', '3306');
-        $db = envValue('DB_NAME', 'gfs_akomodasi_db');
-        $user = envValue('DB_USER', 'root');
-        $pass = envValue('DB_PASS', '');
-        $charset = envValue('DB_CHARSET', 'utf8mb4');
-
-        $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $host, $port, $db, $charset);
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
-
-        try {
-            $this->pdo = new PDO($dsn, $user, $pass, $options);
-        } catch (PDOException $e) {
-            jsonResponse(['error' => 'Database connection failed: ' . $e->getMessage()], 500);
+        global $pdo;
+        if (!isset($pdo) || !$pdo instanceof PDO) {
+            $dbPath = dirname(__DIR__, 2) . '/db.php';
+            if (file_exists($dbPath)) {
+                require_once $dbPath;
+            }
+        }
+        
+        if (isset($pdo) && $pdo instanceof PDO) {
+            $this->pdo = $pdo;
+        } else {
+            // Fallback error if db.php somehow didn't set $pdo
+            http_response_code(500);
+            echo json_encode(['error' => 'Database connection not initialized.']);
+            exit();
         }
     }
 

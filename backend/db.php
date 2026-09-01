@@ -109,7 +109,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 
 $host = envValue('DB_HOST', '127.0.0.1');
 $port = envValue('DB_PORT', '3306');
-$db = envValue('DB_NAME', 'gfs_akomodasi_db');
+$db = envValue('DB_NAME', 'gfs_akomodasi');
 $user = envValue('DB_USER', 'root');
 $pass = envValue('DB_PASS', '');
 $charset = envValue('DB_CHARSET', 'utf8mb4');

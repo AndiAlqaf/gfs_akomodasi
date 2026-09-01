@@ -13,9 +13,10 @@ const buildDefaultApiBaseUrl = () => {
 
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 
-export const API_BASE_URL = normalizeBaseUrl(
-  import.meta.env.VITE_API_BASE_URL || buildDefaultApiBaseUrl()
-) + '/api';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || buildDefaultApiBaseUrl();
+export const API_BASE_URL = normalizeBaseUrl(rawBaseUrl).endsWith('/api')
+  ? normalizeBaseUrl(rawBaseUrl)
+  : normalizeBaseUrl(rawBaseUrl) + '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

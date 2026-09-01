@@ -104,7 +104,7 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
       setIsMeetingDialogOpen(false);
       Swal.fire({ icon: 'success', title: 'Success', text: 'Meeting Room successfully booked!', timer: 2000, showConfirmButton: false });
-      
+
       // Reset meeting room form
       setMrDate('');
       setMrDepartement('');
@@ -288,10 +288,10 @@ const Reservations: React.FC = () => {
                     {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1)
                       .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
                       .map(page => (
-                      <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
-                        {page}
-                      </Button>
-                    ))}
+                        <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                          {page}
+                        </Button>
+                      ))}
                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, bedroomTotalPages))} disabled={currentPage === bedroomTotalPages}>Next</Button>
                   </div>
                 </div>
@@ -343,7 +343,7 @@ const Reservations: React.FC = () => {
                         <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Remark</label><Input value={mrRemark} onChange={e => setMrRemark(e.target.value)} /></div>
                         <div className="md:col-span-2 flex justify-end mt-2">
                           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" onClick={() => {
-                            if(!mrDate || !mrMeetingRoom || !mrStart || !mrFinish) {
+                            if (!mrDate || !mrMeetingRoom || !mrStart || !mrFinish) {
                               return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Please fill in required fields.', timer: 2000, showConfirmButton: false });
                             }
                             createMeetingRoomMutation.mutate({
@@ -409,8 +409,8 @@ const Reservations: React.FC = () => {
                                   <DropdownMenuContent align="end" className="w-32">
                                     <DropdownMenuItem onClick={() => {
                                       meetingRoomAPI.cancel(mb.id, mb.meeting_room).then(() => {
-                                        queryClient.invalidateQueries({queryKey: ['meetingBookings']});
-                                        queryClient.invalidateQueries({queryKey: ['meetingRooms']});
+                                        queryClient.invalidateQueries({ queryKey: ['meetingBookings'] });
+                                        queryClient.invalidateQueries({ queryKey: ['meetingRooms'] });
                                         Swal.fire({ icon: 'success', title: 'Cancelled', text: 'Reservation cancelled successfully!', timer: 1500, showConfirmButton: false });
                                       }).catch(err => {
                                         Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to cancel reservation' });
@@ -527,10 +527,10 @@ const Reservations: React.FC = () => {
                     {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1)
                       .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
                       .map(page => (
-                      <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
-                        {page}
-                      </Button>
-                    ))}
+                        <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                          {page}
+                        </Button>
+                      ))}
                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, checkInOutTotalPages))} disabled={currentPage === checkInOutTotalPages}>Next</Button>
                   </div>
                 </div>
