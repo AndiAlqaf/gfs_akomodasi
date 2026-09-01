@@ -44,7 +44,8 @@ class InformationController
                     // INFORMATION_PERSON_ON_BOARD query
                     $query = "
                         SELECT 
-                            CURDATE() as date,
+                            COALESCE(DATE(res.check_in), CURDATE()) as date,
+                            DATE(res.check_out) as check_out_date,
                             r.room_no,
                             m.mess_name as mess,
                             a.area_name as area,
@@ -62,8 +63,7 @@ class InformationController
                         JOIN rooms r ON res.room_id = r.id
                         JOIN messes m ON r.mess_id = m.id
                         JOIN areas a ON m.area_id = a.id
-                        WHERE res.guest_status = 'ON SITE' 
-                           OR (res.guest_status = 'OFF SITE' AND g.occupants_category IN ('REGULAR GUEST', 'SPECIAL GUEST', 'EXECUTIVE/VIPs GUEST'))
+                        /* Data remains so it can be filtered by date */
                         ORDER BY COALESCE(res.check_in, res.check_out) DESC
                     ";
                     $data = Database::fetchAll($query);

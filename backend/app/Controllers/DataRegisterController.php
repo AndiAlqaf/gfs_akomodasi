@@ -108,13 +108,21 @@ class DataRegisterController
                 break;
             case 'add_guest':
                 requireFields($data, ['room_id', 'name']);
-                \App\Core\Database::execute('INSERT INTO guests (room_id, name, institution_company, occupants_category, personal_identification, reg_id_card, job, position, level_category, meals_packages, breakfast_dp, lunch_dp, dinner_dp, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $registeredBy, $data['remarks'] ?? '']);
+                \App\Core\Database::execute('INSERT INTO guests (room_id, name, institution_company, occupants_category, personal_identification, reg_id_card, job, position, level_category, department, meals_packages, breakfast_dp, lunch_dp, dinner_dp, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $registeredBy, $data['remarks'] ?? '']);
+                
+                $guestId = \App\Core\Database::lastInsertId();
+                if (($data['occupants_category'] ?? 'REGULAR GUEST') === 'REGULAR GUEST') {
+                    \App\Core\Database::execute(
+                        "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, 'OFF SITE', NULL, NULL)",
+                        [$guestId, $data['room_id']]
+                    );
+                }
                 break;
             case 'add_meeting_room':
                 requireFields($data, ['meeting_room', 'building', 'capacity']);
-                \App\Core\Database::execute('INSERT INTO meeting_rooms (room, building, capacity, status) VALUES (?, ?, ?, ?)',
-                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY']);
+                \App\Core\Database::execute('INSERT INTO meeting_rooms (room, building, capacity, status, additional_info) VALUES (?, ?, ?, ?, ?)',
+                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY', $data['remarks'] ?? '']);
                 break;
             default:
                 jsonResponse(['error' => 'Invalid POST action'], 400);
@@ -157,13 +165,13 @@ class DataRegisterController
                 break;
             case 'update_guest':
                 requireFields($data, ['id', 'room_id', 'name']);
-                \App\Core\Database::execute('UPDATE guests SET room_id = ?, name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?',
-                    [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $data['remarks'] ?? '', $data['id']]);
+                \App\Core\Database::execute('UPDATE guests SET room_id = ?, name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, department = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?',
+                    [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $data['remarks'] ?? '', $data['id']]);
                 break;
             case 'update_meeting_room':
                 requireFields($data, ['id', 'meeting_room', 'building', 'capacity']);
-                \App\Core\Database::execute('UPDATE meeting_rooms SET room = ?, building = ?, capacity = ?, status = ? WHERE id = ?',
-                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY', $data['id']]);
+                \App\Core\Database::execute('UPDATE meeting_rooms SET room = ?, building = ?, capacity = ?, status = ?, additional_info = ? WHERE id = ?',
+                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY', $data['remarks'] ?? '', $data['id']]);
                 break;
             default:
                 jsonResponse(['error' => 'Invalid POST action'], 400);

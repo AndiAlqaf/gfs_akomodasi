@@ -261,7 +261,9 @@ const UserManagement: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>Previous</Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p >= Math.floor((page - 1) / 10) * 10 + 1 && p <= Math.floor((page - 1) / 10) * 10 + 10)
+                  .map(p => (
                   <Button key={p} variant={page === p ? 'default' : 'outline'} size="sm" onClick={() => setPage(p)} className={page === p ? 'bg-emerald-600 text-white' : ''}>{p}</Button>
                 ))}
                 <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(p + 1, totalPages))} disabled={page === totalPages}>Next</Button>

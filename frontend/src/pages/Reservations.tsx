@@ -22,7 +22,7 @@ const Reservations: React.FC = () => {
 
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [guestCategory, setGuestCategory] = useState('REGULAR GUEST');
+  const [guestCategory, setGuestCategory] = useState('SPECIAL GUEST');
   const [guestName, setGuestName] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   const [estimatedArrival, setEstimatedArrival] = useState('');
@@ -164,7 +164,15 @@ const Reservations: React.FC = () => {
   const bedroomTotalPages = Math.ceil(bedroomReservations.length / itemsPerPage) || 1;
   const bedroomPaginatedData = bedroomReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const checkInOutReservations = reservations.filter((r: any) => !checkInOutSearch || Object.values(r).some(val => String(val).toLowerCase().includes(checkInOutSearch.toLowerCase())));
+  // We show all check-in/out records for history, but hide Special/VIP guests that are OFF SITE
+  const checkInOutReservations = reservations
+    .filter((r: any) => !(r.guest_status === 'OFF SITE' && r.occupants_category !== 'REGULAR GUEST'))
+    .filter((r: any) => !checkInOutSearch || Object.values(r).some(val => String(val).toLowerCase().includes(checkInOutSearch.toLowerCase())))
+    .sort((a: any, b: any) => {
+      if (a.guest_status === 'ON SITE' && b.guest_status !== 'ON SITE') return -1;
+      if (b.guest_status === 'ON SITE' && a.guest_status !== 'ON SITE') return 1;
+      return 0;
+    });
   const checkInOutTotalPages = Math.ceil(checkInOutReservations.length / itemsPerPage) || 1;
   const checkInOutPaginatedData = checkInOutReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -277,7 +285,9 @@ const Reservations: React.FC = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                    {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1).map(page => (
+                    {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1)
+                      .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
+                      .map(page => (
                       <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
                         {page}
                       </Button>
@@ -456,16 +466,24 @@ const Reservations: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
                       {checkInOutPaginatedData.map((res: any) => (
-                        <tr key={res.id} className="hover:bg-emerald-50/50 transition-colors text-center text-emerald-900">
+                        <tr key={res.id} className={`hover:bg-emerald-50/50 transition-colors text-center text-emerald-900 ${res.guest_status === 'ON SITE' ? 'bg-lime-50/50' : ''}`}>
                           <td className="px-1 py-1 font-semibold text-emerald-950"><HighlightText text={res.roomNo} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-[11px]"><HighlightText text={`LANDED HOUSE-${res.roomNo?.split('.')[1] || '01'}`} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-[11px] text-left"><HighlightText text={res.guestName} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_out ? formatDate(res.check_out) : '-'} highlight={checkInOutSearch} /></td>
-                          <td className="px-1 py-1 uppercase font-medium text-[11px]"><HighlightText text={res.guest_status} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 uppercase font-medium text-[11px]">
+                            {res.guest_status === 'ON SITE' ? (
+                              <span className="bg-lime-200 text-lime-900 px-2 py-1 rounded font-bold shadow-sm inline-block">
+                                <HighlightText text={res.guest_status} highlight={checkInOutSearch} />
+                              </span>
+                            ) : (
+                              <HighlightText text={res.guest_status} highlight={checkInOutSearch} />
+                            )}
+                          </td>
                           <td className="px-1 py-1">
                             <div className="flex justify-center gap-1">
-                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || res.guest_status === 'OFF SITE') && (
+                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || (res.guest_status === 'OFF SITE' && !res.check_in)) && (
                                 <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>
                                   Check In
                                 </Button>
@@ -506,7 +524,9 @@ const Reservations: React.FC = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                    {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1).map(page => (
+                    {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1)
+                      .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
+                      .map(page => (
                       <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
                         {page}
                       </Button>
@@ -528,9 +548,8 @@ const Reservations: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Guest Category</label>
               <select className="w-full border p-2 rounded-md" value={guestCategory} onChange={(e) => setGuestCategory(e.target.value)}>
-                <option value="REGULAR GUEST">REGULAR GUEST</option>
                 <option value="SPECIAL GUEST">SPECIAL GUEST</option>
-                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
+                <option value="VIP GUEST">VIP GUEST</option>
               </select>
             </div>
             <div>

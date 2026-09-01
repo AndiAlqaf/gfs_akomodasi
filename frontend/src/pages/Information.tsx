@@ -3,13 +3,30 @@ import { useQuery } from '@tanstack/react-query';
 import { informationAPI, laundryAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDate, toTitleCase } from '@/lib/utils';
+import { formatDate, toTitleCase, calculateDuration } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Download } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportUtils';
 import { HighlightText } from '@/components/ui/HighlightText';
 const ITEMS_PER_PAGE = 20;
+
+const getVisiblePages = (currentPage: number, totalPages: number) => {
+  const maxVisible = 10;
+  if (totalPages <= maxVisible) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  
+  let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+  let end = start + maxVisible - 1;
+  
+  if (end > totalPages) {
+    end = totalPages;
+    start = Math.max(1, end - maxVisible + 1);
+  }
+  
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+};
 
 const Information: React.FC = () => {
   const [roomPage, setRoomPage] = useState(1);
@@ -102,30 +119,121 @@ const Information: React.FC = () => {
     return matchSearch;
   });
 
-  const filteredPobs = pobs.filter((p: any) => {
+  // Expand POBs for Regular Guests so they appear every day, and deduplicate others
+  const expandedPobsMap = new Map();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  pobs.forEach((p: any) => {
+    const isRegularGuest = String(p.occupants_category || '').toUpperCase() === 'REGULAR GUEST';
+
+    if (isRegularGuest && p.date) {
+      // For Regular Guests, expand the dates from check-in up to TODAY
+      const startDate = new Date(p.date);
+      startDate.setHours(0, 0, 0, 0);
+
+      // We generate records up to today
+      const endDate = today;
+
+      // Safety check: max 10 years to prevent infinite loops if date is corrupt
+      if (startDate <= endDate && endDate.getTime() - startDate.getTime() < 10 * 365 * 24 * 60 * 60 * 1000) {
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          const year = currentDate.getFullYear();
+          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+          const day = String(currentDate.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+          // Use name, room_no, and date to uniquely identify each day's record
+          const key = p.name + '_' + p.room_no + '_' + dateStr;
+
+          if (!expandedPobsMap.has(key)) {
+            // Determine boarding status for this specific day
+            let dailyStatus = p.boarding_status;
+            if (p.check_out_date) {
+              const checkOut = new Date(p.check_out_date);
+              checkOut.setHours(0, 0, 0, 0);
+              // If current date is exactly on or after check out date, they are OFF BOARD
+              if (currentDate >= checkOut) {
+                dailyStatus = 'OFF BOARD';
+              } else {
+                dailyStatus = 'ON BOARD';
+              }
+            } else {
+              dailyStatus = 'ON BOARD';
+            }
+
+            expandedPobsMap.set(key, { ...p, date: dateStr, boarding_status: dailyStatus });
+          }
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      } else {
+        // Fallback for invalid dates
+        const key = p.name + '_' + p.room_no + '_' + p.date;
+        if (!expandedPobsMap.has(key)) {
+          expandedPobsMap.set(key, p);
+        }
+      }
+    } else {
+      // For other guests, use the original logic (deduplicate by latest)
+      const key = p.name + '_' + p.room_no;
+      if (!expandedPobsMap.has(key)) {
+        expandedPobsMap.set(key, p);
+      }
+    }
+  });
+
+  const filteredPobs = Array.from(expandedPobsMap.values()).filter((p: any) => {
+    if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
+
+    // Search filter
     const visibleKeys = ['room_no', 'mess', 'name', 'reg_id_card', 'job', 'position', 'level_category', 'institution_company', 'occupants_category', 'boarding_status', 'date'];
     const searchLower = pobSearch.toLowerCase();
     const matchSearch = visibleKeys.some(k => String(p[k] || '').toLowerCase().includes(searchLower)) ||
-                        (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
-    return matchSearch && isDateInRange(p.date, pobDateFrom, pobDateTo);
+      (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
+
+    if (!matchSearch) return false;
+
+    // Visibility rules:
+    // - ON BOARD: Show all guests
+    // - OFF BOARD: Show only Regular Guests
+    const category = String(p.occupants_category || '').toUpperCase();
+    if (p.boarding_status === 'ON BOARD') {
+      return true;
+    } else if (p.boarding_status === 'OFF BOARD' && category === 'REGULAR GUEST') {
+      return true;
+    }
+
+    return false;
+  }).sort((a: any, b: any) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
     const visibleKeys = ['meals_packages', 'delivery_point', 'meal_time', 'accommodation_status', 'date'];
     const searchLower = mealsSearch.toLowerCase();
     const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
-                        (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
+      (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
     const matchDate = isDateInRange(r.date, mealsDateFrom, mealsDateTo);
     return matchSearch && matchDate;
+  }).sort((a: any, b: any) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   const filteredLaundry = laundryItems.filter((r: any) => {
-    const visibleKeys = ['name', 'room', 'laundry_bag_id', 'laundry_box', 'services_package', 'receiving_date'];
+    const visibleKeys = ['name', 'room', 'laundry_bag_id', 'laundry_box', 'services_package', 'drop_date'];
     const searchLower = laundrySearch.toLowerCase();
     const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
-                        (r.receiving_date ? formatDate(r.receiving_date).toLowerCase().includes(searchLower) : false);
-    const matchDate = isDateInRange(r.receiving_date, laundryDateFrom, laundryDateTo);
+      (r.drop_date ? formatDate(r.drop_date).toLowerCase().includes(searchLower) : false);
+    const matchDate = isDateInRange(r.drop_date, laundryDateFrom, laundryDateTo);
     return matchSearch && matchDate;
+  }).sort((a: any, b: any) => {
+    if (!a.drop_date) return 1;
+    if (!b.drop_date) return -1;
+    return new Date(b.drop_date).getTime() - new Date(a.drop_date).getTime();
   });
 
   const meetingRawData = meetingResp?.data?.data;
@@ -134,8 +242,12 @@ const Information: React.FC = () => {
     const visibleKeys = ['room', 'building', 'booking_status', 'reserved_by', 'status', 'date'];
     const searchLower = meetingSearch.toLowerCase();
     const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
-                        (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
+      (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
     return matchSearch;
+  }).sort((a: any, b: any) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
@@ -145,8 +257,21 @@ const Information: React.FC = () => {
   const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
   const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const onBoardCount = filteredPobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
-  const offBoardCount = filteredPobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
+  const onBoardCount = filteredPobs.filter((p: any) => {
+    if (pobDateFrom || pobDateTo) return p.boarding_status === 'ON BOARD';
+    if (!p.date) return false;
+    const d = new Date(p.date);
+    const today = new Date();
+    return p.boarding_status === 'ON BOARD' && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  }).length;
+
+  const offBoardCount = filteredPobs.filter((p: any) => {
+    if (pobDateFrom || pobDateTo) return p.boarding_status !== 'ON BOARD';
+    if (!p.date) return false;
+    const d = new Date(p.date);
+    const today = new Date();
+    return p.boarding_status !== 'ON BOARD' && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  }).length;
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
@@ -290,7 +415,7 @@ const Information: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.max(prev - 1, 1))} disabled={roomPage === 1}>Previous</Button>
-                      {Array.from({ length: roomTotalPages }, (_, i) => i + 1).map(page => (
+                      {getVisiblePages(roomPage, roomTotalPages).map(page => (
                         <Button key={page} variant={roomPage === page ? 'default' : 'outline'} size="sm" onClick={() => setRoomPage(page)} className={roomPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
                           {page}
                         </Button>
@@ -365,7 +490,7 @@ const Information: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.max(prev - 1, 1))} disabled={meetingPage === 1}>Previous</Button>
-                      {Array.from({ length: meetingTotalPages }, (_, i) => i + 1).map(page => (
+                      {getVisiblePages(meetingPage, meetingTotalPages).map(page => (
                         <Button key={page} variant={meetingPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMeetingPage(page)} className={meetingPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
                           {page}
                         </Button>
@@ -478,7 +603,7 @@ const Information: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.max(prev - 1, 1))} disabled={pobPage === 1}>Previous</Button>
-                      {Array.from({ length: pobTotalPages }, (_, i) => i + 1).map(page => (
+                      {getVisiblePages(pobPage, pobTotalPages).map(page => (
                         <Button key={page} variant={pobPage === page ? 'default' : 'outline'} size="sm" onClick={() => setPobPage(page)} className={pobPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
                           {page}
                         </Button>
@@ -580,7 +705,7 @@ const Information: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.max(prev - 1, 1))} disabled={mealsPage === 1}>Previous</Button>
-                      {Array.from({ length: mealsTotalPages }, (_, i) => i + 1).map(page => (
+                      {getVisiblePages(mealsPage, mealsTotalPages).map(page => (
                         <Button key={page} variant={mealsPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMealsPage(page)} className={mealsPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
                           {page}
                         </Button>
@@ -651,9 +776,9 @@ const Information: React.FC = () => {
                           <th className="px-3 py-3 text-center">SERVICES<br />PACKAGES</th>
                           <th className="px-3 py-3 text-center">WEIGHT</th>
                           <th className="px-3 py-3 text-center">PCS</th>
-                          <th className="px-3 py-3 text-center">RECEIVING<br />DATE</th>
+                          <th className="px-3 py-3 text-center">DROP<br />DATE</th>
                           <th className="px-3 py-3 text-center">COMPLETION<br />DATE</th>
-                          <th className="px-3 py-3 text-center">DURATION</th>
+                          <th className="px-3 py-3 text-center">DURATION<br />(DAY)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
@@ -671,9 +796,9 @@ const Information: React.FC = () => {
                               <td className="px-4 py-2 text-emerald-700">{row.services_package}</td>
                               <td className="px-4 py-2 font-bold text-emerald-800">{row.weight || '-'}</td>
                               <td className="px-4 py-2 text-emerald-700">{row.no_of_pcs_total || '-'}</td>
-                              <td className="px-4 py-2 text-emerald-700">{formatDate(row.receiving_date) || '-'}</td>
-                              <td className="px-4 py-2 text-emerald-700">-</td>
-                              <td className="px-4 py-2 text-emerald-700">-</td>
+                              <td className="px-4 py-2 text-emerald-700">{formatDate(row.drop_date) || '-'}</td>
+                              <td className="px-4 py-2 text-emerald-700">{row.distribute_date ? formatDate(row.distribute_date) : '-'}</td>
+                              <td className="px-4 py-2 font-medium text-emerald-800">{calculateDuration(row.drop_date, row.distribute_date)}</td>
                             </tr>
                           ))
                         )}
@@ -688,7 +813,7 @@ const Information: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.max(prev - 1, 1))} disabled={laundryPage === 1}>Previous</Button>
-                      {Array.from({ length: laundryTotalPages }, (_, i) => i + 1).map(page => (
+                      {getVisiblePages(laundryPage, laundryTotalPages).map(page => (
                         <Button key={page} variant={laundryPage === page ? 'default' : 'outline'} size="sm" onClick={() => setLaundryPage(page)} className={laundryPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
                           {page}
                         </Button>

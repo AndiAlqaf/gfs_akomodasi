@@ -58,11 +58,11 @@ class ReservationModel extends BaseModel
             // Free up the room
             Database::execute("UPDATE rooms SET room_status = 'READY' WHERE id = ?", [$roomId]);
             
-            // Spawn new OFF SITE reservation for REGULAR GUEST
+            // For REGULAR GUEST, create a new empty slot so they can be checked in again
             if ($resData['occupants_category'] === 'REGULAR GUEST') {
                 Database::execute(
-                    "INSERT INTO {$this->table} (guest_id, room_id, guest_status) VALUES (?, ?, 'OFF SITE')", 
-                    [$guestId, $roomId]
+                    "INSERT INTO {$this->table} (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, NULL, NULL)",
+                    [$guestId, $roomId, 'OFF SITE']
                 );
             }
         }

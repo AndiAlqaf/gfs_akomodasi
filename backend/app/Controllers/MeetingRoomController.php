@@ -40,7 +40,7 @@ class MeetingRoomController
                 "UPDATE meeting_rooms SET 
                     date = ?, reserved_by = ?, departement = ?, participants = ?, 
                     start_time = ?, finish_time = ?, additional_info = ?,
-                    booking_status = 'BOOKED', status = ?
+                    booking_status = 'BOOKED'
                 WHERE room = ?",
                 [
                     $input['booking_date'],
@@ -50,7 +50,6 @@ class MeetingRoomController
                     $input['start_time'],
                     $input['finish_time'],
                     $input['additional_info'] ?? '',
-                    $input['action_status'] ?? 'SCHEDULLED',
                     $input['meeting_room'],
                 ]
             );
@@ -66,7 +65,7 @@ class MeetingRoomController
 
             if (!empty($input['room'])) {
                 Database::execute(
-                    "UPDATE meeting_rooms SET booking_status='OPEN', status='CANCELLED' WHERE room=?",
+                    "UPDATE meeting_rooms SET booking_status='OPEN' WHERE room=?",
                     [$input['room']]
                 );
             }

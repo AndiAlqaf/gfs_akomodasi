@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
-import { Truck, RotateCcw, Search, Plus, Shirt, Package } from 'lucide-react';
+import { Truck, RotateCcw, Search, Plus, Shirt, Package, Eye } from 'lucide-react';
 import { HighlightText } from '@/components/ui/HighlightText';
 import { formatDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/useAppStore';
@@ -53,6 +53,7 @@ const Laundry: React.FC = () => {
 
   const [weightInput, setWeightInput] = useState<{ [key: string]: string }>({});
   const [selectedTxForDetails, setSelectedTxForDetails] = useState<any | null>(null);
+  const [viewDetailsTx, setViewDetailsTx] = useState<any | null>(null);
   const [clothesList, setClothesList] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -153,9 +154,7 @@ const Laundry: React.FC = () => {
           <TabsTrigger value="dropping" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
             <Shirt size={16} /> DROPPING & DISTRIBUTING
           </TabsTrigger>
-          <TabsTrigger value="delivering" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-            <Truck size={16} /> DELIVERING & RETURNING
-          </TabsTrigger>
+
           <TabsTrigger value="receiving" className="rounded-xl px-5 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
             <Package size={16} /> RECEIVING & CLEANING
           </TabsTrigger>
@@ -258,7 +257,8 @@ const Laundry: React.FC = () => {
                         <th className="px-3 py-3 text-center">DROP POINT</th>
                         <th className="px-3 py-3 text-center">DROPPING DATE</th>
                         <th className="px-3 py-3 text-center">DISTRIBUTING DATE</th>
-                        <th className="px-3 py-3 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">DETAILS</th>
+                        <th className="px-3 py-3 text-center">STATUS</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
@@ -272,14 +272,21 @@ const Laundry: React.FC = () => {
                           <td className="px-1 py-1"><HighlightText text={t.drop_point} highlight={dropSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.drop_date)}</td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.distribute_date)}</td>
+                          <td className="px-1 py-1 text-center">
+                            {t.details && t.details.length > 0 ? (
+                              <button onClick={() => setViewDetailsTx(t)} className="text-emerald-600 hover:text-emerald-800 transition-colors bg-emerald-50 p-1.5 rounded-md hover:bg-emerald-100" title="View Details">
+                                <Eye size={16} />
+                              </button>
+                            ) : <span className="text-xs text-gray-300">-</span>}
+                          </td>
                           <td className="px-1 py-1">
-                            {t.current_status === 'RETURNED_TO_DROP' ? (
+                            {t.current_status === 'PROCESS_COMPLETED' || (t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Rejected') ? (
                               <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={() => actionMutation.mutate({ action: 'distribute', id: t.laundry_bag_id })}>Distribute</Button>
                             ) : <span className="text-xs text-emerald-600 font-semibold">{t.current_status}</span>}
                           </td>
                         </tr>
                       ))}
-                      {filteredDropTransactions.length === 0 && <tr><td colSpan={9} className="text-center py-8 text-gray-500">No data found</td></tr>}
+                      {filteredDropTransactions.length === 0 && <tr><td colSpan={10} className="text-center py-8 text-gray-500">No data found</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -288,94 +295,6 @@ const Laundry: React.FC = () => {
           </Card>
         </TabsContent>
 
-        {/* --- TAB 2: DELIVERING & RETURNING --- */}
-        <TabsContent value="delivering" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
-          <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
-            <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Tabel Delivering & Returning</CardTitle>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                  <Input placeholder="Search..." value={deliverSearch} onChange={e => setDeliverSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
-                </div>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
-                {canInsertDeliver && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
-                        <Plus size={18} /> Deliver & Return Form
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[800px]">
-                      <DialogHeader>
-                        <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Delivering & Returning Form</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleDispatcherSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold uppercase">Laundry Box</label>
-                          <select
-                            value={dispBox}
-                            onChange={e => setDispBox(e.target.value)}
-                            required
-                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-                          >
-                            <option value="">Select Laundry Box</option>
-                            {uniqueBoxesFromDropping.map((boxId: any) => (
-                              <option key={boxId} value={boxId}>{boxId}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Bags</label><Input value={dispBags} onChange={e => setDispBags(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Deliver Point</label><Input value={dispPoint} onChange={e => setDispPoint(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Delivering Date</label><Input type="date" value={dispDeliverDate} onChange={e => setDispDeliverDate(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Returning Date</label><Input type="date" value={dispReturnDate} onChange={e => setDispReturnDate(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
-                          <select value={dispAction} onChange={e => setDispAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <option value="DELIVERED">DELIVERED</option>
-                            <option value="RETURNED">RETURNED</option>
-                          </select>
-                        </div>
-                        <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
-                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={actionMutation.isPending}>Submit Form</Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden ">
-              <div className="w-full bg-white rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden flex flex-col max-h-full min-h-0">
-                <div className="overflow-auto max-h-full min-h-0 w-full relative">
-                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
-                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
-                      <tr><th className="px-3 py-3">LAUNDRY BOX</th><th className="px-3 py-3">BAGS</th><th className="px-3 py-3">DELIVER POINT</th><th className="px-3 py-3">DELIVER DATE</th><th className="px-3 py-3">RETURN DATE</th><th className="px-3 py-3">ACTION</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-emerald-50">
-                      {filteredBoxList.map((b: any) => (
-                        <tr key={b.laundry_box_id} className="hover:bg-emerald-50/50 text-center">
-                          <td className="px-1 py-1 font-bold text-emerald-950"><HighlightText text={b.laundry_box_id} highlight={deliverSearch} /></td>
-                          <td className="px-1 py-1 text-emerald-700 font-semibold"><HighlightText text={b.total_bags} highlight={deliverSearch} /></td>
-                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={b.drop_point} highlight={deliverSearch} /></td>
-                          <td className="px-1 py-1 text-emerald-800 bg-emerald-50 border-x border-emerald-100 font-medium"><HighlightText text={b.delivery_point || '-'} highlight={deliverSearch} /></td>
-                          <td className="px-1 py-1 text-xs">{formatDate(b.deliverDate)}</td><td className="px-1 py-1 text-xs">{formatDate(b.returnDate)}</td>
-                          <td className="px-1 py-1">
-                            {b.isReadyToDeliver ? (
-                              <Button size="sm" className="bg-amber-500 hover:bg-amber-600 h-7 text-xs px-3" onClick={() => actionMutation.mutate({ action: 'deliver', id: b.boxId })}><Truck size={14} className="mr-1" /> To Laundry</Button>
-                            ) : b.isReadyToReturn && !b.returnDate ? (
-                              <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600 h-7 text-xs px-3" onClick={() => actionMutation.mutate({ action: 'return', id: b.boxId })}><RotateCcw size={14} className="mr-1" /> Return Box</Button>
-                            ) : <span className="text-xs text-gray-500 font-medium">In Process</span>}
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredBoxList.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No boxes found</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* --- TAB 3: RECEIVING & CLEANING --- */}
         <TabsContent value="receiving" className="m-0 animate-fade-in data-[state=active]:flex flex-col flex-1 min-h-0 w-full overflow-hidden">
@@ -449,26 +368,67 @@ const Laundry: React.FC = () => {
                         <th className="px-3 py-3 text-center">RECEIVING DATE</th>
                         <th className="px-3 py-3 text-center">WEIGHT</th>
                         <th className="px-3 py-3 text-center">NO OF PCS</th>
-                        <th className="px-3 py-3 text-center">ACTION</th>
+                        <th className="px-3 py-3 text-center">DETAILS</th>
+                        <th className="px-3 py-3 text-center">STATUS</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-emerald-50">
-                      {transactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT' && t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
+                      {filteredReceiveTransactions.filter((t: any) => t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').map((t: any) => (
                         <tr key={t.id} className="hover:bg-emerald-50/50 text-center">
                           <td className="px-1 py-1 font-bold text-emerald-900"><HighlightText text={t.laundry_bag_id} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 font-semibold text-emerald-700"><HighlightText text={t.bag_status} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.receiving_date)}</td>
                           <td className="px-1 py-1">
-                            {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
+                            {t.current_status === 'DROPPED_AT_POINT' ? (
                               <div className="flex justify-center"><Input type="number" step="0.1" className="w-20 h-8 text-center" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} /></div>
                             ) : <span className="font-mono">{t.weight || '-'}</span>}
                           </td>
                           <td className="px-1 py-1 font-mono">{t.no_of_pcs_total}</td>
                           <td className="px-1 py-1 text-center">
-                            {t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
+                            {t.details && t.details.length > 0 ? (
+                              <button onClick={() => setViewDetailsTx(t)} className="text-emerald-600 hover:text-emerald-800 transition-colors bg-emerald-50 p-1.5 rounded-md hover:bg-emerald-100" title="View Details">
+                                <Eye size={16} />
+                              </button>
+                            ) : <span className="text-xs text-gray-300">-</span>}
+                          </td>
+                          <td className="px-1 py-1 text-center">
+                            {t.current_status === 'DROPPED_AT_POINT' ? (
                               <div className="flex gap-2 justify-center">
-                                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-7 px-2" onClick={() => actionMutation.mutate({ action: 'receive', id: t.laundry_bag_id, data: { bag_status: 'Accepted', weight: weightInput[t.id] } })}>Accept</Button>
-                                <Button size="sm" className="bg-red-500 hover:bg-red-600 h-7 px-2" onClick={() => actionMutation.mutate({ action: 'receive', id: t.laundry_bag_id, data: { bag_status: 'Rejected', weight: weightInput[t.id] } })}>Reject</Button>
+                                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-7 px-2" onClick={() => {
+                                  const weight = weightInput[t.id];
+                                  if (!weight || parseFloat(weight) <= 0) {
+                                    Swal.fire({ icon: 'warning', title: 'Weight Required', text: 'Please enter the weight before accepting the bag.', timer: 2000, showConfirmButton: false });
+                                    return;
+                                  }
+                                  Swal.fire({
+                                    title: 'Are you sure?',
+                                    text: `You are about to ACCEPT laundry bag ${t.laundry_bag_id}.`,
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#10b981',
+                                    cancelButtonColor: '#ef4444',
+                                    confirmButtonText: 'Yes, Accept!'
+                                  }).then((result) => {
+                                    if (result.isConfirmed) {
+                                      actionMutation.mutate({ action: 'receive', id: t.laundry_bag_id, data: { bag_status: 'Accepted', weight } });
+                                    }
+                                  });
+                                }}>Accept</Button>
+                                <Button size="sm" className="bg-red-500 hover:bg-red-600 h-7 px-2" onClick={() => {
+                                  Swal.fire({
+                                    title: 'Are you sure?',
+                                    text: `You are about to REJECT laundry bag ${t.laundry_bag_id}.`,
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#ef4444',
+                                    cancelButtonColor: '#6b7280',
+                                    confirmButtonText: 'Yes, Reject!'
+                                  }).then((result) => {
+                                    if (result.isConfirmed) {
+                                      actionMutation.mutate({ action: 'receive', id: t.laundry_bag_id, data: { bag_status: 'Rejected', weight: weightInput[t.id] } });
+                                    }
+                                  });
+                                }}>Reject</Button>
                               </div>
                             ) : t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted' ? (
                               <span className="text-xs text-amber-600 font-medium">Needs Details</span>
@@ -478,7 +438,7 @@ const Laundry: React.FC = () => {
                           </td>
                         </tr>
                       ))}
-                      {filteredReceiveTransactions.filter((t: any) => t.current_status !== 'DROPPED_AT_POINT').length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No bags arrived yet.</td></tr>}
+                      {filteredReceiveTransactions.filter((t: any) => t.current_status !== 'RETURNED_TO_DROP' && t.current_status !== 'DISTRIBUTED_TO_ROOM').length === 0 && <tr><td colSpan={7} className="text-center py-8 text-gray-500">No bags arrived yet.</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -508,13 +468,47 @@ const Laundry: React.FC = () => {
                       <thead className="bg-emerald-950 text-stone-50 uppercase">
                         <tr><th className="p-2">CLOTHES TYPE</th><th className="p-2">BRAND</th><th className="p-2">COLOUR</th><th className="p-2">SIZE</th><th className="p-2 w-20">QTY</th><th className="p-2 w-10"></th></tr>
                       </thead>
+                      <datalist id="clothes-type-options">
+                        <option value="Kemeja" />
+                        <option value="Celana Panjang" />
+                        <option value="Kaos" />
+                        <option value="Jaket" />
+                        <option value="Celana Dalam" />
+                        <option value="Kaos Kaki" />
+                        <option value="Handuk" />
+                        <option value="Celana Pendek" />
+                        <option value="Baju Wearpack" />
+                      </datalist>
+                      <datalist id="colour-options">
+                        <option value="Hitam" />
+                        <option value="Putih" />
+                        <option value="Biru" />
+                        <option value="Merah" />
+                        <option value="Hijau" />
+                        <option value="Kuning" />
+                        <option value="Abu-abu" />
+                        <option value="Coklat" />
+                        <option value="Oranye" />
+                        <option value="Biru Dongker" />
+                        <option value="Campuran" />
+                      </datalist>
+                      <datalist id="size-options">
+                        <option value="XS" />
+                        <option value="S" />
+                        <option value="M" />
+                        <option value="L" />
+                        <option value="XL" />
+                        <option value="XXL" />
+                        <option value="3XL" />
+                        <option value="Semua Ukuran (All Size)" />
+                      </datalist>
                       <tbody>
                         {clothesList.map((c, i) => (
                           <tr key={i} className="border-b border-gray-100">
-                            <td className="p-1.5"><Input value={c.clothes_type} onChange={e => { const n = [...clothesList]; n[i].clothes_type = e.target.value; setClothesList(n) }} placeholder="Shirt, Pants..." className="h-8 text-xs" /></td>
-                            <td className="p-1.5"><Input value={c.brand} onChange={e => { const n = [...clothesList]; n[i].brand = e.target.value; setClothesList(n) }} placeholder="Brand..." className="h-8 text-xs" /></td>
-                            <td className="p-1.5"><Input value={c.colour} onChange={e => { const n = [...clothesList]; n[i].colour = e.target.value; setClothesList(n) }} placeholder="Colour..." className="h-8 text-xs" /></td>
-                            <td className="p-1.5"><Input value={c.size} onChange={e => { const n = [...clothesList]; n[i].size = e.target.value; setClothesList(n) }} placeholder="M, L..." className="h-8 text-xs" /></td>
+                            <td className="p-1.5"><Input list="clothes-type-options" value={c.clothes_type} onChange={e => { const n = [...clothesList]; n[i].clothes_type = e.target.value; setClothesList(n) }} placeholder="Kemeja, Celana..." className="h-8 text-xs" /></td>
+                            <td className="p-1.5"><Input value={c.brand} onChange={e => { const n = [...clothesList]; n[i].brand = e.target.value; setClothesList(n) }} placeholder="Merk..." className="h-8 text-xs" /></td>
+                            <td className="p-1.5"><Input list="colour-options" value={c.colour} onChange={e => { const n = [...clothesList]; n[i].colour = e.target.value; setClothesList(n) }} placeholder="Warna..." className="h-8 text-xs" /></td>
+                            <td className="p-1.5"><Input list="size-options" value={c.size} onChange={e => { const n = [...clothesList]; n[i].size = e.target.value; setClothesList(n) }} placeholder="M, L..." className="h-8 text-xs" /></td>
                             <td className="p-1.5"><Input type="number" value={c.no_of_pcs} onChange={e => { const n = [...clothesList]; n[i].no_of_pcs = e.target.value; setClothesList(n) }} min="1" className="h-8 text-xs" /></td>
                             <td className="p-1.5"><Button variant="destructive" size="sm" onClick={() => { const n = [...clothesList]; n.splice(i, 1); setClothesList(n) }} className="h-7 px-2 text-xs">X</Button></td>
                           </tr>
@@ -532,6 +526,46 @@ const Laundry: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog for Viewing Details */}
+      <Dialog open={!!viewDetailsTx} onOpenChange={(open) => !open && setViewDetailsTx(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-emerald-950 text-xl uppercase">Bag Details: {viewDetailsTx?.laundry_bag_id}</DialogTitle>
+          </DialogHeader>
+          <div className="p-2">
+            <div className="grid grid-cols-2 gap-4 mb-4 text-sm bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+              <div><span className="font-semibold text-emerald-900">Room:</span> {viewDetailsTx?.room}</div>
+              <div><span className="font-semibold text-emerald-900">Guest:</span> {viewDetailsTx?.guest_name}</div>
+              <div><span className="font-semibold text-emerald-900">Total Pcs:</span> {viewDetailsTx?.no_of_pcs_total || 0}</div>
+              <div><span className="font-semibold text-emerald-900">Weight:</span> {viewDetailsTx?.weight ? `${viewDetailsTx.weight} kg` : '-'}</div>
+            </div>
+            
+            {viewDetailsTx?.details && viewDetailsTx.details.length > 0 ? (
+              <div className="overflow-hidden border border-emerald-100 rounded-lg">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-emerald-950 text-stone-50 uppercase">
+                    <tr><th className="p-2 text-center">TYPE</th><th className="p-2 text-center">BRAND</th><th className="p-2 text-center">COLOUR</th><th className="p-2 text-center">SIZE</th><th className="p-2 text-center">QTY</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-emerald-50">
+                    {viewDetailsTx.details.map((d: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-emerald-50/50">
+                        <td className="p-2 text-center">{d.clothes_type || '-'}</td>
+                        <td className="p-2 text-center">{d.brand || '-'}</td>
+                        <td className="p-2 text-center">{d.colour || '-'}</td>
+                        <td className="p-2 text-center">{d.size || '-'}</td>
+                        <td className="p-2 text-center font-bold">{d.no_of_pcs}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center text-sm text-gray-500 py-4">No clothes details found for this bag.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

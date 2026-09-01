@@ -149,8 +149,9 @@ export default function DataRegister() {
     const data = { ...row };
     if (activeTab === 'meeting_room') {
       data.meeting_room = row.room;
-      data.room_id = 'MR-' + row.id?.toString().padStart(3, '0');
+      data.room_id = 'CMP-MR-' + row.id?.toString().padStart(2, '0');
       data.room_status = row.status;
+      data.remarks = row.additional_info;
     }
     setFormData(data);
     setIsModalOpen(true);
@@ -242,9 +243,9 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Allocation</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_allocation ?? ''} onChange={(e) => setFormData({ ...formData, room_allocation: e.target.value })}>
                 <option value="">Select Allocation</option>
-                <option value="REGULAR GUEST">REGULAR GUEST</option>
-                <option value="SPECIAL GUEST">SPECIAL GUEST</option>
-                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
+                <option value="BED ROOM">BED ROOM</option>
+                <option value="WAREHOUSE">WAREHOUSE</option>
+                <option value="OTHER PURPOSES">OTHER PURPOSES</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -311,8 +312,7 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Canteen Status</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.canteen_status ?? ''} onChange={(e) => setFormData({ ...formData, canteen_status: e.target.value })}>
-                <option value="">Select Status</option>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.canteen_status ?? 'Ready'} onChange={(e) => setFormData({ ...formData, canteen_status: e.target.value })}>
                 <option value="Ready">Ready</option>
                 <option value="Under Repaired">Under Repaired</option>
                 <option value="Out of Order">Out of Order</option>
@@ -336,8 +336,7 @@ export default function DataRegister() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium leading-tight">Drop & Delivery Point Status</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.dp_status ?? ''} onChange={(e) => setFormData({ ...formData, dp_status: e.target.value })}>
-                <option value="">Select Status</option>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.dp_status ?? 'Ready'} onChange={(e) => setFormData({ ...formData, dp_status: e.target.value })}>
                 <option value="Ready">Ready</option>
                 <option value="Under Repaired">Under Repaired</option>
                 <option value="Out of Order">Out of Order</option>
@@ -449,9 +448,8 @@ export default function DataRegister() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.occupants_category ?? ''} onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
-                <option value="REGULAR GUEST">REGULAR GUEST</option>
                 <option value="SPECIAL GUEST">SPECIAL GUEST</option>
-                <option value="EXECUTIVE/VIPs GUEST">EXECUTIVE/VIPs GUEST</option>
+                <option value="VIP GUEST">VIP GUEST</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -479,6 +477,10 @@ export default function DataRegister() {
                 <option value="SENIOR STAFF">SENIOR STAFF</option>
                 <option value="BOD">BOD</option>
               </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Department</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="e.g. IT" value={formData.department ?? ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Meals Pkg</Label>
@@ -536,7 +538,7 @@ export default function DataRegister() {
                 <Home size={16} /> MESS
               </TabsTrigger>
               <TabsTrigger value="room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
-                <BedDouble size={16} /> BEDROOM
+                <BedDouble size={16} /> ROOM
               </TabsTrigger>
               <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Users size={16} /> GUEST
@@ -755,13 +757,13 @@ export default function DataRegister() {
                         <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
                           <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.room} highlight={searchTerm} /></td>
-                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={"MR-" + row.id?.toString().padStart(3, "0")} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-700"><HighlightText text={"CMP-MR-" + row.id?.toString().padStart(2, "0")} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.building} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center text-emerald-900 font-medium"><HighlightText text={row.capacity} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 font-semibold text-emerald-900"><HighlightText text={row.status || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.reserved_by || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.created_at ? row.created_at.split(" ")[0] : "-"} highlight={searchTerm} /></td>
-                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.remarks || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.additional_info || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
@@ -928,6 +930,7 @@ export default function DataRegister() {
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>JOB</th>
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>POSITION</th>
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>DEPARTMENT</th>
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
                         <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
@@ -955,6 +958,7 @@ export default function DataRegister() {
                           <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.job || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.position || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-900 font-semibold"><HighlightText text={row.level_category || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.department || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.institution_company || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.occupants_category || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.meals_packages || "-"} highlight={searchTerm} /></td>
