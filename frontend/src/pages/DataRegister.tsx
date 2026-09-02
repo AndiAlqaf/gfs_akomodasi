@@ -448,6 +448,7 @@ export default function DataRegister() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.occupants_category ?? ''} onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
+                <option value="REGULAR GUEST">REGULAR GUEST</option>
                 <option value="SPECIAL GUEST">SPECIAL GUEST</option>
                 <option value="VIP GUEST">VIP GUEST</option>
               </select>

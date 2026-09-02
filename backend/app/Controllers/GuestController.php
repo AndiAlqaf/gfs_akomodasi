@@ -34,6 +34,7 @@ class GuestController
         $occupantsCategory = $input['occupants_category'] ?? 'REGULAR GUEST';
         $job = $input['job'] ?? null;
         $institutionCompany = $input['institution_company'] ?? null;
+        $roomId = $input['room_id'] ?? null;
         // In the older logic, it also had room_id and registered_by but guests.php only used 4 fields for simple POST.
         // We use raw DB execute here as BaseModel doesn't have a generic insert yet.
         
@@ -42,6 +43,15 @@ class GuestController
             [$name, $occupantsCategory, $job, $institutionCompany]
         );
 
-        jsonResponse(["success" => true, "id" => \App\Core\Database::lastInsertId()], 201);
+        $guestId = \App\Core\Database::lastInsertId();
+
+        if ($occupantsCategory === 'REGULAR GUEST') {
+            \App\Core\Database::execute(
+                "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, NULL, NULL)",
+                [$guestId, $roomId, 'SCHEDULED']
+            );
+        }
+
+        jsonResponse(["success" => true, "id" => $guestId], 201);
     }
 }
