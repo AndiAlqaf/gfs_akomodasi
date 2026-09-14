@@ -223,6 +223,14 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Managed By</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" value={formData.managed_by ?? ''} onChange={(e) => setFormData({ ...formData, managed_by: e.target.value })} />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Mess Status</Label>
+              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.mess_status ?? 'OWNED BY CERIA'} onChange={(e) => setFormData({ ...formData, mess_status: e.target.value })}>
+                <option value="OWNED BY CERIA">OWNED BY CERIA</option>
+                <option value="RENTED">RENTED</option>
+                <option value="OTHER">OTHER</option>
+              </select>
+            </div>
           </>
         )}
 
@@ -259,6 +267,10 @@ export default function DataRegister() {
                 <option value="UNDER REPAIRED">UNDER REPAIRED</option>
                 <option value="OUT OF ORDER">OUT OF ORDER</option>
               </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Remarks</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="Optional remarks..." value={formData.remarks ?? ''} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} />
             </div>
           </>
         )}
@@ -439,6 +451,10 @@ export default function DataRegister() {
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Reg ID Card</Label>
+              <Input className="col-span-3 border-emerald-200" placeholder="ID Card Number" value={formData.reg_id_card ?? ''} onChange={(e) => setFormData({ ...formData, reg_id_card: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
                 <option value="">Select Room</option>
@@ -473,10 +489,18 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Level</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.level_category ?? ''} onChange={(e) => setFormData({ ...formData, level_category: e.target.value })}>
                 <option value="">Select Level</option>
-                <option value="NON STAFF">NON STAFF</option>
-                <option value="STAFF">STAFF</option>
-                <option value="SENIOR STAFF">SENIOR STAFF</option>
                 <option value="BOD">BOD</option>
+                <option value="SR. STAFF">SR. STAFF</option>
+                <option value="SR. STAFF - GM & EQUIVALENT">SR. STAFF - GM & EQUIVALENT</option>
+                <option value="SR. STAFF - MANAGER">SR. STAFF - MANAGER</option>
+                <option value="SR. STAFF - ENGINEER/ SPECIALIST">SR. STAFF - ENGINEER/ SPECIALIST</option>
+                <option value="SR. STAFF - SUPERINTENDENT">SR. STAFF - SUPERINTENDENT</option>
+                <option value="STAFF">STAFF</option>
+                <option value="STAFF - SUPERVISOR">STAFF - SUPERVISOR</option>
+                <option value="STAFF - ENGINEER/ GEOLOGIST">STAFF - ENGINEER/ GEOLOGIST</option>
+                <option value="STAFF - OFFICER">STAFF - OFFICER</option>
+                <option value="NON STAFF">NON STAFF</option>
+                <option value="NON STAFF - OPERATOR">NON STAFF - OPERATOR</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

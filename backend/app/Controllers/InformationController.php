@@ -44,7 +44,7 @@ class InformationController
                     // INFORMATION_PERSON_ON_BOARD query
                     $query = "
                         SELECT 
-                            COALESCE(DATE(res.check_in), CURDATE()) as date,
+                            COALESCE(DATE(res.check_in), DATE(g.last_registration), CURDATE()) as date,
                             DATE(res.check_out) as check_out_date,
                             r.room_no,
                             m.mess_name as mess,

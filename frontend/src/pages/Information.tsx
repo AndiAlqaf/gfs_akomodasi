@@ -16,15 +16,15 @@ const getVisiblePages = (currentPage: number, totalPages: number) => {
   if (totalPages <= maxVisible) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
-  
+
   let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
   let end = start + maxVisible - 1;
-  
+
   if (end > totalPages) {
     end = totalPages;
     start = Math.max(1, end - maxVisible + 1);
   }
-  
+
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 
@@ -159,7 +159,7 @@ const Information: React.FC = () => {
                 dailyStatus = 'ON BOARD';
               }
             } else {
-              dailyStatus = 'ON BOARD';
+              dailyStatus = p.boarding_status;
             }
 
             expandedPobsMap.set(key, { ...p, date: dateStr, boarding_status: dailyStatus });
