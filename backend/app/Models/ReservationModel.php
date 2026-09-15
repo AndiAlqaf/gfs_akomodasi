@@ -88,10 +88,15 @@ class ReservationModel extends BaseModel
     public function createBooking($data)
     {
         $guestId = $data['guest_id'] ?? null;
-        if (!$guestId) {
-            Database::execute("INSERT INTO guests (name, occupants_category) VALUES (?, ?)", 
-                [$data['guestName'], $data['category']]);
-            $guestId = Database::lastInsertId();
+        if (!$guestId && !empty($data['guestName'])) {
+            $existing = Database::fetch("SELECT id FROM guests WHERE UPPER(TRIM(name)) = UPPER(TRIM(?)) LIMIT 1", [$data['guestName']]);
+            if ($existing) {
+                $guestId = $existing['id'];
+            } else {
+                Database::execute("INSERT INTO guests (name, occupants_category) VALUES (?, ?)", 
+                    [$data['guestName'], $data['category']]);
+                $guestId = Database::lastInsertId();
+            }
         }
 
         Database::execute(

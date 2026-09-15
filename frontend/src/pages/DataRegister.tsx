@@ -224,6 +224,10 @@ export default function DataRegister() {
               <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" value={formData.managed_by ?? ''} onChange={(e) => setFormData({ ...formData, managed_by: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right font-medium">Rooms (Capacity)</Label>
+              <Input type="number" className="col-span-3 border-emerald-200" placeholder="e.g. 2" value={formData.rooms_count ?? ''} onChange={(e) => setFormData({ ...formData, rooms_count: parseInt(e.target.value) || 0 })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Mess Status</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.mess_status ?? 'OWNED BY CERIA'} onChange={(e) => setFormData({ ...formData, mess_status: e.target.value })}>
                 <option value="OWNED BY CERIA">OWNED BY CERIA</option>

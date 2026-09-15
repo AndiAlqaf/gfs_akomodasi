@@ -41,6 +41,9 @@ const Information: React.FC = () => {
   const [laundrySearch, setLaundrySearch] = useState('');
   const [meetingSearch, setMeetingSearch] = useState('');
 
+  const [meetingDateFrom, setMeetingDateFrom] = useState('');
+  const [meetingDateTo, setMeetingDateTo] = useState('');
+
   const [roomDateFrom, setRoomDateFrom] = useState('');
   const [roomDateTo, setRoomDateTo] = useState('');
   const [pobDateFrom, setPobDateFrom] = useState('');
@@ -113,9 +116,8 @@ const Information: React.FC = () => {
   };
 
   const filteredRooms = rooms.filter((r: any) => {
-    const visibleKeys = ['room', 'mess', 'area', 'room_allocation', 'status'];
-    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(roomSearch.toLowerCase()));
-    // Bedroom doesn't have a date field, so we just return matchSearch
+    const searchLower = roomSearch.toLowerCase().trim();
+    const matchSearch = Object.values(r).some(val => String(val || '').toLowerCase().includes(searchLower));
     return matchSearch;
   });
 
@@ -186,9 +188,8 @@ const Information: React.FC = () => {
     if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
 
     // Search filter
-    const visibleKeys = ['room_no', 'mess', 'name', 'reg_id_card', 'job', 'position', 'level_category', 'institution_company', 'occupants_category', 'boarding_status', 'date'];
-    const searchLower = pobSearch.toLowerCase();
-    const matchSearch = visibleKeys.some(k => String(p[k] || '').toLowerCase().includes(searchLower)) ||
+    const searchLower = pobSearch.toLowerCase().trim();
+    const matchSearch = Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
       (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
 
     if (!matchSearch) return false;
@@ -211,9 +212,8 @@ const Information: React.FC = () => {
   });
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
-    const visibleKeys = ['meals_packages', 'delivery_point', 'meal_time', 'accommodation_status', 'date'];
-    const searchLower = mealsSearch.toLowerCase();
-    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
+    const searchLower = mealsSearch.toLowerCase().trim();
+    const matchSearch = Object.values(r).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
       (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
     const matchDate = isDateInRange(r.date, mealsDateFrom, mealsDateTo);
     return matchSearch && matchDate;
@@ -224,9 +224,8 @@ const Information: React.FC = () => {
   });
 
   const filteredLaundry = laundryItems.filter((r: any) => {
-    const visibleKeys = ['name', 'room', 'laundry_bag_id', 'laundry_box', 'services_package', 'drop_date'];
-    const searchLower = laundrySearch.toLowerCase();
-    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
+    const searchLower = laundrySearch.toLowerCase().trim();
+    const matchSearch = Object.values(r).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
       (r.drop_date ? formatDate(r.drop_date).toLowerCase().includes(searchLower) : false);
     const matchDate = isDateInRange(r.drop_date, laundryDateFrom, laundryDateTo);
     return matchSearch && matchDate;
@@ -239,15 +238,21 @@ const Information: React.FC = () => {
   const meetingRawData = meetingResp?.data?.data;
   const meetingRoomsData = Array.isArray(meetingRawData) ? meetingRawData : [];
   const filteredMeetingRooms = meetingRoomsData.filter((r: any) => {
-    const visibleKeys = ['room', 'building', 'booking_status', 'reserved_by', 'status', 'date'];
-    const searchLower = meetingSearch.toLowerCase();
-    const matchSearch = visibleKeys.some(k => String(r[k] || '').toLowerCase().includes(searchLower)) ||
-      (r.date ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
+    if (meetingDateFrom || meetingDateTo) {
+      if (!r.date || r.date === '-') return false;
+      if (!isDateInRange(r.date, meetingDateFrom, meetingDateTo)) return false;
+    }
+
+    const searchLower = meetingSearch.toLowerCase().trim();
+    const matchSearch = Object.values(r).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
+      (r.date && r.date !== '-' ? formatDate(r.date).toLowerCase().includes(searchLower) : false);
     return matchSearch;
   }).sort((a: any, b: any) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (!a.date || a.date === '-') return 1;
+    if (!b.date || b.date === '-') return -1;
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return String(b.start_time || '').localeCompare(String(a.start_time || ''));
   });
 
   const roomTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
@@ -298,7 +303,21 @@ const Information: React.FC = () => {
   const paginatedMeetingRooms = filteredMeetingRooms.slice((meetingPage - 1) * ITEMS_PER_PAGE, meetingPage * ITEMS_PER_PAGE);
 
   const handleExportRooms = () => exportToExcel(filteredRooms, `Rooms_Info_${new Date().toISOString().split('T')[0]}`);
-  const handleExportMeeting = () => exportToExcel(filteredMeetingRooms, `Meeting_Rooms_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportMeeting = () => {
+    const formattedData = filteredMeetingRooms.map((r: any) => ({
+      'Date': r.date || '-',
+      'Room': r.room || '-',
+      'Building': r.building || '-',
+      'Capacity': r.capacity || '-',
+      'Jam Start': r.start_time || '-',
+      'Finish': r.finish_time || '-',
+      'Booking Status': r.booking_status || '-',
+      'Reserved By': r.reserved_by || '-',
+      'Additional Info': r.additional_info || '-',
+      'Status': r.status || '-'
+    }));
+    exportToExcel(formattedData, `Meeting_Rooms_Info_${new Date().toISOString().split('T')[0]}`);
+  };
   const handleExportPob = () => exportToExcel(filteredPobs, `POB_Info_${new Date().toISOString().split('T')[0]}`);
   const handleExportMeals = () => exportToExcel(filteredMeals, `Meals_Info_${new Date().toISOString().split('T')[0]}`);
   const handleExportLaundry = () => exportToExcel(filteredLaundry, `Laundry_Info_${new Date().toISOString().split('T')[0]}`);
@@ -432,14 +451,22 @@ const Information: React.FC = () => {
         <TabsContent value="meeting_rooms" className="animate-fade-in mt-0 data-[state=active]:flex flex-col flex-1 min-h-0 w-full">
           <Card className="flex flex-col flex-1 border-0 shadow-sm rounded-xl overflow-hidden border-emerald-100 w-full min-w-0 max-w-full min-h-0">
             <CardHeader className="bg-white border-b border-emerald-100 py-1.5 px-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="text-lg text-emerald-950 uppercase">Meeting Room Information</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+              <CardTitle className="text-lg text-emerald-950 uppercase font-bold">Meeting Room Information</CardTitle>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="font-medium whitespace-nowrap">Filter Date:</span>
+                    <Input type="date" value={meetingDateFrom} onChange={e => { setMeetingDateFrom(e.target.value); setMeetingPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
+                    <span>to</span>
+                    <Input type="date" value={meetingDateTo} onChange={e => { setMeetingDateTo(e.target.value); setMeetingPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setMeetingPage(1)}>Search</Button>
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                      <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setMeetingPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setMeetingPage(1)}>Search</Button>
+                  </div>
                 </div>
                 <Button onClick={handleExportMeeting} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                   <Download size={18} /> Export
@@ -459,25 +486,31 @@ const Information: React.FC = () => {
                           <th className="px-3 py-3 text-left">ROOM</th>
                           <th className="px-3 py-3 text-left">BUILDING</th>
                           <th className="px-3 py-3 text-center">CAPACITY</th>
+                          <th className="px-3 py-3 text-center">JAM START</th>
+                          <th className="px-3 py-3 text-center">FINISH</th>
                           <th className="px-3 py-3 text-center">BOOKING STATUS</th>
                           <th className="px-3 py-3 text-center">RESERVED BY</th>
+                          <th className="px-3 py-3 text-left">ADDITIONAL INFO</th>
                           <th className="px-3 py-3 text-center">STATUS</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-emerald-50">
                         {paginatedMeetingRooms.map((r: any, i: number) => (
                           <tr key={i} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="px-1 py-1 text-emerald-800 font-medium text-center"><HighlightText text={r.date} highlight={meetingSearch} /></td>
-                            <td className="px-1 py-1 text-emerald-800 font-medium text-left"><HighlightText text={r.room} highlight={meetingSearch} /></td>
-                            <td className="px-1 py-1 text-emerald-700 text-left"><HighlightText text={r.building} highlight={meetingSearch} /></td>
-                            <td className="px-1 py-1 text-emerald-700 text-center">{r.capacity}</td>
-                            <td className="px-1 py-1 text-emerald-700 text-center font-semibold"><HighlightText text={r.booking_status} highlight={meetingSearch} /></td>
-                            <td className="px-1 py-1 text-emerald-700 text-center"><HighlightText text={r.reserved_by} highlight={meetingSearch} /></td>
-                            <td className="px-1 py-1 text-emerald-700 text-center"><HighlightText text={toTitleCase(r.status)} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-800 font-medium text-center"><HighlightText text={r.date} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-800 font-medium text-left"><HighlightText text={toTitleCase(r.room)} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-left"><HighlightText text={toTitleCase(r.building)} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center">{r.capacity}</td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center font-mono"><HighlightText text={r.start_time || '-'} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center font-mono"><HighlightText text={r.finish_time || '-'} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center font-semibold"><HighlightText text={toTitleCase(r.booking_status)} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center"><HighlightText text={r.reserved_by && r.reserved_by !== '-' ? toTitleCase(r.reserved_by) : '-'} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-left max-w-xs truncate" title={r.additional_info && r.additional_info !== '-' ? r.additional_info : ''}><HighlightText text={r.additional_info || '-'} highlight={meetingSearch} /></td>
+                            <td className="px-2 py-1.5 text-emerald-700 text-center"><HighlightText text={r.status && r.status !== '-' ? toTitleCase(r.status) : '-'} highlight={meetingSearch} /></td>
                           </tr>
                         ))}
                         {paginatedMeetingRooms.length === 0 && (
-                          <tr><td colSpan={7} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
+                          <tr><td colSpan={10} className="text-center py-8 text-gray-500">No meeting rooms found.</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -789,16 +822,16 @@ const Information: React.FC = () => {
                         ) : (
                           paginatedLaundryItems.map((row: any) => (
                             <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors text-center font-medium">
-                              <td className="px-4 py-2 text-emerald-800">{row.guest_name}</td>
-                              <td className="px-4 py-2 text-emerald-800">{row.room}</td>
-                              <td className="px-4 py-2 text-emerald-700 font-bold"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200">{row.laundry_bag_id}</span></td>
-                              <td className="px-4 py-2 text-emerald-700">{row.laundry_box_id}</td>
-                              <td className="px-4 py-2 text-emerald-700">{row.services_package}</td>
-                              <td className="px-4 py-2 font-bold text-emerald-800">{row.weight || '-'}</td>
-                              <td className="px-4 py-2 text-emerald-700">{row.no_of_pcs_total || '-'}</td>
-                              <td className="px-4 py-2 text-emerald-700">{formatDate(row.drop_date) || '-'}</td>
-                              <td className="px-4 py-2 text-emerald-700">{row.distribute_date ? formatDate(row.distribute_date) : '-'}</td>
-                              <td className="px-4 py-2 font-medium text-emerald-800">{calculateDuration(row.drop_date, row.distribute_date)}</td>
+                              <td className="px-4 py-2 text-emerald-800"><HighlightText text={row.guest_name || '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-800"><HighlightText text={row.room || '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-700 font-bold"><span className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md border border-stone-200"><HighlightText text={row.laundry_bag_id || '-'} highlight={laundrySearch} /></span></td>
+                              <td className="px-4 py-2 text-emerald-700"><HighlightText text={row.laundry_box_id || '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-700"><HighlightText text={row.services_package || '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 font-bold text-emerald-800"><HighlightText text={String(row.weight || '-')} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-700"><HighlightText text={String(row.no_of_pcs_total || '-')} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-700"><HighlightText text={formatDate(row.drop_date) || '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 text-emerald-700"><HighlightText text={row.distribute_date ? formatDate(row.distribute_date) : '-'} highlight={laundrySearch} /></td>
+                              <td className="px-4 py-2 font-medium text-emerald-800"><HighlightText text={String(calculateDuration(row.drop_date, row.distribute_date))} highlight={laundrySearch} /></td>
                             </tr>
                           ))
                         )}

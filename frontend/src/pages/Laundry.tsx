@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Swal from 'sweetalert2';
-import { Truck, RotateCcw, Search, Plus, Shirt, Package, Eye } from 'lucide-react';
+import { Search, Plus, Shirt, Package, Eye } from 'lucide-react';
 import { HighlightText } from '@/components/ui/HighlightText';
 import { formatDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/useAppStore';
@@ -18,13 +18,13 @@ const Laundry: React.FC = () => {
   const { user } = useAppStore();
 
   const canInsertDrop = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.droppingInsert);
-  const canInsertDeliver = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.deliveringInsert);
+  // const canInsertDeliver = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.deliveringInsert);
   const canInsertReceive = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.receivingInsert);
 
   const [activeTab, setActiveTab] = useState('dropping');
 
   const [dropSearch, setDropSearch] = useState('');
-  const [deliverSearch, setDeliverSearch] = useState('');
+  // const [deliverSearch, setDeliverSearch] = useState('');
   const [receiveSearch, setReceiveSearch] = useState('');
 
 
@@ -36,12 +36,12 @@ const Laundry: React.FC = () => {
   const [dropPoint, setDropPoint] = useState('');
 
   // States for Dispatcher Form
-  const [dispBox, setDispBox] = useState('');
-  const [dispBags, setDispBags] = useState('');
-  const [dispPoint, setDispPoint] = useState('');
-  const [dispDeliverDate, setDispDeliverDate] = useState('');
-  const [dispReturnDate, setDispReturnDate] = useState('');
-  const [dispAction, setDispAction] = useState('DELIVERED');
+  const [dispBox, ] = useState('');
+  // const [dispBags, setDispBags] = useState('');
+  // const [dispPoint, setDispPoint] = useState('');
+  // const [dispDeliverDate, setDispDeliverDate] = useState('');
+  // const [dispReturnDate, setDispReturnDate] = useState('');
+  const [dispAction, ] = useState('DELIVERED');
 
   // States for Officer Form
   const [offBagId, setOffBagId] = useState('');
@@ -69,6 +69,12 @@ const Laundry: React.FC = () => {
   });
   const registerLaundryBags = laundryBagsResp?.data?.data || [];
 
+  const { data: guestsRegisterResp } = useQuery({
+    queryKey: ['guestsRegister'],
+    queryFn: dataRegisterAPI.getGuests,
+  });
+  const registerGuests = guestsRegisterResp?.data?.data || [];
+
   const { data: laundryDpResp } = useQuery({
     queryKey: ['register_laundry_dp'],
     queryFn: () => dataRegisterAPI.getLaundryDp(),
@@ -81,20 +87,16 @@ const Laundry: React.FC = () => {
   const filteredDropTransactions = transactions.filter((t: any) =>
     !dropSearch || Object.values(t).some(val => String(val).toLowerCase().includes(dropSearch.toLowerCase()))
   );
-  const filteredBoxList = boxList.filter((b: any) =>
-    !deliverSearch || Object.values(b).some(val => String(val).toLowerCase().includes(deliverSearch.toLowerCase()))
-  );
   const filteredReceiveTransactions = transactions.filter((t: any) =>
     !receiveSearch || Object.values(t).some(val => String(val).toLowerCase().includes(receiveSearch.toLowerCase()))
   );
 
   const guestSuggestions = guestName.trim()
-    ? registerLaundryBags.filter((b: any) =>
-        b.nama?.toLowerCase().includes(guestName.toLowerCase())
+    ? registerGuests.filter((g: any) =>
+        g.name?.toLowerCase().includes(guestName.toLowerCase())
       )
     : [];
 
-  const uniqueBoxesFromDropping = Array.from(new Set(transactions.map((t: any) => t.laundry_box_id).filter(Boolean)));
   const uniqueBagsFromDropping = Array.from(new Set(transactions.map((t: any) => t.laundry_bag_id).filter(Boolean)));
 
   const createDropMutation = useMutation({
@@ -120,6 +122,7 @@ const Laundry: React.FC = () => {
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
   };
 
+  /*
   const handleDispatcherSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (dispAction === 'DELIVERED') {
@@ -128,6 +131,7 @@ const Laundry: React.FC = () => {
       actionMutation.mutate({ action: 'return', id: dispBox });
     }
   };
+  */
 
   const handleOfficerDetailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,15 +207,23 @@ const Laundry: React.FC = () => {
                                   key={item.id}
                                   className="px-3 py-2 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer flex justify-between items-center transition-colors"
                                   onMouseDown={() => {
-                                    setGuestName(item.nama);
+                                    setGuestName(item.name);
                                     setRoom(item.room_no || '');
-                                    setBagId(item.laundry_bag || '');
-                                    setBoxId(item.laundry_box || '');
+                                    
+                                    const matchedBag = registerLaundryBags.find((b: any) => b.room_no === item.room_no || b.nama === item.name);
+                                    if (matchedBag) {
+                                      setBagId(matchedBag.laundry_bag || '');
+                                      setBoxId(matchedBag.laundry_box || '');
+                                    } else {
+                                      const firstName = (item.name || '').trim().split(' ')[0];
+                                      setBagId(item.room_no ? `${item.room_no} (${firstName})` : '');
+                                      setBoxId(item.mess_name || 'CENTRAL');
+                                    }
                                     setShowSuggestions(false);
                                   }}
                                 >
-                                  <span className="font-semibold text-emerald-900">{item.nama}</span>
-                                  <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono text-[10px]">Room: {item.room_no}</span>
+                                  <span className="font-semibold text-emerald-900">{item.name}</span>
+                                  <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono text-[10px]">Room: {item.room_no || '-'}</span>
                                 </div>
                               ))}
                             </div>
@@ -307,54 +319,6 @@ const Laundry: React.FC = () => {
                   <Input placeholder="Search..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                 </div>
                 <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
-                {canInsertReceive && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
-                        <Plus size={18} /> Laundry Detail Form
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[800px]">
-                      <DialogHeader>
-                        <DialogTitle className="text-emerald-950 text-xl uppercase">Laundry Receiving Form</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleOfficerDetailSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold uppercase">Laundry Bag ID</label>
-                          <select
-                            value={offBagId}
-                            onChange={e => setOffBagId(e.target.value)}
-                            required
-                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-                          >
-                            <option value="">Select Laundry Bag</option>
-                            {uniqueBagsFromDropping.map((bagId: any) => (
-                              <option key={bagId} value={bagId}>{bagId}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Laundry Bag Status</label>
-                          <select value={offBagStatus} onChange={e => setOffBagStatus(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <option value="ACCEPTED">ACCEPTED</option>
-                            <option value="REJECTED">REJECTED</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Receiving Date</label><Input type="date" value={offRecvDate} onChange={e => setOffRecvDate(e.target.value)} /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Weight</label><Input value={offWeight} onChange={e => setOffWeight(e.target.value)} placeholder="0.0" type="number" step="0.1" /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">No of Pcs</label><Input value={offPcs} onChange={e => setOffPcs(e.target.value)} type="number" /></div>
-                        <div className="space-y-1.5"><label className="text-xs font-semibold uppercase">Action</label>
-                          <select value={offAction} onChange={e => setOffAction(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <option value="PROCEED">PROCEED</option>
-                            <option value="COMPLETED">COMPLETED</option>
-                          </select>
-                        </div>
-                        <div className="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
-                          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8" disabled={actionMutation.isPending}>Submit Form</Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                )}
               </div>
             </CardHeader>
             <CardContent className="p-6 bg-stone-50/50 flex-1 flex flex-col min-h-0 overflow-hidden  space-y-4">
@@ -431,7 +395,7 @@ const Laundry: React.FC = () => {
                                 }}>Reject</Button>
                               </div>
                             ) : t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Accepted' ? (
-                              <span className="text-xs text-amber-600 font-medium">Needs Details</span>
+                              <button onClick={() => { setSelectedTxForDetails(t); setClothesList([{ clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }]); }} className="text-xs text-amber-600 font-bold hover:text-amber-800 underline transition-colors cursor-pointer">Needs Details</button>
                             ) : t.current_status === 'DETAILS_ADDED' ? (
                               <Button size="sm" className="bg-blue-500 hover:bg-blue-600 h-7" onClick={() => actionMutation.mutate({ action: 'complete', id: t.laundry_bag_id })}>Mark Done</Button>
                             ) : <span className="text-xs text-gray-400">{t.current_status}</span>}
@@ -458,16 +422,17 @@ const Laundry: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="w-full bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
-                  <div className="bg-emerald-50/60 border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
+                <div className="w-full bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden flex flex-col max-h-[350px]">
+                  <div className="bg-emerald-50/60 border-b border-emerald-100 px-4 py-3 flex items-center justify-between shrink-0">
                     <p className="text-xs font-bold text-emerald-950 uppercase">Entering Clothes Details for: {selectedTxForDetails.laundry_bag_id}</p>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedTxForDetails(null)} className="h-7 text-xs">Cancel</Button>
                   </div>
-                  <div className="p-3">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-emerald-950 text-stone-50 uppercase">
-                        <tr><th className="p-2">CLOTHES TYPE</th><th className="p-2">BRAND</th><th className="p-2">COLOUR</th><th className="p-2">SIZE</th><th className="p-2 w-20">QTY</th><th className="p-2 w-10"></th></tr>
-                      </thead>
+                  <div className="p-3 flex flex-col min-h-0 flex-1">
+                    <div className="overflow-auto border border-emerald-50 rounded-lg min-h-0 flex-1 relative">
+                      <table className="w-full text-xs text-left relative">
+                        <thead className="bg-emerald-950 text-stone-50 uppercase sticky top-0 z-10">
+                          <tr><th className="p-2">CLOTHES TYPE</th><th className="p-2">BRAND</th><th className="p-2">COLOUR</th><th className="p-2">SIZE</th><th className="p-2 w-20">QTY</th><th className="p-2 w-10"></th></tr>
+                        </thead>
                       <datalist id="clothes-type-options">
                         <option value="Kemeja" />
                         <option value="Celana Panjang" />
@@ -515,7 +480,8 @@ const Laundry: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
-                    <div className="pt-3 flex justify-between">
+                    </div>
+                    <div className="pt-3 flex justify-between shrink-0">
                       <Button variant="outline" size="sm" onClick={() => setClothesList([...clothesList, { clothes_type: '', brand: '', colour: '', size: '', no_of_pcs: 1 }])} className="text-xs">+ Add Row</Button>
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" onClick={() => handleDetailsSubmit(selectedTxForDetails.id)}>Save & Proceed</Button>
                     </div>

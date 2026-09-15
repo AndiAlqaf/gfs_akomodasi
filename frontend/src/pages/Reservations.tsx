@@ -24,6 +24,8 @@ const Reservations: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [guestCategory, setGuestCategory] = useState('SPECIAL GUEST');
   const [guestName, setGuestName] = useState('');
+  const [guestSearch, setGuestSearch] = useState('');
+  const [selectedGuestId, setSelectedGuestId] = useState<string | number>('');
   const [selectedRoom, setSelectedRoom] = useState('');
   const [estimatedArrival, setEstimatedArrival] = useState('');
   const [estimatedDeparture, setEstimatedDeparture] = useState('');
@@ -78,6 +80,33 @@ const Reservations: React.FC = () => {
     queryFn: dataRegisterAPI.getMeetingRooms,
   });
 
+  const { data: guestsRegisterResp } = useQuery({
+    queryKey: ['guestsRegister'],
+    queryFn: dataRegisterAPI.getGuests,
+  });
+
+  const registeredGuests = React.useMemo(() => {
+    const raw = guestsRegisterResp?.data?.data || [];
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set();
+    const list: any[] = [];
+    raw.forEach((g: any) => {
+      const name = (g.name || '').trim();
+      if (!name || name.toUpperCase().includes('VACANT')) return;
+      if (!seen.has(name.toUpperCase())) {
+        seen.add(name.toUpperCase());
+        list.push(g);
+      }
+    });
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [guestsRegisterResp]);
+
+  const filteredGuests = React.useMemo(() => {
+    if (!guestSearch) return registeredGuests;
+    const s = guestSearch.toLowerCase().trim();
+    return registeredGuests.filter((g: any) => g.name.toLowerCase().includes(s));
+  }, [registeredGuests, guestSearch]);
+
   const updateReservationMutation = useMutation({
     mutationFn: ({ id, status, estimated_arrival, estimated_departure }: { id: string; status: string; estimated_arrival?: string; estimated_departure?: string }) => reservationAPI.updateStatus(id, status, estimated_arrival, estimated_departure),
     onSuccess: () => {
@@ -93,6 +122,13 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setIsDialogOpen(false);
+      setGuestName('');
+      setSelectedGuestId('');
+      setGuestSearch('');
+      setSelectedRoom('');
+      setEstimatedArrival('');
+      setEstimatedDeparture('');
+      setRemark('');
       Swal.fire({ icon: 'success', title: 'Booked!', text: 'Room successfully booked!', timer: 2000, showConfirmButton: false });
     }
   });
@@ -124,6 +160,7 @@ const Reservations: React.FC = () => {
   const handleBooking = () => {
     if (!guestName || !selectedRoom || !estimatedArrival || !estimatedDeparture) return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Pilih kamar, nama tamu, dan estimasi waktu.', timer: 2000, showConfirmButton: false });
     createReservationMutation.mutate({
+      guest_id: selectedGuestId || undefined,
       guestName,
       category: guestCategory,
       room_id: selectedRoom,
@@ -458,6 +495,7 @@ const Reservations: React.FC = () => {
                         <th className="px-3 py-3 text-center">ROOM NO</th>
                         <th className="px-3 py-3 text-center">MESS</th>
                         <th className="px-3 py-3 text-center">NAME</th>
+                        <th className="px-3 py-3 text-center">GUEST CATEGORY</th>
                         <th className="px-3 py-3 text-center">CHECK-IN</th>
                         <th className="px-3 py-3 text-center">CHECK-OUT</th>
                         <th className="px-3 py-3 text-center">GUEST STATUS</th>
@@ -468,8 +506,9 @@ const Reservations: React.FC = () => {
                       {checkInOutPaginatedData.map((res: any) => (
                         <tr key={res.id} className={`hover:bg-emerald-50/50 transition-colors text-center text-emerald-900 ${res.guest_status === 'ON SITE' ? 'bg-lime-50/50' : ''}`}>
                           <td className="px-1 py-1 font-semibold text-emerald-950"><HighlightText text={res.roomNo} highlight={checkInOutSearch} /></td>
-                          <td className="px-1 py-1 text-[11px]"><HighlightText text={`LANDED HOUSE-${res.roomNo?.split('.')[1] || '01'}`} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-[11px]"><HighlightText text={res.messName || '-'} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-[11px] text-left"><HighlightText text={res.guestName} highlight={checkInOutSearch} /></td>
+                          <td className="px-1 py-1 text-[11px]"><HighlightText text={res.occupants_category || '-'} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_in ? formatDate(res.check_in) : res.estimated_arrival ? formatDate(res.estimated_arrival) : '-'} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 text-emerald-700"><HighlightText text={res.check_out ? formatDate(res.check_out) : '-'} highlight={checkInOutSearch} /></td>
                           <td className="px-1 py-1 uppercase font-medium text-[11px]">
@@ -547,40 +586,76 @@ const Reservations: React.FC = () => {
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-sm font-medium mb-1">Guest Category</label>
-              <select className="w-full border p-2 rounded-md" value={guestCategory} onChange={(e) => setGuestCategory(e.target.value)}>
+              <select
+                className="w-full border p-2 rounded-md"
+                value={guestCategory}
+                onChange={(e) => {
+                  setGuestCategory(e.target.value);
+                  setGuestName('');
+                  setSelectedGuestId('');
+                  setGuestSearch('');
+                }}
+              >
                 <option value="SPECIAL GUEST">SPECIAL GUEST</option>
                 <option value="VIP GUEST">VIP GUEST</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Guest Name</label>
-              <select className="w-full border p-2 rounded-md" value={guestName} onChange={(e) => setGuestName(e.target.value)}>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium">Guest Name</label>
+                {filteredGuests.length > 0 && (
+                  <span className="text-xs text-muted-foreground">({filteredGuests.length} guests in register)</span>
+                )}
+              </div>
+              <Input
+                placeholder="Type to search guest name..."
+                value={guestSearch}
+                onChange={(e) => setGuestSearch(e.target.value)}
+                className="mb-1.5 h-8 text-xs border-emerald-200"
+              />
+              <select
+                className="w-full border p-2 rounded-md"
+                value={guestName}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setGuestName(name);
+                  const found = registeredGuests.find((g: any) => g.name === name);
+                  if (found) {
+                    setSelectedGuestId(found.id);
+                    if (found.room_id) {
+                      setSelectedRoom(String(found.room_id));
+                    }
+                  } else {
+                    setSelectedGuestId('');
+                    setSelectedRoom('');
+                  }
+                }}
+              >
                 <option value="">-- Select guest --</option>
-                <option value="SUNARTO URJOYO PURBA">SUNARTO URJOYO PURBA</option>
-                <option value="CHRISTIAN BAMBANG KHRISNA MUKTI">CHRISTIAN BAMBANG KHRISNA MUKTI</option>
-                <option value="MR. ZHENG BU DONG">MR. ZHENG BU DONG</option>
-                <option value="TA'DUNG">TA'DUNG</option>
-                <option value="REINHARD SIAHAAN">REINHARD SIAHAAN</option>
-                <option value="SUWARTO PRAWIROATMODJO">SUWARTO PRAWIROATMODJO</option>
-                <option value="ANDRE CH MR DAENUWY">ANDRE CH MR DAENUWY</option>
-                <option value="SLAMET SURYANTO">SLAMET SURYANTO</option>
-                <option value="SYAMSI BUANG">SYAMSI BUANG</option>
-                <option value="ROIMON BARUS">ROIMON BARUS</option>
-                <option value="YARIS TANDI">YARIS TANDI</option>
-                <option value="ALIMUDDIN TOLA">ALIMUDDIN TOLA</option>
-                <option value="BUSYAIRI">BUSYAIRI</option>
-                <option value="IMRAN ROSJADI PABITJARA">IMRAN ROSJADI PABITJARA</option>
-                <option value="AGUSTINUS LONTOH">AGUSTINUS LONTOH</option>
-                <option value="ANDI MAPPASELA">ANDI MAPPASELA</option>
-                <option value="LUSYAN TADUNG">LUSYAN TADUNG</option>
-                <option value="ALFINA WIJANARNO">ALFINA WIJANARNO</option>
-                <option value="ALIM SIDDIQ SOLEH">ALIM SIDDIQ SOLEH</option>
+                {filteredGuests.map((g: any) => (
+                  <option key={g.id || g.name} value={g.name}>
+                    {g.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Select Available Room</label>
               <select className="w-full border p-2 rounded-md" value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)}>
-                <option value="">-- Choose Room --</option>
+                <option value="" disabled>-- Choose Room --</option>
+                
+                {/* Always show the guest's assigned room if one exists */}
+                {selectedGuestId && (() => {
+                  const guest = registeredGuests.find((g: any) => g.id === selectedGuestId);
+                  if (guest && guest.room_id) {
+                    const roomInList = rooms.some((r: any) => String(r.id) === String(guest.room_id) && r.room_status === 'READY');
+                    if (!roomInList) {
+                      return <option value={guest.room_id}>{guest.room_no} - {guest.mess_name}</option>;
+                    }
+                  }
+                  return null;
+                })()}
+
                 {rooms.filter((r: any) => r.room_status === 'READY').map((r: any) => (
                   <option key={r.id} value={r.id}>{r.room_no} - {r.mess_name}</option>
                 ))}

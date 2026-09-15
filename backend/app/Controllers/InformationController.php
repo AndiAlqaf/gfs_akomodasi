@@ -25,9 +25,10 @@ class InformationController
                             g.name as guest_name,
                             r.room_allocation,
                             r.beds as beds_total,
-                            IF(res.id IS NOT NULL, 1, 0) as beds_occupied,
-                            IF(res.id IS NOT NULL, r.beds - 1, r.beds) as beds_vacant,
-                            IF(res.id IS NOT NULL, 'FULL OCCUPIED', 'VACANT') as status,
+                            SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) as beds_occupied,
+                            GREATEST(r.beds - SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)), 0) as beds_vacant,
+                            IF(SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) >= r.beds, 'FULL OCCUPIED', 
+                               IF(SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) > 0, 'PARTIAL OCCUPIED', 'VACANT')) as status,
                             r.room_status as remark
                         FROM rooms r
                         LEFT JOIN messes m ON r.mess_id = m.id
@@ -169,19 +170,45 @@ class InformationController
                     });
                     jsonResponse(["data" => $result]);
                 } elseif ($type === 'meeting') {
-                    // INFORMATION_MEETING_ROOMS query
+                    // INFORMATION_MEETING_ROOMS query (Historical data from meeting_room_bookings + unbooked rooms)
                     $query = "
                         SELECT 
-                            COALESCE(b.booking_date, '-') as date,
+                            b.id,
+                            COALESCE(NULLIF(b.booking_date, ''), '-') as date,
+                            COALESCE(NULLIF(b.meeting_room, ''), m.room) as room,
+                            COALESCE(NULLIF(m.building, ''), 'OFFICE U') as building,
+                            COALESCE(m.capacity, '-') as capacity,
+                            COALESCE(NULLIF(b.start_time, ''), '-') as start_time,
+                            COALESCE(NULLIF(b.finish_time, ''), '-') as finish_time,
+                            COALESCE(NULLIF(b.additional_info, ''), '-') as additional_info,
+                            COALESCE(NULLIF(b.action_status, ''), 'OPEN') as booking_status,
+                            COALESCE(NULLIF(b.requested_by, ''), '-') as reserved_by,
+                            COALESCE(NULLIF(m.status, ''), '-') as status
+                        FROM meeting_room_bookings b
+                        LEFT JOIN meeting_rooms m ON UPPER(TRIM(b.meeting_room)) = UPPER(TRIM(m.room))
+                        UNION ALL
+                        SELECT 
+                            NULL as id,
+                            '-' as date,
                             m.room,
-                            m.building,
-                            m.capacity,
-                            COALESCE(b.action_status, 'OPEN') as booking_status,
-                            COALESCE(b.requested_by, '-') as reserved_by,
-                            '-' as status
+                            COALESCE(NULLIF(m.building, ''), 'OFFICE U') as building,
+                            COALESCE(m.capacity, '-') as capacity,
+                            '-' as start_time,
+                            '-' as finish_time,
+                            '-' as additional_info,
+                            'OPEN' as booking_status,
+                            '-' as reserved_by,
+                            COALESCE(NULLIF(m.status, ''), '-') as status
                         FROM meeting_rooms m
-                        LEFT JOIN meeting_room_bookings b ON m.room = b.meeting_room AND b.booking_date >= CURDATE()
-                        ORDER BY m.room ASC, b.booking_date ASC
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM meeting_room_bookings b2 
+                            WHERE UPPER(TRIM(b2.meeting_room)) = UPPER(TRIM(m.room))
+                        )
+                        ORDER BY 
+                            CASE WHEN date IS NOT NULL AND date != '-' THEN 0 ELSE 1 END,
+                            date DESC,
+                            start_time DESC,
+                            room ASC
                     ";
                     $data = Database::fetchAll($query);
                     jsonResponse(["data" => $data]);
