@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, Search, Edit, Trash2, Download } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, ChevronDown, Search, Edit, Trash2, Download } from 'lucide-react';
 import { HighlightText } from '@/components/ui/HighlightText';
 import Swal from 'sweetalert2';
 
@@ -25,6 +25,8 @@ export default function DataRegister() {
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [showGuestSuggestions, setShowGuestSuggestions] = useState(false);
+  const [roomSearchQuery, setRoomSearchQuery] = useState('');
+  const [showRoomSuggestions, setShowRoomSuggestions] = useState(false);
 
   // Real Data States
   const [areas, setAreas] = useState<any[]>([]);
@@ -125,6 +127,25 @@ export default function DataRegister() {
     let type = activeTab;
     if (activeTab === 'meals') type = 'meals_dp';
 
+    // Client-side validation: if adding a guest to a room with vacant = 0
+    if (activeTab === 'guest' && formData.room_id) {
+      const room = rooms.find(r => Number(r.id) === Number(formData.room_id));
+      if (room) {
+        const occupied = guests.filter(g => Number(g.room_id) === Number(room.id) && (!editingId || g.id !== editingId)).length;
+        const vacant = Math.max((Number(room.beds) || 0) - occupied, 0);
+        if (vacant <= 0) {
+          setIsSaving(false);
+          Swal.fire({
+            icon: 'warning',
+            title: 'Room not Available',
+            text: 'Room not Available (Kamar sudah penuh / Vacant = 0)',
+            confirmButtonColor: '#065f46'
+          });
+          return;
+        }
+      }
+    }
+
     try {
       if (editingId) {
         await dataRegisterAPI.update(type, editingId, formData);
@@ -135,11 +156,23 @@ export default function DataRegister() {
       setIsModalOpen(false);
       setEditingId(null);
       setFormData({});
+      setRoomSearchQuery('');
+      setShowRoomSuggestions(false);
       fetchData(); // Refresh data
       Swal.fire({ icon: 'success', title: 'Saved!', text: 'Data saved successfully!', timer: 2000, showConfirmButton: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save data:', error);
-      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Failed to save data!', timer: 2000, showConfirmButton: false });
+      const errorMsg = error?.message || 'Failed to save data!';
+      if (errorMsg.includes('Room not Available')) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Room not Available',
+          text: 'Room not Available (Kamar sudah penuh / Vacant = 0)',
+          confirmButtonColor: '#065f46'
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Oops...', text: errorMsg, timer: 2000, showConfirmButton: false });
+      }
       setIsSaving(false);
     }
   };
@@ -147,6 +180,10 @@ export default function DataRegister() {
   const handleEdit = (row: any) => {
     setEditingId(row.id);
     const data = { ...row };
+    if (activeTab === 'guest') {
+      const selectedRoom = rooms.find(r => r.id === row.room_id);
+      setRoomSearchQuery(selectedRoom ? selectedRoom.room_no : '');
+    }
     if (activeTab === 'meeting_room') {
       data.meeting_room = row.room;
       data.room_id = 'CMP-MR-' + row.id?.toString().padStart(2, '0');
@@ -458,12 +495,123 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Reg ID Card</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="ID Card Number" value={formData.reg_id_card ?? ''} onChange={(e) => setFormData({ ...formData, reg_id_card: e.target.value })} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 relative">
               <Label className="text-right font-medium">Room</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.room_id ?? ''} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}>
-                <option value="">Select Room</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
-              </select>
+              <div className="col-span-3 relative">
+                <div className="relative flex items-center">
+                  <Input
+                    className="border-emerald-200 w-full pr-16"
+                    placeholder="Ketik nomor kamar atau mess..."
+                    value={roomSearchQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRoomSearchQuery(val);
+                      setShowRoomSuggestions(true);
+                      const exactRoom = rooms.find(r => r.room_no?.toLowerCase() === val.trim().toLowerCase());
+                      if (exactRoom) {
+                        setFormData({ ...formData, room_id: exactRoom.id });
+                      } else if (!val) {
+                        setFormData({ ...formData, room_id: '' });
+                      }
+                    }}
+                    onFocus={() => setShowRoomSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowRoomSuggestions(false), 250)}
+                  />
+                  {formData.room_id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, room_id: '' });
+                        setRoomSearchQuery('');
+                        setShowRoomSuggestions(false);
+                      }}
+                      className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
+                      title="Clear room"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowRoomSuggestions(!showRoomSuggestions)}
+                    className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
+                    title="Toggle rooms list"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
+
+                {showRoomSuggestions && (
+                  <div className="absolute z-50 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-52 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs">
+                    {(() => {
+                      const q = roomSearchQuery.toLowerCase().trim();
+                      const filteredRooms = rooms.filter(r => {
+                        if (!q) return true;
+                        return (
+                          r.room_no?.toLowerCase().includes(q) ||
+                          r.mess_name?.toLowerCase().includes(q) ||
+                          r.area_name?.toLowerCase().includes(q)
+                        );
+                      });
+
+                      if (filteredRooms.length === 0) {
+                        return (
+                          <div className="px-3 py-3 text-center text-stone-400 italic">
+                            Kamar "{roomSearchQuery}" tidak ditemukan
+                          </div>
+                        );
+                      }
+
+                      return filteredRooms.map(r => {
+                        const occupied = guests.filter(g => Number(g.room_id) === Number(r.id) && (!editingId || g.id !== editingId)).length;
+                        const vacant = Math.max((Number(r.beds) || 0) - occupied, 0);
+                        const isFull = vacant <= 0;
+                        const isSelected = Number(formData.room_id) === Number(r.id);
+
+                        return (
+                          <div
+                            key={r.id}
+                            className={`px-3 py-2 cursor-pointer flex justify-between items-center transition-colors ${
+                              isSelected ? 'bg-emerald-100/70 font-semibold' : 'hover:bg-emerald-50'
+                            }`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              if (isFull) {
+                                Swal.fire({
+                                  icon: 'warning',
+                                  title: 'Room not Available',
+                                  text: 'Room not Available (Kamar sudah penuh / Vacant = 0)',
+                                  confirmButtonColor: '#065f46'
+                                });
+                                return;
+                              }
+                              setFormData({ ...formData, room_id: r.id });
+                              setRoomSearchQuery(r.room_no);
+                              setShowRoomSuggestions(false);
+                            }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-emerald-950 text-sm">{r.room_no}</span>
+                              <span className="text-[11px] text-stone-500">{r.mess_name || 'Mess'}</span>
+                            </div>
+                            <div>
+                              {isFull ? (
+                                <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold text-[10px] border border-rose-200">
+                                  FULL (Vacant: 0)
+                                </span>
+                              ) : (
+                                <span className="bg-lime-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px] border border-lime-300">
+                                  Vacant: {vacant}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
@@ -603,7 +751,7 @@ export default function DataRegister() {
               {canInsert && (
                 <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingId(null); }}>
                   <DialogTrigger asChild>
-                    <Button onClick={() => { setEditingId(null); setFormData({}); }} className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
+                    <Button onClick={() => { setEditingId(null); setFormData({}); setRoomSearchQuery(''); setShowRoomSuggestions(false); }} className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
                       <Plus size={18} /> Add New Entry
                     </Button>
                   </DialogTrigger>
@@ -613,7 +761,7 @@ export default function DataRegister() {
                     </DialogHeader>
                     {renderAddForm()}
                     <DialogFooter>
-                      <Button onClick={() => { setIsModalOpen(false); setEditingId(null); }} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
+                      <Button onClick={() => { setIsModalOpen(false); setEditingId(null); setRoomSearchQuery(''); setShowRoomSuggestions(false); }} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
                       <Button onClick={handleSave} className="bg-emerald-950 text-stone-50 hover:bg-emerald-900" disabled={isSaving}>
                         {isSaving ? 'Saving...' : editingId ? 'Update Entry' : 'Save Entry'}
                       </Button>

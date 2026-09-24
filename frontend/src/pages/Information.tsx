@@ -28,6 +28,17 @@ const getVisiblePages = (currentPage: number, totalPages: number) => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 
+const getRoomStatusBadgeClass = (status: string) => {
+  const s = String(status || '').toUpperCase();
+  if (s === 'FULL OCCUPIED') {
+    return 'bg-rose-500 text-white shadow-sm font-bold';
+  }
+  if (s === 'PARTIAL OCCUPIED') {
+    return 'bg-amber-400 text-amber-950 shadow-sm font-bold';
+  }
+  return 'bg-lime-400 text-emerald-950 shadow-sm font-bold';
+};
+
 const Information: React.FC = () => {
   const [roomPage, setRoomPage] = useState(1);
   const [pobPage, setPobPage] = useState(1);
@@ -416,7 +427,7 @@ const Information: React.FC = () => {
                             <td className="px-1 py-1 text-center font-semibold bg-lime-50/50 text-lime-800 border-x border-emerald-100">{r.beds_occupied}</td>
                             <td className="px-1 py-1 text-center font-semibold bg-stone-50 text-stone-800 border-x border-emerald-100">{r.beds_vacant}</td>
                             <td className="px-1 py-1">
-                              <span className="bg-lime-400 text-emerald-950 px-2 py-1 rounded-full text-xs shadow-sm font-bold">{toTitleCase(r.status)}</span>
+                              <span className={`px-2 py-1 rounded-full text-xs ${getRoomStatusBadgeClass(r.status)}`}>{toTitleCase(r.status)}</span>
                             </td>
                           </tr>
                         ))}

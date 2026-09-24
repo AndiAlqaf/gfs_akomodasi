@@ -57,10 +57,18 @@ try {
         $mess = trim($cols[2] ?? '');
         $name = trim($cols[3] ?? '');
 
+        // Skip dummy/placeholder allocations (VACANT, VISITOR, APD SCM, GUDANG GFS, POLISI AIR, NEW HIRE, SUPERVISOR placeholders)
+        // Note: SOLANA MART, CARSURIN, BRIMOB, and TRIYASA are kept as requested
+        if (empty($name) || preg_match('/^(vacant|visitor|gudang|apd\s*scm|polisi\s*air|new\s*hire|safety\s*supervisor|safety\s*data|accounting\s*supervisor)/i', $name)) {
+            continue;
+        }
+
+
         // Fix known typo if any: DM.A3.115 in DORMITORY B1 is DM.B1.115
         if ($room_no === 'DM.A3.115' && strpos($mess, 'DORMITORY B1') !== false) {
             $room_no = 'DM.B1.115';
         }
+
 
         if (!isset($room_map[$room_no])) {
             $skipped[] = "Row $no: Room '$room_no' not found in rooms table for guest '$name'";

@@ -22,19 +22,21 @@ class InformationController
                             r.room_no as room,
                             m.mess_name as mess,
                             a.area_name as area,
-                            g.name as guest_name,
+                            GROUP_CONCAT(g.name SEPARATOR ', ') as guest_name,
                             r.room_allocation,
                             r.beds as beds_total,
-                            SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) as beds_occupied,
-                            GREATEST(r.beds - SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)), 0) as beds_vacant,
-                            IF(SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) >= r.beds, 'FULL OCCUPIED', 
-                               IF(SUM(IF(res.id IS NOT NULL AND UPPER(g.name) != 'VACANT', 1, 0)) > 0, 'PARTIAL OCCUPIED', 'VACANT')) as status,
+                            COUNT(g.id) as beds_occupied,
+                            GREATEST(r.beds - COUNT(g.id), 0) as beds_vacant,
+                            CASE
+                                WHEN COUNT(g.id) >= r.beds AND r.beds > 0 THEN 'FULL OCCUPIED'
+                                WHEN COUNT(g.id) > 0 THEN 'PARTIAL OCCUPIED'
+                                ELSE 'VACANT'
+                            END as status,
                             r.room_status as remark
                         FROM rooms r
                         LEFT JOIN messes m ON r.mess_id = m.id
                         LEFT JOIN areas a ON m.area_id = a.id
-                        LEFT JOIN reservations res ON res.room_id = r.id AND res.guest_status = 'ON SITE'
-                        LEFT JOIN guests g ON res.guest_id = g.id
+                        LEFT JOIN guests g ON g.room_id = r.id AND TRIM(COALESCE(g.name, '')) != '' AND UPPER(g.name) NOT LIKE 'VACANT%'
                         GROUP BY r.id
                         ORDER BY r.room_no
                     ";

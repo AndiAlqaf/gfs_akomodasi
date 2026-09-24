@@ -108,6 +108,25 @@ class DataRegisterController
                 break;
             case 'add_guest':
                 requireFields($data, ['room_id', 'name']);
+                
+                // Validate room availability (vacant beds must be > 0)
+                $room = \App\Core\Database::fetch('SELECT id, beds, room_no FROM rooms WHERE id = ?', [$data['room_id']]);
+                if (!$room) {
+                    jsonResponse(['error' => 'Room not found'], 404);
+                }
+                
+                $occupied = \App\Core\Database::fetchColumn('
+                    SELECT COUNT(*) FROM guests 
+                    WHERE room_id = ? 
+                      AND TRIM(COALESCE(name, "")) != "" 
+                      AND UPPER(name) NOT LIKE "VACANT%"
+                ', [$data['room_id']]);
+                
+                $vacant = max((int)$room['beds'] - (int)$occupied, 0);
+                if ($vacant <= 0) {
+                    jsonResponse(['error' => 'Room not Available'], 400);
+                }
+
                 \App\Core\Database::execute('INSERT INTO guests (room_id, name, institution_company, occupants_category, personal_identification, reg_id_card, job, position, level_category, department, meals_packages, breakfast_dp, lunch_dp, dinner_dp, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $registeredBy, $data['remarks'] ?? '']);
                 
@@ -165,6 +184,25 @@ class DataRegisterController
                 break;
             case 'update_guest':
                 requireFields($data, ['id', 'room_id', 'name']);
+                
+                // If room changed, verify new room has vacancy
+                $currentGuest = \App\Core\Database::fetch('SELECT room_id FROM guests WHERE id = ?', [$data['id']]);
+                if ($currentGuest && $currentGuest['room_id'] != $data['room_id']) {
+                    $room = \App\Core\Database::fetch('SELECT id, beds FROM rooms WHERE id = ?', [$data['room_id']]);
+                    if ($room) {
+                        $occupied = \App\Core\Database::fetchColumn('
+                            SELECT COUNT(*) FROM guests 
+                            WHERE room_id = ? AND id != ?
+                              AND TRIM(COALESCE(name, "")) != "" 
+                              AND UPPER(name) NOT LIKE "VACANT%"
+                        ', [$data['room_id'], $data['id']]);
+                        $vacant = max((int)$room['beds'] - (int)$occupied, 0);
+                        if ($vacant <= 0) {
+                            jsonResponse(['error' => 'Room not Available'], 400);
+                        }
+                    }
+                }
+
                 \App\Core\Database::execute('UPDATE guests SET room_id = ?, name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, department = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?',
                     [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $data['remarks'] ?? '', $data['id']]);
                 break;
