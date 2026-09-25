@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Environment files (akan di-inject via docker-compose)
+.env
+
+# Backup dan file development
+*.txt
+*.xlsx
+scratch/
+scratch_pob.js
+
+# Database files (tidak perlu dikopi ke image, sudah ada path terpisah)
+database.sqlite
+
+# PHP dev utility files
+add_*.php
+check_*.php
+count_*.php
+create_table.php
+extract_csv.php
+fix_*.php
+get_tables*.php
+migrate_data.php
+reseed_*.php
+seed_*.php
+sync_*.php
+test*.php
+
+# Docs
+*.md
