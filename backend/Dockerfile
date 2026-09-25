@@ -6,6 +6,9 @@ RUN apk add --no-cache \
     mysql-client \
     && docker-php-ext-install pdo pdo_mysql
 
+# Fix Windows CRLF line endings in shell scripts
+RUN apk add --no-cache dos2unix
+
 # Set working directory
 WORKDIR /var/www/backend
 
@@ -60,11 +63,13 @@ RUN rm -f \
     start-server.ps1 \
     scratch_pob.js 2>/dev/null || true
 
-# Create uploads directory
-RUN mkdir -p /var/www/backend/uploads && chmod 755 /var/www/backend/uploads
+# Create uploads directory and fix line endings
+RUN mkdir -p /var/www/backend/uploads && chmod 755 /var/www/backend/uploads \
+    && dos2unix start-server.sh \
+    && chmod +x start-server.sh
 
 # Expose backend port
 EXPOSE 31145
 
 # Start PHP built-in server
-CMD ["sh", "start-server.sh"]
+CMD ["/bin/sh", "/var/www/backend/start-server.sh"]
