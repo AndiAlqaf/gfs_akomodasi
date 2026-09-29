@@ -44,41 +44,69 @@ class InformationController
                     jsonResponse(["data" => $data]);
                     
                 } elseif ($type === 'pob') {
-                    // INFORMATION_PERSON_ON_BOARD query
+                    // 1. Sync any missing guests into reservations
+                    $missingGuests = Database::fetchAll("
+                        SELECT g.id, g.room_id, g.occupants_category, g.last_registration 
+                        FROM guests g 
+                        LEFT JOIN reservations r ON g.id = r.guest_id 
+                        WHERE r.id IS NULL
+                    ");
+
+                    if (!empty($missingGuests)) {
+                        foreach ($missingGuests as $mg) {
+                            $isRegular = ($mg['occupants_category'] === 'REGULAR GUEST' || empty($mg['occupants_category']));
+                            $status = $isRegular ? 'ON SITE' : 'SCHEDULED';
+                            $checkIn = $isRegular ? ($mg['last_registration'] ?: date('Y-m-d H:i:s')) : null;
+                            Database::execute(
+                                "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
+                                [$mg['id'], $mg['room_id'], $status, $checkIn]
+                            );
+                        }
+                    }
+
+                    // 2. Query all Person On Board matching Check In/Out and Data Register Guest
                     $query = "
                         SELECT 
-                            COALESCE(DATE(res.check_in), DATE(g.last_registration), CURDATE()) as date,
+                            res.id as reservation_id,
+                            g.id as guest_id,
+                            COALESCE(DATE(res.check_in), DATE(res.estimated_arrival), DATE(g.last_registration), CURDATE()) as date,
+                            res.check_in,
+                            res.check_out,
                             DATE(res.check_out) as check_out_date,
-                            r.room_no,
-                            m.mess_name as mess,
-                            a.area_name as area,
+                            COALESCE(rg.room_no, r.room_no) as room_no,
+                            COALESCE(mg.mess_name, m.mess_name) as mess,
+                            COALESCE(ag.area_name, a.area_name) as area,
                             g.name,
                             g.reg_id_card,
+                            g.personal_identification,
                             g.job,
                             g.position,
                             g.level_category,
+                            g.department,
                             g.institution_company,
-                            g.occupants_category,
-                            res.guest_status as boarding_status,
-                            res.remark as remarks
+                            COALESCE(NULLIF(g.occupants_category, ''), 'REGULAR GUEST') as occupants_category,
+                            res.guest_status,
+                            CASE 
+                                WHEN res.guest_status = 'ON SITE' THEN 'ON BOARD'
+                                ELSE 'OFF BOARD'
+                            END as boarding_status,
+                            COALESCE(res.remark, g.remarks, '') as remarks
                         FROM reservations res
                         JOIN guests g ON res.guest_id = g.id
-                        JOIN rooms r ON res.room_id = r.id
-                        JOIN messes m ON r.mess_id = m.id
-                        JOIN areas a ON m.area_id = a.id
-                        /* Data remains so it can be filtered by date */
-                        ORDER BY COALESCE(res.check_in, res.check_out) DESC
+                        LEFT JOIN rooms rg ON g.room_id = rg.id
+                        LEFT JOIN messes mg ON rg.mess_id = mg.id
+                        LEFT JOIN areas ag ON mg.area_id = ag.id
+                        LEFT JOIN rooms r ON res.room_id = r.id
+                        LEFT JOIN messes m ON r.mess_id = m.id
+                        LEFT JOIN areas a ON m.area_id = a.id
+                        /* Sorted by: 1. Tanggal, 2. Mess, 3. Room Id */
+                        ORDER BY 
+                            COALESCE(DATE(res.check_in), DATE(res.estimated_arrival), DATE(g.last_registration), CURDATE()) DESC,
+                            COALESCE(mg.mess_name, m.mess_name) ASC,
+                            COALESCE(rg.room_no, r.room_no) ASC
                     ";
                     $data = Database::fetchAll($query);
-                    
-                    // Map ON SITE to ON BOARD, OFF SITE to OFF BOARD just to match screenshot
-                    $mappedData = array_map(function($row) {
-                        if ($row['boarding_status'] === 'ON SITE') $row['boarding_status'] = 'ON BOARD';
-                        if ($row['boarding_status'] === 'OFF SITE') $row['boarding_status'] = 'OFF BOARD';
-                        return $row;
-                    }, $data);
-
-                    jsonResponse(["data" => $mappedData]);
+                    jsonResponse(["data" => $data]);
 
                 } elseif ($type === 'meals_delivery' || $type === 'meals_info') {
                     // Aggregate meals for Meals Services Delivery Info or Overall Info

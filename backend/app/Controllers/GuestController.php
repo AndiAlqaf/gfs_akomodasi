@@ -45,11 +45,17 @@ class GuestController
 
         $guestId = \App\Core\Database::lastInsertId();
 
-        if ($occupantsCategory === 'REGULAR GUEST') {
-            \App\Core\Database::execute(
-                "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, NULL, NULL)",
-                [$guestId, $roomId, 'SCHEDULED']
-            );
+        $isReg = ($occupantsCategory === 'REGULAR GUEST' || empty($occupantsCategory));
+        $initialStatus = $isReg ? 'ON SITE' : 'SCHEDULED';
+        $initialCheckIn = $isReg ? date('Y-m-d H:i:s') : null;
+
+        \App\Core\Database::execute(
+            "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
+            [$guestId, $roomId, $initialStatus, $initialCheckIn]
+        );
+
+        if ($isReg && $roomId) {
+            \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$roomId]);
         }
 
         jsonResponse(["success" => true, "id" => $guestId], 201);

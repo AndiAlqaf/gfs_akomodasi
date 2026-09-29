@@ -132,94 +132,49 @@ const Information: React.FC = () => {
     return matchSearch;
   });
 
-  // Expand POBs for Regular Guests so they appear every day, and deduplicate others
-  const expandedPobsMap = new Map();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  pobs.forEach((p: any) => {
-    const isRegularGuest = String(p.occupants_category || '').toUpperCase() === 'REGULAR GUEST';
-
-    if (isRegularGuest && p.date) {
-      // For Regular Guests, expand the dates from check-in up to TODAY
-      const startDate = new Date(p.date);
-      startDate.setHours(0, 0, 0, 0);
-
-      // We generate records up to today
-      const endDate = today;
-
-      // Safety check: max 10 years to prevent infinite loops if date is corrupt
-      if (startDate <= endDate && endDate.getTime() - startDate.getTime() < 10 * 365 * 24 * 60 * 60 * 1000) {
-        let currentDate = new Date(startDate);
-        while (currentDate <= endDate) {
-          const year = currentDate.getFullYear();
-          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-          const day = String(currentDate.getDate()).padStart(2, '0');
-          const dateStr = `${year}-${month}-${day}`;
-          // Use name, room_no, and date to uniquely identify each day's record
-          const key = p.name + '_' + p.room_no + '_' + dateStr;
-
-          if (!expandedPobsMap.has(key)) {
-            // Determine boarding status for this specific day
-            let dailyStatus = p.boarding_status;
-            if (p.check_out_date) {
-              const checkOut = new Date(p.check_out_date);
-              checkOut.setHours(0, 0, 0, 0);
-              // If current date is exactly on or after check out date, they are OFF BOARD
-              if (currentDate >= checkOut) {
-                dailyStatus = 'OFF BOARD';
-              } else {
-                dailyStatus = 'ON BOARD';
-              }
-            } else {
-              dailyStatus = p.boarding_status;
-            }
-
-            expandedPobsMap.set(key, { ...p, date: dateStr, boarding_status: dailyStatus });
-          }
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-      } else {
-        // Fallback for invalid dates
-        const key = p.name + '_' + p.room_no + '_' + p.date;
-        if (!expandedPobsMap.has(key)) {
-          expandedPobsMap.set(key, p);
-        }
-      }
-    } else {
-      // For other guests, use the original logic (deduplicate by latest)
-      const key = p.name + '_' + p.room_no;
-      if (!expandedPobsMap.has(key)) {
-        expandedPobsMap.set(key, p);
-      }
+  // POBs directly correspond to registered guests and check in/out records
+  const filteredPobs = pobs.filter((p: any) => {
+    // Visibility rules:
+    // - ON BOARD: Tampilkan semua tamu (Regular, Special Guest, VIP)
+    // - OFF BOARD: Hanya tampilkan Regular Guest (Special Guest & VIP disembunyikan saat OFF BOARD)
+    const category = String(p.occupants_category || '').toUpperCase().trim();
+    const isRegular = category === 'REGULAR GUEST' || category === '';
+    if (p.boarding_status !== 'ON BOARD' && !isRegular) {
+      return false;
     }
-  });
 
-  const filteredPobs = Array.from(expandedPobsMap.values()).filter((p: any) => {
     if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
 
     // Search filter
     const searchLower = pobSearch.toLowerCase().trim();
-    const matchSearch = Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
+    if (!searchLower) return true;
+
+    return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
       (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
-
-    if (!matchSearch) return false;
-
-    // Visibility rules:
-    // - ON BOARD: Show all guests
-    // - OFF BOARD: Show only Regular Guests
-    const category = String(p.occupants_category || '').toUpperCase();
-    if (p.boarding_status === 'ON BOARD') {
-      return true;
-    } else if (p.boarding_status === 'OFF BOARD' && category === 'REGULAR GUEST') {
-      return true;
+  }).sort((a: any, b: any) => {
+    // 1. Tanggal (Date) - latest date first
+    const getDateStr = (item: any) => {
+      const raw = item.date || item.check_in || '';
+      return raw ? String(raw).split(' ')[0].split('T')[0] : '';
+    };
+    const dateA = getDateStr(a);
+    const dateB = getDateStr(b);
+    if (dateA !== dateB) {
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return dateB.localeCompare(dateA);
     }
 
-    return false;
-  }).sort((a: any, b: any) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    // 2. Mess - alphabetical
+    const messA = String(a.mess || a.mess_name || '').trim();
+    const messB = String(b.mess || b.mess_name || '').trim();
+    const messDiff = messA.localeCompare(messB, undefined, { numeric: true, sensitivity: 'base' });
+    if (messDiff !== 0) return messDiff;
+
+    // 3. Room Id (Room No) - natural sort
+    const roomA = String(a.room_no || a.room || '').trim();
+    const roomB = String(b.room_no || b.room || '').trim();
+    return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
   });
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
@@ -273,21 +228,8 @@ const Information: React.FC = () => {
   const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
   const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const onBoardCount = filteredPobs.filter((p: any) => {
-    if (pobDateFrom || pobDateTo) return p.boarding_status === 'ON BOARD';
-    if (!p.date) return false;
-    const d = new Date(p.date);
-    const today = new Date();
-    return p.boarding_status === 'ON BOARD' && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-  }).length;
-
-  const offBoardCount = filteredPobs.filter((p: any) => {
-    if (pobDateFrom || pobDateTo) return p.boarding_status !== 'ON BOARD';
-    if (!p.date) return false;
-    const d = new Date(p.date);
-    const today = new Date();
-    return p.boarding_status !== 'ON BOARD' && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-  }).length;
+  const onBoardCount = filteredPobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
+  const offBoardCount = filteredPobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
@@ -329,7 +271,25 @@ const Information: React.FC = () => {
     }));
     exportToExcel(formattedData, `Meeting_Rooms_Info_${new Date().toISOString().split('T')[0]}`);
   };
-  const handleExportPob = () => exportToExcel(filteredPobs, `POB_Info_${new Date().toISOString().split('T')[0]}`);
+  const handleExportPob = () => {
+    const formattedData = filteredPobs.map((p: any, idx: number) => ({
+      'No': idx + 1,
+      'Date': p.date ? formatDate(p.date) : '-',
+      'Room No': p.room_no || '-',
+      'Mess': p.mess || '-',
+      'Area': p.area || '-',
+      'Name': p.name || '-',
+      'Reg ID Card': p.reg_id_card || '-',
+      'Job': p.job || '-',
+      'Position': p.position || '-',
+      'Level Category': p.level_category || '-',
+      'Department': p.department || '-',
+      'Institution/Company': p.institution_company || '-',
+      'Occupants Category': p.occupants_category || '-',
+      'Boarding Status': p.boarding_status || '-'
+    }));
+    exportToExcel(formattedData, `POB_Info_${new Date().toISOString().split('T')[0]}`);
+  };
   const handleExportMeals = () => exportToExcel(filteredMeals, `Meals_Info_${new Date().toISOString().split('T')[0]}`);
   const handleExportLaundry = () => exportToExcel(filteredLaundry, `Laundry_Info_${new Date().toISOString().split('T')[0]}`);
 
@@ -607,6 +567,7 @@ const Information: React.FC = () => {
                           <th className="px-3 py-3">JOB</th>
                           <th className="px-3 py-3">POSITION</th>
                           <th className="px-3 py-3">LEVEL CATEGORY</th>
+                          <th className="px-3 py-3">DEPARTMENT</th>
                           <th className="px-3 py-3">INSTITUTION/COMPANY</th>
                           <th className="px-3 py-3">OCCUPANTS CATEGORY</th>
                           <th className="px-3 py-3 text-center">BOARDING STATUS</th>
@@ -624,6 +585,7 @@ const Information: React.FC = () => {
                             <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.job || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.position || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.level_category || '-'} highlight={pobSearch} /></td>
+                            <td className="px-1 py-1 text-emerald-600"><HighlightText text={p.department || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-emerald-700">
                               <span className="bg-stone-100 text-emerald-800 px-2 py-1 rounded-md border border-stone-200"><HighlightText text={p.institution_company || '-'} highlight={pobSearch} /></span>
                             </td>
@@ -634,7 +596,7 @@ const Information: React.FC = () => {
                           </tr>
                         ))}
                         {paginatedPobs.length === 0 && (
-                          <tr><td colSpan={14} className="text-center py-8 text-gray-500">No POB data found.</td></tr>
+                          <tr><td colSpan={13} className="text-center py-8 text-gray-500">No POB data found.</td></tr>
                         )}
                       </tbody>
                     </table>

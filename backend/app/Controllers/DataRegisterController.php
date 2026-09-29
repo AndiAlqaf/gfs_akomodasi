@@ -131,11 +131,18 @@ class DataRegisterController
                     [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $registeredBy, $data['remarks'] ?? '']);
                 
                 $guestId = \App\Core\Database::lastInsertId();
-                if (($data['occupants_category'] ?? 'REGULAR GUEST') === 'REGULAR GUEST') {
-                    \App\Core\Database::execute(
-                        "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, 'OFF SITE', NULL, NULL)",
-                        [$guestId, $data['room_id']]
-                    );
+                $cat = $data['occupants_category'] ?? 'REGULAR GUEST';
+                $isReg = ($cat === 'REGULAR GUEST' || empty($cat));
+                $initialStatus = $isReg ? 'ON SITE' : 'SCHEDULED';
+                $initialCheckIn = $isReg ? date('Y-m-d H:i:s') : null;
+
+                \App\Core\Database::execute(
+                    "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
+                    [$guestId, $data['room_id'], $initialStatus, $initialCheckIn]
+                );
+
+                if ($isReg && !empty($data['room_id'])) {
+                    \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$data['room_id']]);
                 }
                 break;
             case 'add_meeting_room':
@@ -205,6 +212,25 @@ class DataRegisterController
 
                 \App\Core\Database::execute('UPDATE guests SET room_id = ?, name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, department = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?',
                     [$data['room_id'], $data['name'], $data['institution_company'] ?? '', $data['occupants_category'] ?? 'REGULAR GUEST', $data['personal_identification'] ?? '', $data['reg_id_card'] ?? '', $data['job'] ?? '', $data['position'] ?? '', $data['level_category'] ?? '', $data['department'] ?? '', $data['meals_packages'] ?? '', $data['breakfast_dp'] ?? '', $data['lunch_dp'] ?? '', $data['dinner_dp'] ?? '', $data['remarks'] ?? '', $data['id']]);
+                
+                // Sync reservation for this guest
+                $cat = $data['occupants_category'] ?? 'REGULAR GUEST';
+                $isReg = ($cat === 'REGULAR GUEST' || empty($cat));
+                $resExists = \App\Core\Database::fetch("SELECT id, guest_status FROM reservations WHERE guest_id = ? LIMIT 1", [$data['id']]);
+                if ($resExists) {
+                    $newStatus = ($isReg && $resExists['guest_status'] !== 'OFF SITE') ? 'ON SITE' : $resExists['guest_status'];
+                    \App\Core\Database::execute("UPDATE reservations SET room_id = ?, guest_status = ? WHERE id = ?", [$data['room_id'], $newStatus, $resExists['id']]);
+                } else {
+                    $status = $isReg ? 'ON SITE' : 'SCHEDULED';
+                    $checkIn = $isReg ? date('Y-m-d H:i:s') : null;
+                    \App\Core\Database::execute(
+                        "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
+                        [$data['id'], $data['room_id'], $status, $checkIn]
+                    );
+                }
+                if ($isReg && !empty($data['room_id'])) {
+                    \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$data['room_id']]);
+                }
                 break;
             case 'update_meeting_room':
                 requireFields($data, ['id', 'meeting_room', 'building', 'capacity']);
@@ -226,7 +252,10 @@ class DataRegisterController
             case 'delete_area': (new AreaModel())->delete($id); break;
             case 'delete_mess': (new MessModel())->delete($id); break;
             case 'delete_room': (new RoomModel())->delete($id); break;
-            case 'delete_guest': (new GuestModel())->delete($id); break;
+            case 'delete_guest': 
+                \App\Core\Database::execute("DELETE FROM reservations WHERE guest_id = ?", [$id]);
+                (new GuestModel())->delete($id); 
+                break;
             case 'delete_meals_dp': (new MealsDpModel())->delete($id); break;
             case 'delete_laundry_dp': (new LaundryDpModel())->delete($id); break;
             case 'delete_laundry_bag': (new LaundryBagModel())->delete($id); break;

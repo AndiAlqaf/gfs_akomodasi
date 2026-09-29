@@ -52,7 +52,8 @@ const Reservations: React.FC = () => {
   const [rescheduleDeparture, setRescheduleDeparture] = useState('');
 
   // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const [bedroomPage, setBedroomPage] = useState(1);
+  const [checkInOutPage, setCheckInOutPage] = useState(1);
   const itemsPerPage = 20;
 
   const [roomSearch, setRoomSearch] = useState('');
@@ -199,19 +200,38 @@ const Reservations: React.FC = () => {
   const bedroomReservations = reservations.filter((r: any) => r.occupants_category !== 'REGULAR GUEST')
     .filter((r: any) => !roomSearch || Object.values(r).some(val => String(val).toLowerCase().includes(roomSearch.toLowerCase())));
   const bedroomTotalPages = Math.ceil(bedroomReservations.length / itemsPerPage) || 1;
-  const bedroomPaginatedData = bedroomReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const bedroomPaginatedData = bedroomReservations.slice((bedroomPage - 1) * itemsPerPage, bedroomPage * itemsPerPage);
 
-  // We show all check-in/out records for history, but hide Special/VIP guests that are OFF SITE
+  // All check-in/out records corresponding directly to data register guests, sorted by: 1. Tanggal, 2. Mess, 3. Room Id
   const checkInOutReservations = reservations
-    .filter((r: any) => !(r.guest_status === 'OFF SITE' && r.occupants_category !== 'REGULAR GUEST'))
     .filter((r: any) => !checkInOutSearch || Object.values(r).some(val => String(val).toLowerCase().includes(checkInOutSearch.toLowerCase())))
     .sort((a: any, b: any) => {
-      if (a.guest_status === 'ON SITE' && b.guest_status !== 'ON SITE') return -1;
-      if (b.guest_status === 'ON SITE' && a.guest_status !== 'ON SITE') return 1;
-      return 0;
+      // 1. Tanggal (Date) - latest date first
+      const getDateStr = (item: any) => {
+        const raw = item.check_in || item.estimated_arrival || item.created_at || '';
+        return raw ? String(raw).split(' ')[0].split('T')[0] : '';
+      };
+      const dateA = getDateStr(a);
+      const dateB = getDateStr(b);
+      if (dateA !== dateB) {
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateB.localeCompare(dateA);
+      }
+
+      // 2. Mess - alphabetical
+      const messA = String(a.messName || a.mess || '').trim();
+      const messB = String(b.messName || b.mess || '').trim();
+      const messDiff = messA.localeCompare(messB, undefined, { numeric: true, sensitivity: 'base' });
+      if (messDiff !== 0) return messDiff;
+
+      // 3. Room Id (Room No) - natural sort
+      const roomA = String(a.roomNo || a.room_no || '').trim();
+      const roomB = String(b.roomNo || b.room_no || '').trim();
+      return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
     });
   const checkInOutTotalPages = Math.ceil(checkInOutReservations.length / itemsPerPage) || 1;
-  const checkInOutPaginatedData = checkInOutReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const checkInOutPaginatedData = checkInOutReservations.slice((checkInOutPage - 1) * itemsPerPage, checkInOutPage * itemsPerPage);
 
   const meetingBookings = meetingBookingsResp?.data?.data || [];
   const filteredMeetingBookings = meetingBookings.filter((mb: any) => !meetingSearch || Object.values(mb).some(val => String(val).toLowerCase().includes(meetingSearch.toLowerCase())));
@@ -221,7 +241,7 @@ const Reservations: React.FC = () => {
 
 
       <div className="flex flex-col flex-1 min-h-0">
-        <Tabs defaultValue="bedroom" className="w-full flex flex-col flex-1 min-h-0">
+        <Tabs defaultValue="bedroom" onValueChange={() => { setBedroomPage(1); setCheckInOutPage(1); }} className="w-full flex flex-col flex-1 min-h-0">
           <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl border border-stone-200 inline-flex shrink-0 w-max">
             <TabsTrigger value="bedroom" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">BEDROOM</TabsTrigger>
             <TabsTrigger value="meeting" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 transition-all px-4 py-2">MEETING ROOM</TabsTrigger>
@@ -235,9 +255,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={roomSearch} onChange={e => { setRoomSearch(e.target.value); setBedroomPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setBedroomPage(1)}>Search</Button>
                   {canInsertBooking && (
                     <Button className="gap-2 bg-lime-400 text-emerald-950 hover:bg-lime-500 font-bold shadow-sm rounded-full px-6" onClick={() => setIsDialogOpen(true)}>
                       <Plus size={18} /> Book Room
@@ -318,18 +338,18 @@ const Reservations: React.FC = () => {
 
                 <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl shrink-0 w-full">
                   <div className="text-sm text-emerald-800">
-                    Showing <span className="font-semibold">{bedroomReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, bedroomReservations.length)}</span> of <span className="font-semibold">{bedroomReservations.length}</span> entries
+                    Showing <span className="font-semibold">{bedroomReservations.length > 0 ? (bedroomPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(bedroomPage * itemsPerPage, bedroomReservations.length)}</span> of <span className="font-semibold">{bedroomReservations.length}</span> entries
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                    <Button variant="outline" size="sm" onClick={() => setBedroomPage(prev => Math.max(prev - 1, 1))} disabled={bedroomPage === 1}>Previous</Button>
                     {Array.from({ length: bedroomTotalPages }, (_, i) => i + 1)
-                      .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
+                      .filter(page => page >= Math.floor((bedroomPage - 1) / 10) * 10 + 1 && page <= Math.floor((bedroomPage - 1) / 10) * 10 + 10)
                       .map(page => (
-                        <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                        <Button key={page} variant={bedroomPage === page ? 'default' : 'outline'} size="sm" onClick={() => setBedroomPage(page)} className={bedroomPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
                           {page}
                         </Button>
                       ))}
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, bedroomTotalPages))} disabled={currentPage === bedroomTotalPages}>Next</Button>
+                    <Button variant="outline" size="sm" onClick={() => setBedroomPage(prev => Math.min(prev + 1, bedroomTotalPages))} disabled={bedroomPage === bedroomTotalPages}>Next</Button>
                   </div>
                 </div>
               </CardContent>
@@ -343,9 +363,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={meetingSearch} onChange={e => { setMeetingSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={meetingSearch} onChange={e => setMeetingSearch(e.target.value)} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10">Search</Button>
                   <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
                     <DialogTrigger asChild>
                       <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4">
@@ -479,9 +499,9 @@ const Reservations: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
-                    <Input placeholder="Search..." value={checkInOutSearch} onChange={e => { setCheckInOutSearch(e.target.value); setCurrentPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
+                    <Input placeholder="Search..." value={checkInOutSearch} onChange={e => { setCheckInOutSearch(e.target.value); setCheckInOutPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCurrentPage(1)}>Search</Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setCheckInOutPage(1)}>Search</Button>
                   <Button className="bg-emerald-950 hover:bg-emerald-900 text-white rounded-lg px-6 shadow-sm" onClick={() => setIsCheckInOutDialogOpen(true)}>
                     Check In/ Out
                   </Button>
@@ -522,7 +542,7 @@ const Reservations: React.FC = () => {
                           </td>
                           <td className="px-1 py-1">
                             <div className="flex justify-center gap-1">
-                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || (res.guest_status === 'OFF SITE' && !res.check_in)) && (
+                              {(res.guest_status === 'SCHEDULED' || res.guest_status === 'SCHEDULLED' || res.guest_status === 'OFF SITE') && (
                                 <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => handleCheckIn(res)}>
                                   Check In
                                 </Button>
@@ -551,7 +571,7 @@ const Reservations: React.FC = () => {
                         </tr>
                       ))}
                       {checkInOutPaginatedData.length === 0 && (
-                        <tr><td colSpan={7} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
+                        <tr><td colSpan={8} className="text-center py-8 text-gray-500">No reservations found.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -559,18 +579,18 @@ const Reservations: React.FC = () => {
 
                 <div className="flex items-center justify-between px-4 py-3 border-t border-emerald-100 bg-stone-50/50 mt-4 rounded-xl shrink-0 w-full">
                   <div className="text-sm text-emerald-800">
-                    Showing <span className="font-semibold">{checkInOutReservations.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, checkInOutReservations.length)}</span> of <span className="font-semibold">{checkInOutReservations.length}</span> entries
+                    Showing <span className="font-semibold">{checkInOutReservations.length > 0 ? (checkInOutPage - 1) * itemsPerPage + 1 : 0}</span> to <span className="font-semibold">{Math.min(checkInOutPage * itemsPerPage, checkInOutReservations.length)}</span> of <span className="font-semibold">{checkInOutReservations.length}</span> entries
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCheckInOutPage(prev => Math.max(prev - 1, 1))} disabled={checkInOutPage === 1}>Previous</Button>
                     {Array.from({ length: checkInOutTotalPages }, (_, i) => i + 1)
-                      .filter(page => page >= Math.floor((currentPage - 1) / 10) * 10 + 1 && page <= Math.floor((currentPage - 1) / 10) * 10 + 10)
+                      .filter(page => page >= Math.floor((checkInOutPage - 1) / 10) * 10 + 1 && page <= Math.floor((checkInOutPage - 1) / 10) * 10 + 10)
                       .map(page => (
-                        <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(page)} className={currentPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
+                        <Button key={page} variant={checkInOutPage === page ? 'default' : 'outline'} size="sm" onClick={() => setCheckInOutPage(page)} className={checkInOutPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'text-emerald-700 border-emerald-200'}>
                           {page}
                         </Button>
                       ))}
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, checkInOutTotalPages))} disabled={currentPage === checkInOutTotalPages}>Next</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCheckInOutPage(prev => Math.min(prev + 1, checkInOutTotalPages))} disabled={checkInOutPage === checkInOutTotalPages}>Next</Button>
                   </div>
                 </div>
               </CardContent>
@@ -691,7 +711,7 @@ const Reservations: React.FC = () => {
               <label className="block text-sm font-medium mb-1 text-emerald-900">Select Guest</label>
               <select className="w-full border border-emerald-200 p-2 rounded-lg focus:border-emerald-500" value={selectedReservationId} onChange={(e) => setSelectedReservationId(e.target.value)}>
                 <option value="">-- Choose Reservation --</option>
-                {reservations?.filter((r: any) => r.guest_status === 'SCHEDULED' || r.guest_status === 'SCHEDULLED' || r.guest_status === 'ON SITE').map((r: any) => (
+                {reservations?.map((r: any) => (
                   <option key={r.id} value={r.id}>{r.guestName} - {r.roomNo} ({r.guest_status})</option>
                 ))}
               </select>
