@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { informationAPI, laundryAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate, toTitleCase, calculateDuration } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Download } from 'lucide-react';
+import { Search, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportUtils';
 import { HighlightText } from '@/components/ui/HighlightText';
 const ITEMS_PER_PAGE = 20;
@@ -132,50 +132,124 @@ const Information: React.FC = () => {
     return matchSearch;
   });
 
-  // POBs directly correspond to registered guests and check in/out records
-  const filteredPobs = pobs.filter((p: any) => {
-    // Visibility rules:
-    // - ON BOARD: Tampilkan semua tamu (Regular, Special Guest, VIP)
-    // - OFF BOARD: Hanya tampilkan Regular Guest (Special Guest & VIP disembunyikan saat OFF BOARD)
-    const category = String(p.occupants_category || '').toUpperCase().trim();
-    const isRegular = category === 'REGULAR GUEST' || category === '';
-    if (p.boarding_status !== 'ON BOARD' && !isRegular) {
-      return false;
+  // Memoize POB expansion and filtering with a fast default window (last 3 days) to eliminate lag.
+  // If the user specifies pobDateFrom / pobDateTo, it will expand precisely for their requested range.
+  const filteredPobs = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Default view window is 1 week (7 days) to keep performance fast while showing full week of data.
+    const defaultWindowDays = 7;
+    let effectiveFromDate: Date;
+    if (pobDateFrom) {
+      const parts = pobDateFrom.split('-').map(Number);
+      effectiveFromDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    } else {
+      effectiveFromDate = new Date(today);
+      effectiveFromDate.setDate(today.getDate() - (defaultWindowDays - 1));
     }
 
-    if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
-
-    // Search filter
-    const searchLower = pobSearch.toLowerCase().trim();
-    if (!searchLower) return true;
-
-    return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
-      (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
-  }).sort((a: any, b: any) => {
-    // 1. Tanggal (Date) - latest date first
-    const getDateStr = (item: any) => {
-      const raw = item.date || item.check_in || '';
-      return raw ? String(raw).split(' ')[0].split('T')[0] : '';
-    };
-    const dateA = getDateStr(a);
-    const dateB = getDateStr(b);
-    if (dateA !== dateB) {
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return dateB.localeCompare(dateA);
+    let effectiveToDate: Date;
+    if (pobDateTo) {
+      const parts = pobDateTo.split('-').map(Number);
+      effectiveToDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    } else {
+      effectiveToDate = today;
     }
 
-    // 2. Mess - alphabetical
-    const messA = String(a.mess || a.mess_name || '').trim();
-    const messB = String(b.mess || b.mess_name || '').trim();
-    const messDiff = messA.localeCompare(messB, undefined, { numeric: true, sensitivity: 'base' });
-    if (messDiff !== 0) return messDiff;
+    const expandedPobs: any[] = [];
 
-    // 3. Room Id (Room No) - natural sort
-    const roomA = String(a.room_no || a.room || '').trim();
-    const roomB = String(b.room_no || b.room || '').trim();
-    return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
-  });
+    pobs.forEach((p: any) => {
+      // If the guest is ON BOARD:
+      if (p.boarding_status === 'ON BOARD' && p.date) {
+        const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
+        let guestStartDate: Date;
+        if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+          guestStartDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        } else {
+          guestStartDate = new Date(p.date);
+          guestStartDate.setHours(0, 0, 0, 0);
+        }
+
+        const rangeStart = guestStartDate > effectiveFromDate ? guestStartDate : effectiveFromDate;
+        const rangeEnd = effectiveToDate;
+
+        if (!isNaN(rangeStart.getTime()) && rangeStart <= rangeEnd) {
+          const cur = new Date(rangeStart);
+          while (cur <= rangeEnd) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, '0');
+            const d = String(cur.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            let dailyStatus = 'ON BOARD';
+            if (p.check_out_date) {
+              const coParts = String(p.check_out_date).split(' ')[0].split('T')[0].split('-').map(Number);
+              const coDate = new Date(coParts[0], coParts[1] - 1, coParts[2]);
+              if (cur >= coDate) {
+                dailyStatus = 'OFF BOARD';
+              }
+            }
+
+            expandedPobs.push({
+              ...p,
+              date: dateStr,
+              boarding_status: dailyStatus,
+            });
+
+            cur.setDate(cur.getDate() + 1);
+          }
+        }
+      } else {
+        // Off Board / Scheduled guests keep their original record
+        expandedPobs.push(p);
+      }
+    });
+
+    return expandedPobs.filter((p: any) => {
+      // Visibility rules:
+      // - ON BOARD: Tampilkan semua tamu (Regular, Special Guest, VIP)
+      // - OFF BOARD: Hanya tampilkan Regular Guest (Special Guest & VIP disembunyikan saat OFF BOARD)
+      const category = String(p.occupants_category || '').toUpperCase().trim();
+      const isRegular = category === 'REGULAR GUEST' || category === '';
+      if (p.boarding_status !== 'ON BOARD' && !isRegular) {
+        return false;
+      }
+
+      if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
+
+      // Search filter
+      const searchLower = pobSearch.toLowerCase().trim();
+      if (!searchLower) return true;
+
+      return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
+        (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
+    }).sort((a: any, b: any) => {
+      // 1. Tanggal (Date) - latest date first
+      const getDateStr = (item: any) => {
+        const raw = item.date || item.check_in || '';
+        return raw ? String(raw).split(' ')[0].split('T')[0] : '';
+      };
+      const dateA = getDateStr(a);
+      const dateB = getDateStr(b);
+      if (dateA !== dateB) {
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateB.localeCompare(dateA);
+      }
+
+      // 2. Mess - alphabetical
+      const messA = String(a.mess || a.mess_name || '').trim();
+      const messB = String(b.mess || b.mess_name || '').trim();
+      const messDiff = messA.localeCompare(messB, undefined, { numeric: true, sensitivity: 'base' });
+      if (messDiff !== 0) return messDiff;
+
+      // 3. Room Id (Room No) - natural sort
+      const roomA = String(a.room_no || a.room || '').trim();
+      const roomB = String(b.room_no || b.room || '').trim();
+      return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [pobs, pobDateFrom, pobDateTo, pobSearch]);
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
     const searchLower = mealsSearch.toLowerCase().trim();
@@ -228,8 +302,30 @@ const Information: React.FC = () => {
   const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
   const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const onBoardCount = filteredPobs.filter((p: any) => p.boarding_status === 'ON BOARD').length;
-  const offBoardCount = filteredPobs.filter((p: any) => p.boarding_status !== 'ON BOARD').length;
+  const { onBoardCount, offBoardCount } = useMemo(() => {
+    let onBoard = 0;
+    let offBoard = 0;
+    const now = new Date();
+    const todayY = now.getFullYear();
+    const todayM = now.getMonth() + 1;
+    const todayD = now.getDate();
+    const hasDateFilter = Boolean(pobDateFrom || pobDateTo);
+
+    for (let i = 0; i < filteredPobs.length; i++) {
+      const p = filteredPobs[i];
+      let isTargetDay = true;
+      if (!hasDateFilter) {
+        if (!p.date) continue;
+        const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
+        isTargetDay = (parts[0] === todayY && parts[1] === todayM && parts[2] === todayD);
+      }
+      if (isTargetDay) {
+        if (p.boarding_status === 'ON BOARD') onBoard++;
+        else offBoard++;
+      }
+    }
+    return { onBoardCount: onBoard, offBoardCount: offBoard };
+  }, [filteredPobs, pobDateFrom, pobDateTo]);
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
@@ -403,14 +499,24 @@ const Information: React.FC = () => {
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredRooms.length > 0 ? (roomPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(roomPage * ITEMS_PER_PAGE, filteredRooms.length)}</span> of <span className="font-semibold">{filteredRooms.length}</span> entries
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.max(prev - 1, 1))} disabled={roomPage === 1}>Previous</Button>
+                    <div className="flex gap-1.5 items-center">
+                      <Button variant="outline" size="sm" onClick={() => setRoomPage(1)} disabled={roomPage === 1} title="Page 01" className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronsLeft className="h-4 w-4" /> First
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.max(prev - 1, 1))} disabled={roomPage === 1} className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
                       {getVisiblePages(roomPage, roomTotalPages).map(page => (
-                        <Button key={page} variant={roomPage === page ? 'default' : 'outline'} size="sm" onClick={() => setRoomPage(page)} className={roomPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <Button key={page} variant={roomPage === page ? 'default' : 'outline'} size="sm" onClick={() => setRoomPage(page)} className={roomPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white min-w-8' : 'min-w-8'}>
                           {page}
                         </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.min(prev + 1, roomTotalPages))} disabled={roomPage === roomTotalPages}>Next</Button>
+                      <Button variant="outline" size="sm" onClick={() => setRoomPage(prev => Math.min(prev + 1, roomTotalPages))} disabled={roomPage === roomTotalPages} className="px-2.5 flex items-center gap-1 text-xs">
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRoomPage(roomTotalPages)} disabled={roomPage === roomTotalPages} title="Last Page" className="px-2.5 flex items-center gap-1 text-xs">
+                        Last <ChevronsRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -492,14 +598,24 @@ const Information: React.FC = () => {
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredMeetingRooms.length > 0 ? (meetingPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(meetingPage * ITEMS_PER_PAGE, filteredMeetingRooms.length)}</span> of <span className="font-semibold">{filteredMeetingRooms.length}</span> entries
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.max(prev - 1, 1))} disabled={meetingPage === 1}>Previous</Button>
+                    <div className="flex gap-1.5 items-center">
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(1)} disabled={meetingPage === 1} title="Page 01" className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronsLeft className="h-4 w-4" /> First
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.max(prev - 1, 1))} disabled={meetingPage === 1} className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
                       {getVisiblePages(meetingPage, meetingTotalPages).map(page => (
-                        <Button key={page} variant={meetingPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMeetingPage(page)} className={meetingPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <Button key={page} variant={meetingPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMeetingPage(page)} className={meetingPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white min-w-8' : 'min-w-8'}>
                           {page}
                         </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.min(prev + 1, meetingTotalPages))} disabled={meetingPage === meetingTotalPages}>Next</Button>
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(prev => Math.min(prev + 1, meetingTotalPages))} disabled={meetingPage === meetingTotalPages} className="px-2.5 flex items-center gap-1 text-xs">
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setMeetingPage(meetingTotalPages)} disabled={meetingPage === meetingTotalPages} title="Last Page" className="px-2.5 flex items-center gap-1 text-xs">
+                        Last <ChevronsRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -519,6 +635,11 @@ const Information: React.FC = () => {
                     <Input type="date" value={pobDateFrom} onChange={e => { setPobDateFrom(e.target.value); setPobPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="From" />
                     <span>to</span>
                     <Input type="date" value={pobDateTo} onChange={e => { setPobDateTo(e.target.value); setPobPage(1); }} className="h-8 w-auto px-2 py-0 border-emerald-200 text-xs" title="To" />
+                    {(!pobDateFrom && !pobDateTo) && (
+                      <span className="text-[11px] text-emerald-700 font-medium italic hidden xl:inline ml-1 whitespace-nowrap">
+                        (Default: 1 minggu terakhir)
+                      </span>
+                    )}
                   </div>
                   <div className="relative flex items-center gap-2">
                     <div className="relative">
@@ -607,14 +728,24 @@ const Information: React.FC = () => {
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredPobs.length > 0 ? (pobPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(pobPage * ITEMS_PER_PAGE, filteredPobs.length)}</span> of <span className="font-semibold">{filteredPobs.length}</span> entries
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.max(prev - 1, 1))} disabled={pobPage === 1}>Previous</Button>
+                    <div className="flex gap-1.5 items-center">
+                      <Button variant="outline" size="sm" onClick={() => setPobPage(1)} disabled={pobPage === 1} title="Page 01" className="px-2.5 flex items-center gap-1 font-semibold text-xs border-emerald-200 hover:bg-emerald-50">
+                        <ChevronsLeft className="h-4 w-4" /> First
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.max(prev - 1, 1))} disabled={pobPage === 1} className="px-2.5 flex items-center gap-1 text-xs border-emerald-200 hover:bg-emerald-50">
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
                       {getVisiblePages(pobPage, pobTotalPages).map(page => (
-                        <Button key={page} variant={pobPage === page ? 'default' : 'outline'} size="sm" onClick={() => setPobPage(page)} className={pobPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <Button key={page} variant={pobPage === page ? 'default' : 'outline'} size="sm" onClick={() => setPobPage(page)} className={pobPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white min-w-8' : 'min-w-8 border-emerald-200 hover:bg-emerald-50'}>
                           {page}
                         </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.min(prev + 1, pobTotalPages))} disabled={pobPage === pobTotalPages}>Next</Button>
+                      <Button variant="outline" size="sm" onClick={() => setPobPage(prev => Math.min(prev + 1, pobTotalPages))} disabled={pobPage === pobTotalPages} className="px-2.5 flex items-center gap-1 text-xs border-emerald-200 hover:bg-emerald-50">
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setPobPage(pobTotalPages)} disabled={pobPage === pobTotalPages} title="Last Page" className="px-2.5 flex items-center gap-1 font-semibold text-xs border-emerald-200 hover:bg-emerald-50">
+                        Last <ChevronsRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -709,14 +840,24 @@ const Information: React.FC = () => {
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredMeals.length > 0 ? (mealsPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(mealsPage * ITEMS_PER_PAGE, filteredMeals.length)}</span> of <span className="font-semibold">{filteredMeals.length}</span> entries
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.max(prev - 1, 1))} disabled={mealsPage === 1}>Previous</Button>
+                    <div className="flex gap-1.5 items-center">
+                      <Button variant="outline" size="sm" onClick={() => setMealsPage(1)} disabled={mealsPage === 1} title="Page 01" className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronsLeft className="h-4 w-4" /> First
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.max(prev - 1, 1))} disabled={mealsPage === 1} className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
                       {getVisiblePages(mealsPage, mealsTotalPages).map(page => (
-                        <Button key={page} variant={mealsPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMealsPage(page)} className={mealsPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <Button key={page} variant={mealsPage === page ? 'default' : 'outline'} size="sm" onClick={() => setMealsPage(page)} className={mealsPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white min-w-8' : 'min-w-8'}>
                           {page}
                         </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.min(prev + 1, mealsTotalPages))} disabled={mealsPage === mealsTotalPages}>Next</Button>
+                      <Button variant="outline" size="sm" onClick={() => setMealsPage(prev => Math.min(prev + 1, mealsTotalPages))} disabled={mealsPage === mealsTotalPages} className="px-2.5 flex items-center gap-1 text-xs">
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setMealsPage(mealsTotalPages)} disabled={mealsPage === mealsTotalPages} title="Last Page" className="px-2.5 flex items-center gap-1 text-xs">
+                        Last <ChevronsRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -817,14 +958,24 @@ const Information: React.FC = () => {
                     <div className="text-sm text-emerald-800">
                       Showing <span className="font-semibold">{filteredLaundry.length > 0 ? (laundryPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to <span className="font-semibold">{Math.min(laundryPage * ITEMS_PER_PAGE, filteredLaundry.length)}</span> of <span className="font-semibold">{filteredLaundry.length}</span> entries
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.max(prev - 1, 1))} disabled={laundryPage === 1}>Previous</Button>
+                    <div className="flex gap-1.5 items-center">
+                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(1)} disabled={laundryPage === 1} title="Page 01" className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronsLeft className="h-4 w-4" /> First
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.max(prev - 1, 1))} disabled={laundryPage === 1} className="px-2.5 flex items-center gap-1 text-xs">
+                        <ChevronLeft className="h-4 w-4" /> Previous
+                      </Button>
                       {getVisiblePages(laundryPage, laundryTotalPages).map(page => (
-                        <Button key={page} variant={laundryPage === page ? 'default' : 'outline'} size="sm" onClick={() => setLaundryPage(page)} className={laundryPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <Button key={page} variant={laundryPage === page ? 'default' : 'outline'} size="sm" onClick={() => setLaundryPage(page)} className={laundryPage === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white min-w-8' : 'min-w-8'}>
                           {page}
                         </Button>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.min(prev + 1, laundryTotalPages))} disabled={laundryPage === laundryTotalPages}>Next</Button>
+                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(prev => Math.min(prev + 1, laundryTotalPages))} disabled={laundryPage === laundryTotalPages} className="px-2.5 flex items-center gap-1 text-xs">
+                        Next <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setLaundryPage(laundryTotalPages)} disabled={laundryPage === laundryTotalPages} title="Last Page" className="px-2.5 flex items-center gap-1 text-xs">
+                        Last <ChevronsRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>

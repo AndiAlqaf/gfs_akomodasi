@@ -147,8 +147,8 @@ class DataRegisterController
                 break;
             case 'add_meeting_room':
                 requireFields($data, ['meeting_room', 'building', 'capacity']);
-                \App\Core\Database::execute('INSERT INTO meeting_rooms (room, building, capacity, status, additional_info) VALUES (?, ?, ?, ?, ?)',
-                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'READY', $data['remarks'] ?? '']);
+                \App\Core\Database::execute('INSERT INTO meeting_rooms (room, building, capacity, status, reserved_by, additional_info) VALUES (?, ?, ?, ?, ?, ?)',
+                    [$data['meeting_room'], $data['building'], $data['capacity'], $data['room_status'] ?? 'Ready', $registeredBy, $data['remarks'] ?? '']);
                 break;
             default:
                 jsonResponse(['error' => 'Invalid POST action'], 400);

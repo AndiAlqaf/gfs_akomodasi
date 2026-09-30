@@ -35,25 +35,6 @@ class MeetingRoomController
                 ]
             );
 
-            // Update meeting_rooms master table so Information and DataRegister views see the latest status
-            Database::execute(
-                "UPDATE meeting_rooms SET 
-                    date = ?, reserved_by = ?, departement = ?, participants = ?, 
-                    start_time = ?, finish_time = ?, additional_info = ?,
-                    booking_status = 'BOOKED'
-                WHERE room = ?",
-                [
-                    $input['booking_date'],
-                    $input['requested_by'],
-                    $input['department'] ?? '',
-                    $input['participants'] ?? 0,
-                    $input['start_time'],
-                    $input['finish_time'],
-                    $input['additional_info'] ?? '',
-                    $input['meeting_room'],
-                ]
-            );
-
             jsonResponse(["success" => true]);
 
         } elseif ($action === 'cancel') {
@@ -63,12 +44,6 @@ class MeetingRoomController
                 [$input['id']]
             );
 
-            if (!empty($input['room'])) {
-                Database::execute(
-                    "UPDATE meeting_rooms SET booking_status='OPEN' WHERE room=?",
-                    [$input['room']]
-                );
-            }
             jsonResponse(["success" => true]);
         }
 
