@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 02, 2026 at 07:00 AM
+-- Generation Time: Oct 02, 2026 at 10:27 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -648,7 +648,6 @@ INSERT INTO `guests` (`id`, `room_id`, `name`, `institution_company`, `occupants
 (690, 327, 'SUHARTO ONGGANG', 'PT. CNI', 'REGULAR GUEST', 'EMPLOYEE BADGE', '10788', 'EMPLOYEE', 'SITE OPERATION COMMITTEE', 'SR. STAFF - GM & EQUIVALENT', 'OPERATION', 'STANDARD BUFFET', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'Admin', '2026-09-15 22:10:45', ''),
 (691, 328, 'EBONY ANDI LOLO', 'PT. CNI', 'REGULAR GUEST', 'EMPLOYEE BADGE', '10042', 'EMPLOYEE', 'DATABASE & ADMIN SUPERINTENDENT', 'SR. STAFF - SUPERINTENDENT', 'GOVERNMENT RELATION', 'STANDARD BUFFET', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'Admin', '2026-09-15 22:10:45', ''),
 (692, 328, 'YUDI MOCHAMAD', 'PT. CNI', 'SPECIAL GUEST', 'EMPLOYEE BADGE', '10674', 'EMPLOYEE', '[CNI] HC EXCELLENCE & INDUSTRIAL RELATION MANAGER', 'SR. STAFF - MANAGER', 'HC EXCELLENCE & INDUSTRIAL RELATION', 'STANDARD BUFFET', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'SAMAENRE CANTEEN', 'Admin', '2026-09-15 22:10:45', ''),
-(693, 329, 'AGUSTINUS LONTOH', 'PT. CMP', 'SPECIAL GUEST', 'EMPLOYEE BADGE', 'C.128', 'EMPLOYEE', 'SMELTER SPECIALIST', 'SR. STAFF - ENGINEER/ SPECIALIST', 'OPERATION READINESS SMELTER RKEF', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (694, 329, 'INDRA HAEDAR NASIR', 'PT. CMP', 'SPECIAL GUEST', 'EMPLOYEE BADGE', '20007', 'EMPLOYEE', '[PROJECT] CIVIL ENGINEER', 'SR. STAFF - ENGINEER/ SPECIALIST', 'CONSTRUCTION MANAGEMENT', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (695, 330, 'MISHBAHUL UMAM', 'PT. CNI', 'REGULAR GUEST', 'EMPLOYEE BADGE', '10749', 'EMPLOYEE', 'QA QC CONSTRUCTION SUPERINTENDENT', 'SR. STAFF - SUPERINTENDENT', 'PROJECT DEVELOPMENT & MINING', 'STANDARD BUFFET', '', '', '', 'Admin', '2026-09-15 22:10:45', ''),
 (697, 331, 'RISALDI', '', 'REGULAR GUEST', '', '', '', '', '', '', '', '', '', '', 'Admin', '2026-09-28 21:05:25', ''),
@@ -818,10 +817,10 @@ INSERT INTO `guests` (`id`, `room_id`, `name`, `institution_company`, `occupants
 (870, 421, 'KOPTU. PRAMUGIANTO', 'TNI', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (872, 422, 'KOPDA. MUHAJIR', 'TNI', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (874, 423, 'PRAKA. MAULANA', 'TNI', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
-(876, 424, 'PRAKA. MUHAMMAD AMIRULLAH', 'TNI', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', '');
-INSERT INTO `guests` (`id`, `room_id`, `name`, `institution_company`, `occupants_category`, `personal_identification`, `reg_id_card`, `job`, `position`, `level_category`, `department`, `meals_packages`, `breakfast_dp`, `lunch_dp`, `dinner_dp`, `registered_by`, `last_registration`, `remarks`) VALUES
+(876, 424, 'PRAKA. MUHAMMAD AMIRULLAH', 'TNI', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (879, 425, 'AIPTU. ABD. ASIS', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
-(881, 426, 'IPDA JAMALUDDIN', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
+(881, 426, 'IPDA JAMALUDDIN', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', '');
+INSERT INTO `guests` (`id`, `room_id`, `name`, `institution_company`, `occupants_category`, `personal_identification`, `reg_id_card`, `job`, `position`, `level_category`, `department`, `meals_packages`, `breakfast_dp`, `lunch_dp`, `dinner_dp`, `registered_by`, `last_registration`, `remarks`) VALUES
 (882, 427, 'AIPDA IKHWANTO', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (884, 428, 'AIPDA. IRSAN SIRUA', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
 (886, 429, 'BRIPKA. LD. MUH. TASRIF', 'PAMOBVIT', 'SPECIAL GUEST', '', '', '', '', '', '', 'ROOM DELIVERY', 'STAY MESS', 'STAY MESS', 'STAY MESS', 'Admin', '2026-09-15 22:10:45', ''),
@@ -2221,15 +2220,14 @@ INSERT INTO `reservations` (`id`, `guest_id`, `room_id`, `estimated_arrival`, `e
 (10, 10, 11, NULL, NULL, '2026-06-01 00:00:00', NULL, 'ON SITE', ''),
 (21, 3, 3, NULL, NULL, '2026-06-17 00:00:00', '2026-07-02 21:02:53', 'OFF SITE', ''),
 (22, 6, 7, '2026-06-20 00:00:00', '2026-06-30 00:00:00', '2026-06-24 12:40:58', '2026-06-24 12:41:16', 'OFF SITE', ''),
-(23, 7, 8, '2026-06-20 00:00:00', '2026-06-30 00:00:00', '2026-06-24 11:03:16', '2026-06-24 11:03:18', 'OFF SITE', ''),
-(25, 21, 22, '2026-07-03 11:48:08', '2026-07-08 11:48:08', '2026-07-05 20:20:32', '2026-07-05 20:20:33', 'OFF SITE', NULL),
+(23, 7, 8, '2026-06-20 00:00:00', '2026-06-30 00:00:00', '2026-10-02 15:31:30', NULL, 'ON SITE', ''),
+(25, 21, 22, '2026-07-03 11:48:08', '2026-07-08 11:48:08', '2026-10-02 14:11:58', NULL, 'ON SITE', NULL),
 (27, 22, 23, '2026-07-05 12:56:06', '2026-07-10 12:56:06', '2026-08-20 12:27:52', NULL, 'ON SITE', NULL),
 (30, 17, 18, NULL, NULL, '2026-08-25 15:57:28', NULL, 'ON SITE', NULL),
 (38, 23, 24, '2026-08-07 15:00:00', '2026-08-08 10:00:00', '2026-08-25 15:44:33', NULL, 'ON SITE', NULL),
 (39, 24, 25, '2026-08-07 14:00:00', '2026-08-08 10:00:00', '2026-08-25 15:43:21', NULL, 'ON SITE', NULL),
 (40, 25, 26, '2026-08-07 14:00:00', '2026-08-08 10:00:00', '2026-08-19 12:28:29', NULL, 'ON SITE', NULL),
 (52, 13, 14, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
-(53, 693, 329, NULL, NULL, NULL, NULL, 'OFF SITE', NULL),
 (54, 16, 17, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (55, 18, 19, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (57, 20, 21, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
@@ -2276,7 +2274,7 @@ INSERT INTO `reservations` (`id`, `guest_id`, `room_id`, `estimated_arrival`, `e
 (102, 66, 63, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (103, 67, 64, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (104, 68, 64, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
-(105, 69, 65, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
+(105, 69, 65, NULL, NULL, '2026-09-15 22:10:44', '2026-10-02 15:49:03', 'OFF SITE', NULL),
 (106, 70, 65, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (107, 71, 66, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
 (108, 72, 66, NULL, NULL, '2026-09-15 22:10:44', NULL, 'ON SITE', NULL),
@@ -2741,8 +2739,8 @@ INSERT INTO `reservations` (`id`, `guest_id`, `room_id`, `estimated_arrival`, `e
 (589, 683, 320, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
 (590, 684, 321, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
 (591, 685, 322, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
-(593, 690, 327, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
-(594, 691, 328, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
+(593, 690, 327, NULL, NULL, '2026-09-15 22:10:45', '2026-10-02 13:26:37', 'OFF SITE', NULL),
+(594, 691, 328, NULL, NULL, '2026-09-15 22:10:45', '2026-10-02 13:26:50', 'OFF SITE', NULL),
 (595, 695, 330, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
 (596, 702, 334, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
 (597, 704, 335, NULL, NULL, '2026-09-15 22:10:45', NULL, 'ON SITE', NULL),
@@ -3065,7 +3063,7 @@ INSERT INTO `rooms` (`id`, `room_no`, `mess_id`, `room_allocation`, `beds`, `roo
 (5, 'LH.03.01', 3, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (6, 'LH.03.02', 3, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (7, 'LH.04.01', 4, 'BED ROOM', 1, 'READY', 'Admin', '2026-08-31 12:29:24', ''),
-(8, 'LH.04.02', 4, 'BED ROOM', 1, 'READY', 'Admin', '2026-08-31 12:29:24', ''),
+(8, 'LH.04.02', 4, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-10-02 15:31:30', ''),
 (9, 'LH.05.01', 5, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (10, 'LH.05.02', 5, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (11, 'LH.06.01', 6, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
@@ -3079,7 +3077,7 @@ INSERT INTO `rooms` (`id`, `room_no`, `mess_id`, `room_allocation`, `beds`, `roo
 (19, 'LH.10.01', 10, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (20, 'LH.10.02', 10, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (21, 'DM.A2.101', 11, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
-(22, 'DM.A2.102', 11, 'BED ROOM', 1, 'READY', 'Admin', '2026-08-31 12:29:24', ''),
+(22, 'DM.A2.102', 11, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-10-02 14:11:58', ''),
 (23, 'DM.A2.103', 11, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (24, 'DM.A2.104', 11, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (25, 'DM.A2.105', 11, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
@@ -3384,8 +3382,8 @@ INSERT INTO `rooms` (`id`, `room_no`, `mess_id`, `room_allocation`, `beds`, `roo
 (324, 'MC.02.02', 33, 'BED ROOM', 2, 'READY', 'Admin', '2026-08-31 12:29:24', ''),
 (325, 'MC.03.01', 34, 'BED ROOM', 2, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (326, 'MC.03.02', 34, 'BED ROOM', 2, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
-(327, 'MC.04.01', 35, 'BED ROOM', 1, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
-(328, 'MC.04.02', 35, 'BED ROOM', 2, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
+(327, 'MC.04.01', 35, 'BED ROOM', 1, 'READY', 'Admin', '2026-10-02 13:26:37', ''),
+(328, 'MC.04.02', 35, 'BED ROOM', 2, 'READY', 'Admin', '2026-10-02 13:26:50', ''),
 (329, 'MC.05.01', 36, 'BED ROOM', 2, 'READY', 'Admin', '2026-08-31 12:29:24', ''),
 (330, 'MC.05.02', 36, 'BED ROOM', 2, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
 (331, 'MC.06.01', 37, 'BED ROOM', 2, 'OCCUPIED', 'Admin', '2026-09-28 21:05:25', ''),
