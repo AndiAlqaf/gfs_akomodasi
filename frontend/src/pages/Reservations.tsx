@@ -114,6 +114,8 @@ const Reservations: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['info-pob'] });
+      queryClient.invalidateQueries({ queryKey: ['info-rooms'] });
     }
   });
 

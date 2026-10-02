@@ -88,7 +88,8 @@ class InformationController
                             res.guest_status,
                             CASE 
                                 WHEN res.guest_status = 'ON SITE' THEN 'ON BOARD'
-                                ELSE 'OFF BOARD'
+                                WHEN res.guest_status = 'OFF SITE' THEN 'OFF BOARD'
+                                ELSE 'SCHEDULED'
                             END as boarding_status,
                             COALESCE(res.remark, g.remarks, '') as remarks
                         FROM reservations res
@@ -99,6 +100,7 @@ class InformationController
                         LEFT JOIN rooms r ON res.room_id = r.id
                         LEFT JOIN messes m ON r.mess_id = m.id
                         LEFT JOIN areas a ON m.area_id = a.id
+                        WHERE res.guest_status IN ('ON SITE', 'OFF SITE')
                         /* Sorted by: 1. Tanggal, 2. Mess, 3. Room Id */
                         ORDER BY 
                             COALESCE(DATE(res.check_in), DATE(res.estimated_arrival), DATE(g.last_registration), CURDATE()) DESC,

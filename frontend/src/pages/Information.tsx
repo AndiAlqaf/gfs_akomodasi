@@ -59,6 +59,7 @@ const Information: React.FC = () => {
   const [roomDateTo, setRoomDateTo] = useState('');
   const [pobDateFrom, setPobDateFrom] = useState('');
   const [pobDateTo, setPobDateTo] = useState('');
+  const [pobStatusFilter, setPobStatusFilter] = useState<'ALL' | 'ON BOARD' | 'OFF BOARD'>('ALL');
   const [mealsDateFrom, setMealsDateFrom] = useState('');
   const [mealsDateTo, setMealsDateTo] = useState('');
   const [laundryDateFrom, setLaundryDateFrom] = useState('');
@@ -134,12 +135,14 @@ const Information: React.FC = () => {
 
   // Memoize POB expansion and filtering with a fast default window (last 3 days) to eliminate lag.
   // If the user specifies pobDateFrom / pobDateTo, it will expand precisely for their requested range.
-  const filteredPobs = useMemo(() => {
+  // Memoize POB expansion and filtering with a fast default window to eliminate lag.
+  // If the user specifies pobDateFrom / pobDateTo, it will expand precisely for their requested range.
+  const { filteredPobs, onBoardCount, offBoardCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Default view window is 1 week (7 days) to keep performance fast while showing full week of data.
-    const defaultWindowDays = 7;
+    // Default view window is 1 week (7 days). If search is active, widen window so matching guests are found.
+    const defaultWindowDays = pobSearch.trim() ? 60 : 7;
     let effectiveFromDate: Date;
     if (pobDateFrom) {
       const parts = pobDateFrom.split('-').map(Number);
@@ -160,19 +163,48 @@ const Information: React.FC = () => {
     const expandedPobs: any[] = [];
 
     pobs.forEach((p: any) => {
-      // If the guest is ON BOARD:
-      if (p.boarding_status === 'ON BOARD' && p.date) {
-        const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
+      // Hanya tamu yang sudah pernah check in (ON SITE atau OFF SITE) yang diproses di POB
+      if (p.guest_status === 'SCHEDULED' || p.boarding_status === 'SCHEDULED' || p.guest_status === 'CANCELLED' || (!p.check_in && p.guest_status !== 'ON SITE' && p.guest_status !== 'OFF SITE')) {
+        return;
+      }
+
+      if (p.date || p.check_in) {
+        const rawDate = p.date || p.check_in;
+        const parts = String(rawDate).split(' ')[0].split('T')[0].split('-').map(Number);
         let guestStartDate: Date;
         if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
           guestStartDate = new Date(parts[0], parts[1] - 1, parts[2]);
         } else {
-          guestStartDate = new Date(p.date);
+          guestStartDate = new Date(rawDate);
           guestStartDate.setHours(0, 0, 0, 0);
         }
 
+        // Determine checkout date if guest checked out
+        let coDate: Date | null = null;
+        const rawCo = p.check_out_date || (p.check_out ? String(p.check_out).split(' ')[0] : null);
+        if (rawCo) {
+          const coParts = String(rawCo).split('T')[0].split('-').map(Number);
+          if (coParts.length === 3 && !isNaN(coParts[0]) && !isNaN(coParts[1]) && !isNaN(coParts[2])) {
+            coDate = new Date(coParts[0], coParts[1] - 1, coParts[2]);
+          }
+        } else if (p.guest_status === 'OFF SITE' || p.boarding_status === 'OFF BOARD') {
+          coDate = new Date(guestStartDate);
+        }
+
+        const category = String(p.occupants_category || '').toUpperCase().trim();
+        const isRegular = category === 'REGULAR GUEST' || category === '';
+
+        // Aturan Tampilan POB:
+        // - Tamu Special Guest & VIP: Saat OFF BOARD hanya ditampilkan 1 HARI SAJA (pada tanggal check-out / coDate).
+        //   Setelah itu (hari berikutnya) tidak ditampilkan lagi di tabel POB.
+        // - Tamu Regular Guest: Mau ON BOARD atau OFF BOARD tetap dimunculkan tiap hari statusnya.
+        let guestEndDate = effectiveToDate;
+        if (!isRegular && coDate) {
+          guestEndDate = coDate < effectiveToDate ? coDate : effectiveToDate;
+        }
+
         const rangeStart = guestStartDate > effectiveFromDate ? guestStartDate : effectiveFromDate;
-        const rangeEnd = effectiveToDate;
+        const rangeEnd = guestEndDate;
 
         if (!isNaN(rangeStart.getTime()) && rangeStart <= rangeEnd) {
           const cur = new Date(rangeStart);
@@ -183,12 +215,8 @@ const Information: React.FC = () => {
             const dateStr = `${y}-${m}-${d}`;
 
             let dailyStatus = 'ON BOARD';
-            if (p.check_out_date) {
-              const coParts = String(p.check_out_date).split(' ')[0].split('T')[0].split('-').map(Number);
-              const coDate = new Date(coParts[0], coParts[1] - 1, coParts[2]);
-              if (cur >= coDate) {
-                dailyStatus = 'OFF BOARD';
-              }
+            if (coDate && cur >= coDate) {
+              dailyStatus = 'OFF BOARD';
             }
 
             expandedPobs.push({
@@ -201,25 +229,53 @@ const Information: React.FC = () => {
           }
         }
       } else {
-        // Off Board / Scheduled guests keep their original record
         expandedPobs.push(p);
       }
     });
 
-    return expandedPobs.filter((p: any) => {
-      // Visibility rules:
-      // - ON BOARD: Tampilkan semua tamu (Regular, Special Guest, VIP)
-      // - OFF BOARD: Hanya tampilkan Regular Guest (Special Guest & VIP disembunyikan saat OFF BOARD)
-      const category = String(p.occupants_category || '').toUpperCase().trim();
-      const isRegular = category === 'REGULAR GUEST' || category === '';
-      if (p.boarding_status !== 'ON BOARD' && !isRegular) {
+    // Exclude scheduled reservations that never checked in
+    const validPobs = expandedPobs.filter((p: any) => {
+      if (p.guest_status === 'SCHEDULED' || p.boarding_status === 'SCHEDULED' || p.guest_status === 'CANCELLED') {
+        return false;
+      }
+      return true;
+    });
+
+    // Compute today's (or filtered date's) counts before search and status filter
+    const now = new Date();
+    const todayY = now.getFullYear();
+    const todayM = now.getMonth() + 1;
+    const todayD = now.getDate();
+    const hasDateFilter = Boolean(pobDateFrom || pobDateTo);
+    let onBoard = 0;
+    let offBoard = 0;
+
+    validPobs.forEach((p: any) => {
+      let isTargetDay = true;
+      if (!hasDateFilter) {
+        if (!p.date) return;
+        const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
+        isTargetDay = (parts[0] === todayY && parts[1] === todayM && parts[2] === todayD);
+      } else {
+        isTargetDay = isDateInRange(p.date, pobDateFrom, pobDateTo);
+      }
+      if (isTargetDay) {
+        if (p.boarding_status === 'ON BOARD') {
+          onBoard++;
+        } else if (p.boarding_status === 'OFF BOARD') {
+          offBoard++;
+        }
+      }
+    });
+
+    const searchLower = pobSearch.toLowerCase().trim();
+    const filtered = validPobs.filter((p: any) => {
+      if (pobStatusFilter !== 'ALL' && p.boarding_status !== pobStatusFilter) {
         return false;
       }
 
       if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
 
-      // Search filter
-      const searchLower = pobSearch.toLowerCase().trim();
       if (!searchLower) return true;
 
       return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
@@ -249,7 +305,9 @@ const Information: React.FC = () => {
       const roomB = String(b.room_no || b.room || '').trim();
       return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [pobs, pobDateFrom, pobDateTo, pobSearch]);
+
+    return { filteredPobs: filtered, onBoardCount: onBoard, offBoardCount: offBoard };
+  }, [pobs, pobDateFrom, pobDateTo, pobSearch, pobStatusFilter]);
 
   const filteredMeals = mealsServicesData.filter((r: any) => {
     const searchLower = mealsSearch.toLowerCase().trim();
@@ -302,30 +360,7 @@ const Information: React.FC = () => {
   const totalBedsOccupied = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_occupied) || 0), 0);
   const totalBedsVacant = filteredRooms.reduce((sum: number, r: any) => sum + (Number(r.beds_vacant) || 0), 0);
 
-  const { onBoardCount, offBoardCount } = useMemo(() => {
-    let onBoard = 0;
-    let offBoard = 0;
-    const now = new Date();
-    const todayY = now.getFullYear();
-    const todayM = now.getMonth() + 1;
-    const todayD = now.getDate();
-    const hasDateFilter = Boolean(pobDateFrom || pobDateTo);
 
-    for (let i = 0; i < filteredPobs.length; i++) {
-      const p = filteredPobs[i];
-      let isTargetDay = true;
-      if (!hasDateFilter) {
-        if (!p.date) continue;
-        const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
-        isTargetDay = (parts[0] === todayY && parts[1] === todayM && parts[2] === todayD);
-      }
-      if (isTargetDay) {
-        if (p.boarding_status === 'ON BOARD') onBoard++;
-        else offBoard++;
-      }
-    }
-    return { onBoardCount: onBoard, offBoardCount: offBoard };
-  }, [filteredPobs, pobDateFrom, pobDateTo]);
 
   const pobTotalPages = Math.max(1, Math.ceil(filteredPobs.length / ITEMS_PER_PAGE));
   const paginatedPobs = filteredPobs.slice((pobPage - 1) * ITEMS_PER_PAGE, pobPage * ITEMS_PER_PAGE);
@@ -647,22 +682,40 @@ const Information: React.FC = () => {
                       <Input placeholder="Search..." value={pobSearch} onChange={e => { setPobSearch(e.target.value); setPobPage(1); }} className="pl-9 w-64 border-emerald-200 focus:border-emerald-500 rounded-lg" />
                     </div>
                     <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10" onClick={() => setPobPage(1)}>Search</Button>
+                    {pobStatusFilter !== 'ALL' && (
+                      <button
+                        onClick={() => { setPobStatusFilter('ALL'); setPobPage(1); }}
+                        className="inline-flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs px-2.5 py-1.5 rounded-lg border border-amber-300 font-semibold transition-colors shrink-0"
+                        title="Click to reset filter and show all"
+                      >
+                        <span>Filter: <b>{pobStatusFilter}</b></span>
+                        <span className="text-amber-700 font-bold text-sm leading-none">&times;</span>
+                      </button>
+                    )}
                   </div>
                   <Button onClick={handleExportPob} variant="outline" className="border-emerald-200 text-emerald-800 flex items-center gap-2 hover:bg-emerald-50 h-10">
                     <Download size={18} /> Export
                   </Button>
                 </div>
                 <div className="flex flex-col gap-1.5 font-bold text-xs text-slate-800 shrink-0 border-l border-emerald-100 pl-6">
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span className="w-20 text-right uppercase tracking-wide">ON BOARD</span>
-                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                  <div
+                    onClick={() => { setPobStatusFilter(prev => prev === 'ON BOARD' ? 'ALL' : 'ON BOARD'); setPobPage(1); }}
+                    className="flex items-center justify-end gap-2.5 cursor-pointer select-none group transition-all"
+                    title="Click to filter ON BOARD"
+                  >
+                    <span className={`w-20 text-right uppercase tracking-wide group-hover:text-emerald-700 transition-colors ${pobStatusFilter === 'ON BOARD' ? 'text-emerald-700 font-extrabold underline' : ''}`}>ON BOARD</span>
+                    <div className={`w-14 h-7 bg-white border-2 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm transition-all ${pobStatusFilter === 'ON BOARD' ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-sky-500 group-hover:border-emerald-500'}`}>
                       {onBoardCount}
                     </div>
                     <span className="w-14 text-left uppercase tracking-wide">PERSON</span>
                   </div>
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span className="w-20 text-right uppercase tracking-wide">OFF BOARD</span>
-                    <div className="w-14 h-7 bg-white border-2 border-sky-500 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm">
+                  <div
+                    onClick={() => { setPobStatusFilter(prev => prev === 'OFF BOARD' ? 'ALL' : 'OFF BOARD'); setPobPage(1); }}
+                    className="flex items-center justify-end gap-2.5 cursor-pointer select-none group transition-all"
+                    title="Click to filter OFF BOARD"
+                  >
+                    <span className={`w-20 text-right uppercase tracking-wide group-hover:text-rose-700 transition-colors ${pobStatusFilter === 'OFF BOARD' ? 'text-rose-700 font-extrabold underline' : ''}`}>OFF BOARD</span>
+                    <div className={`w-14 h-7 bg-white border-2 rounded-md flex items-center justify-center font-extrabold text-slate-800 shadow-sm text-sm transition-all ${pobStatusFilter === 'OFF BOARD' ? 'border-rose-600 ring-2 ring-rose-300' : 'border-sky-500 group-hover:border-rose-500'}`}>
                       {offBoardCount}
                     </div>
                     <span className="w-14 text-left uppercase tracking-wide">PERSON</span>
@@ -712,7 +765,7 @@ const Information: React.FC = () => {
                             </td>
                             <td className="px-1 py-1 text-emerald-700"><HighlightText text={p.occupants_category || '-'} highlight={pobSearch} /></td>
                             <td className="px-1 py-1 text-center">
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-600'}`}><HighlightText text={toTitleCase(p.boarding_status)} highlight={pobSearch} /></span>
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${p.boarding_status === 'ON BOARD' ? 'bg-lime-400 text-emerald-950 shadow-sm' : 'bg-stone-200 text-stone-700 font-bold'}`}><HighlightText text={toTitleCase(p.boarding_status)} highlight={pobSearch} /></span>
                             </td>
                           </tr>
                         ))}
