@@ -13,6 +13,7 @@ import { dataRegisterAPI } from '@/services/api';
 import { useAppStore } from '@/stores/useAppStore';
 import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
 import { exportToExcel } from '@/lib/exportUtils';
+import { toTitleCase } from '@/lib/utils';
 
 export default function DataRegister() {
   const { user } = useAppStore();
@@ -401,72 +402,193 @@ export default function DataRegister() {
         {activeTab === 'laundry_bag' && (
           <>
             <div className="grid grid-cols-4 items-center gap-4 relative">
-              <Label className="text-right font-medium">Name</Label>
+              <Label className="text-right font-medium">Guest Name</Label>
               <div className="col-span-3 relative">
-                <Input
-                  className="border-emerald-200 w-full"
-                  placeholder="Guest Name"
-                  value={formData.nama ?? ''}
-                  onChange={(e) => {
-                    setFormData({ ...formData, nama: e.target.value });
-                    setShowGuestSuggestions(true);
-                  }}
-                  onFocus={() => setShowGuestSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowGuestSuggestions(false), 200)}
-                />
-                {showGuestSuggestions && formData.nama && (
-                  <div className="absolute z-50 w-full bg-white border border-emerald-100 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg divide-y divide-emerald-50 text-xs">
-                    {guests.filter((g: any) => g.name?.toLowerCase().includes((formData.nama || '').toLowerCase())).map((item: any) => (
-                      <div
-                        key={item.id}
-                        className="px-3 py-2 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer flex justify-between items-center transition-colors"
-                        onMouseDown={() => {
-                          const existingBag = laundryBag.find((b: any) => b.nama?.toLowerCase() === item.name?.toLowerCase());
-                          if (existingBag) {
-                            Swal.fire({
-                              title: 'Guest Already Registered',
-                              text: 'This guest already has a Laundry Bag & Box registered. Do you want to edit the existing data or create a new one?',
-                              icon: 'info',
-                              showCancelButton: true,
-                              confirmButtonText: 'Edit Existing',
-                              cancelButtonText: 'Create New',
-                            }).then((result) => {
-                              if (result.isConfirmed) {
-                                setEditingId(existingBag.id);
-                                setFormData({ ...existingBag, nama: item.name, room_id: item.room_id });
-                              } else {
-                                setEditingId(null);
-                                setFormData({ ...formData, nama: item.name, room_id: item.room_id });
-                              }
-                            });
-                          } else {
-                            setFormData({ ...formData, nama: item.name, room_id: item.room_id });
-                          }
-                          setShowGuestSuggestions(false);
-                        }}
-                      >
-                        <span className="font-semibold text-emerald-900">{item.name}</span>
-                        <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono text-[10px]">Room: {rooms.find(r => r.id === item.room_id)?.room_no || '-'}</span>
-                      </div>
-                    ))}
+                <div className="relative flex items-center">
+                  <Search className="absolute left-3 h-4 w-4 text-emerald-600 pointer-events-none" />
+                  <Input
+                    className="border-emerald-200 w-full pl-9 pr-16 focus:border-emerald-500"
+                    placeholder="Ketik nama tamu untuk mencari..."
+                    value={formData.nama ?? ''}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nama: e.target.value });
+                      setShowGuestSuggestions(true);
+                    }}
+                    onFocus={() => setShowGuestSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowGuestSuggestions(false), 250)}
+                  />
+                  {formData.nama && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, nama: '', room_id: '', laundry_bag: '', laundry_box: '' });
+                        setShowGuestSuggestions(false);
+                      }}
+                      className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
+                      title="Clear"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowGuestSuggestions(!showGuestSuggestions)}
+                    className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
+                    title="Tampilkan daftar tamu"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
+
+                {showGuestSuggestions && (
+                  <div
+                    className="absolute z-50 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-52 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {(() => {
+                      const q = (formData.nama || '').toLowerCase().trim();
+                      const sortedGuests = [...guests].sort((a: any, b: any) =>
+                        (a.name || '').localeCompare(b.name || '')
+                      );
+                      const filteredGuests = sortedGuests.filter((g: any) => {
+                        if (!q) return true;
+                        const guestRoom = rooms.find(r => Number(r.id) === Number(g.room_id));
+                        return (
+                          g.name?.toLowerCase().includes(q) ||
+                          g.room_no?.toLowerCase().includes(q) ||
+                          guestRoom?.room_no?.toLowerCase().includes(q) ||
+                          guestRoom?.mess_name?.toLowerCase().includes(q) ||
+                          g.institution_company?.toLowerCase().includes(q)
+                        );
+                      });
+
+                      if (filteredGuests.length === 0) {
+                        return (
+                          <div className="px-3 py-3 text-center text-stone-400 italic">
+                            Tamu "{formData.nama}" tidak ditemukan di Guest Register
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <div className="px-3 py-1.5 bg-emerald-50/90 text-[11px] font-semibold text-emerald-800 flex justify-between items-center sticky top-0 z-10 border-b border-emerald-100 backdrop-blur-sm">
+                            <span>Daftar Tamu ({filteredGuests.length})</span>
+                            <span className="text-[10px] text-stone-500 font-normal">Klik untuk memilih</span>
+                          </div>
+                          {filteredGuests.map((item: any) => {
+                            const guestRoom = rooms.find(r => Number(r.id) === Number(item.room_id));
+                            const roomNumber = guestRoom ? guestRoom.room_no : (item.room_no || '-');
+                            const messName = guestRoom?.mess_name || item.mess_name || '';
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="px-3 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer flex justify-between items-center transition-colors gap-2"
+                                onClick={() => {
+                                  const cleanName = toTitleCase(item.name);
+                                  const existingBag = laundryBag.find((b: any) => b.nama?.toLowerCase() === item.name?.toLowerCase());
+
+                                  const autoBag = roomNumber !== '-' ? `${roomNumber} (${cleanName})` : '';
+                                  const autoBox = messName ? toTitleCase(messName) : '';
+
+                                  if (existingBag) {
+                                    Swal.fire({
+                                      title: 'Guest Sudah Terdaftar',
+                                      text: `Tamu ini sudah memiliki data Laundry Bag & Box (${existingBag.laundry_bag}). Apakah Anda ingin mengedit data yang ada atau membuat baru?`,
+                                      icon: 'info',
+                                      showCancelButton: true,
+                                      confirmButtonText: 'Edit Yang Ada',
+                                      cancelButtonText: 'Buat Baru',
+                                      confirmButtonColor: '#065f46',
+                                    }).then((result) => {
+                                      if (result.isConfirmed) {
+                                        setEditingId(existingBag.id);
+                                        setFormData({ ...existingBag, nama: cleanName, room_id: item.room_id });
+                                      } else {
+                                        setEditingId(null);
+                                        setFormData({
+                                          ...formData,
+                                          nama: cleanName,
+                                          room_id: item.room_id,
+                                          laundry_bag: autoBag || formData.laundry_bag || '',
+                                          laundry_box: autoBox || formData.laundry_box || '',
+                                        });
+                                      }
+                                    });
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      nama: cleanName,
+                                      room_id: item.room_id,
+                                      laundry_bag: autoBag,
+                                      laundry_box: autoBox,
+                                    });
+                                  }
+                                  setShowGuestSuggestions(false);
+                                }}
+                              >
+                                <div className="flex flex-col text-left">
+                                  <span className="font-semibold text-emerald-900">{toTitleCase(item.name)}</span>
+                                  {item.institution_company && (
+                                    <span className="text-[10px] text-stone-500">{item.institution_company}</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded font-mono font-medium text-[11px]">
+                                    Room: {roomNumber}
+                                  </span>
+                                  {messName && (
+                                    <span className="text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded text-[10px]">
+                                      {toTitleCase(messName)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Room</Label>
-              <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm bg-stone-50 cursor-not-allowed" value={formData.room_id ?? ''} disabled>
-                <option value="">Select Room</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>{r.room_no}</option>)}
-              </select>
+              <div className="col-span-3">
+                {(() => {
+                  const selectedRoom = rooms.find(r => Number(r.id) === Number(formData.room_id));
+                  return (
+                    <Input
+                      disabled
+                      className="border-emerald-200 w-full bg-stone-50 text-emerald-950 font-medium"
+                      placeholder="Otomatis terisi sesuai data Guest Register"
+                      value={selectedRoom ? `${selectedRoom.room_no} (${selectedRoom.mess_name || 'Room'})` : (formData.room_id ? `Room ID: ${formData.room_id}` : '')}
+                    />
+                  );
+                })()}
+              </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Laundry Bag</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Bag Name/ID" value={formData.laundry_bag ?? ''} onChange={(e) => setFormData({ ...formData, laundry_bag: e.target.value })} />
+              <Input
+                className="col-span-3 border-emerald-200"
+                placeholder="e.g. BR.C1.02 (Dwi Santoso)"
+                value={formData.laundry_bag ?? ''}
+                onChange={(e) => setFormData({ ...formData, laundry_bag: e.target.value })}
+              />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Laundry Box</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Box Name" value={formData.laundry_box ?? ''} onChange={(e) => setFormData({ ...formData, laundry_box: e.target.value })} />
+              <Input
+                className="col-span-3 border-emerald-200"
+                placeholder="e.g. Barak C"
+                value={formData.laundry_box ?? ''}
+                onChange={(e) => setFormData({ ...formData, laundry_box: e.target.value })}
+              />
             </div>
           </>
         )}

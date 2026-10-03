@@ -20,11 +20,14 @@ class RoomModel extends BaseModel
             FROM {$this->table} r
             LEFT JOIN messes m ON r.mess_id = m.id
             LEFT JOIN areas a ON m.area_id = a.id
+            WHERE r.room_status = 'READY'
         ";
 
-        if ($category) {
-            $query .= " WHERE r.room_allocation = :category AND r.room_status = 'READY'";
+        if ($category && in_array(strtoupper($category), ['BED ROOM', 'WAREHOUSE', 'OTHER PURPOSES'])) {
+            $query .= " AND r.room_allocation = :category";
             return Database::fetchAll($query, ['category' => $category]);
+        } else {
+            $query .= " AND (r.room_allocation = 'BED ROOM' OR r.room_allocation IS NULL)";
         }
 
         return Database::fetchAll($query);

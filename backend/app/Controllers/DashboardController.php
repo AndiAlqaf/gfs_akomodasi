@@ -11,23 +11,10 @@ class DashboardController
         $stats = [];
 
         // 1. Room Stats
-        $roomData = Database::fetchAll("SELECT room_status, COUNT(*) as count FROM rooms GROUP BY room_status");
-        
-        $stats['totalRooms'] = 0;
-        $stats['occupiedRooms'] = 0;
-        $stats['availableRooms'] = 0;
-        $stats['underRepair'] = 0;
-        
-        foreach ($roomData as $r) {
-            $stats['totalRooms'] += $r['count'];
-            if ($r['room_status'] === 'READY') {
-                $stats['availableRooms'] += $r['count'];
-            } elseif ($r['room_status'] === 'OCCUPIED' || $r['room_status'] === 'BOOKED') {
-                $stats['occupiedRooms'] += $r['count'];
-            } else {
-                $stats['underRepair'] += $r['count'];
-            }
-        }
+        $stats['totalRooms'] = (int) Database::fetchColumn("SELECT COUNT(*) FROM rooms");
+        $stats['underRepair'] = (int) Database::fetchColumn("SELECT COUNT(*) FROM rooms WHERE room_status IN ('UNDER REPAIRED', 'OUT OF ORDER')");
+        $stats['occupiedRooms'] = (int) Database::fetchColumn("SELECT COUNT(DISTINCT room_id) FROM reservations WHERE guest_status = 'ON SITE' AND room_id IS NOT NULL");
+        $stats['availableRooms'] = max(0, $stats['totalRooms'] - $stats['occupiedRooms'] - $stats['underRepair']);
 
         // 2. Guests
         $stats['onSiteGuests'] = Database::fetchColumn("SELECT COUNT(*) FROM reservations WHERE guest_status = 'ON SITE'");

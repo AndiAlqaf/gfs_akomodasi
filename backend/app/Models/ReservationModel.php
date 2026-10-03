@@ -58,44 +58,12 @@ class ReservationModel extends BaseModel
     {
         // 1. Update reservation status
         Database::execute("UPDATE {$this->table} SET guest_status = 'ON SITE', check_in = NOW(), check_out = NULL WHERE id = ?", [$id]);
-        
-        // 2. Update room status to OCCUPIED
-        $res = Database::fetch("SELECT res.room_id, g.room_id as guest_room_id FROM {$this->table} res LEFT JOIN guests g ON res.guest_id = g.id WHERE res.id = ?", [$id]);
-        $roomId = ($res && $res['guest_room_id']) ? $res['guest_room_id'] : ($res['room_id'] ?? null);
-        if ($roomId) {
-            Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$roomId]);
-        }
     }
 
     public function checkOut($id)
     {
-        // Fetch current reservation info
-        $resData = Database::fetch("
-            SELECT res.room_id, res.guest_id, g.room_id as guest_room_id, g.occupants_category 
-            FROM {$this->table} res 
-            LEFT JOIN guests g ON res.guest_id = g.id 
-            WHERE res.id = ?
-        ", [$id]);
-
         // Update current reservation to OFF SITE
         Database::execute("UPDATE {$this->table} SET guest_status = 'OFF SITE', check_out = NOW() WHERE id = ?", [$id]);
-
-        $roomId = ($resData && $resData['guest_room_id']) ? $resData['guest_room_id'] : ($resData['room_id'] ?? null);
-        if ($roomId) {
-            // Free up the room if no other guests are ON SITE in this room
-            $otherOnSite = Database::fetchColumn("
-                SELECT COUNT(*) 
-                FROM {$this->table} res
-                JOIN guests g ON res.guest_id = g.id
-                WHERE (res.room_id = ? OR g.room_id = ?) 
-                  AND res.guest_status = 'ON SITE' 
-                  AND res.id != ?
-            ", [$roomId, $roomId, $id]);
-
-            if (!$otherOnSite) {
-                Database::execute("UPDATE rooms SET room_status = 'READY' WHERE id = ?", [$roomId]);
-            }
-        }
     }
 
     public function updateStatus($id, $status, $estimatedArrival = null, $estimatedDeparture = null)
@@ -105,13 +73,6 @@ class ReservationModel extends BaseModel
         if ($status === 'RE-SCHEDULED' && $estimatedArrival && $estimatedDeparture) {
             Database::execute("UPDATE {$this->table} SET estimated_arrival = ?, estimated_departure = ? WHERE id = ?", 
                 [$estimatedArrival, $estimatedDeparture, $id]);
-        }
-        
-        if ($status === 'CANCELLED') {
-            $roomId = Database::fetchColumn("SELECT room_id FROM {$this->table} WHERE id = ?", [$id]);
-            if ($roomId) {
-                Database::execute("UPDATE rooms SET room_status = 'READY' WHERE id = ?", [$roomId]);
-            }
         }
     }
 
@@ -133,7 +94,5 @@ class ReservationModel extends BaseModel
             "INSERT INTO {$this->table} (guest_id, room_id, estimated_arrival, estimated_departure, guest_status) VALUES (?, ?, ?, ?, ?)",
             [$guestId, $data['room_id'], $data['estimated_arrival'], $data['estimated_departure'], 'SCHEDULED']
         );
-
-        Database::execute("UPDATE rooms SET room_status = 'BOOKED' WHERE id = ?", [$data['room_id']]);
     }
 }

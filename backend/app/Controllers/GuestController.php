@@ -54,10 +54,6 @@ class GuestController
             [$guestId, $roomId, $initialStatus, $initialCheckIn]
         );
 
-        if ($isReg && $roomId) {
-            \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$roomId]);
-        }
-
         jsonResponse(["success" => true, "id" => $guestId], 201);
     }
 }

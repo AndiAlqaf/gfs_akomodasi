@@ -140,10 +140,6 @@ class DataRegisterController
                     "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
                     [$guestId, $data['room_id'], $initialStatus, $initialCheckIn]
                 );
-
-                if ($isReg && !empty($data['room_id'])) {
-                    \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$data['room_id']]);
-                }
                 break;
             case 'add_meeting_room':
                 requireFields($data, ['meeting_room', 'building', 'capacity']);
@@ -227,9 +223,6 @@ class DataRegisterController
                         "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
                         [$data['id'], $data['room_id'], $status, $checkIn]
                     );
-                }
-                if ($isReg && !empty($data['room_id'])) {
-                    \App\Core\Database::execute("UPDATE rooms SET room_status = 'OCCUPIED' WHERE id = ?", [$data['room_id']]);
                 }
                 break;
             case 'update_meeting_room':

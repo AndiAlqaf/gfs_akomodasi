@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ChevronDown } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { formatDate, toTitleCase } from '@/lib/utils';
 import { HighlightText } from '@/components/ui/HighlightText';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -26,6 +26,7 @@ const Reservations: React.FC = () => {
   const [guestName, setGuestName] = useState('');
   const [guestSearch, setGuestSearch] = useState('');
   const [selectedGuestId, setSelectedGuestId] = useState<string | number>('');
+  const [showGuestSuggestions, setShowGuestSuggestions] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState('');
   const [estimatedArrival, setEstimatedArrival] = useState('');
   const [estimatedDeparture, setEstimatedDeparture] = useState('');
@@ -89,23 +90,47 @@ const Reservations: React.FC = () => {
   const registeredGuests = React.useMemo(() => {
     const raw = guestsRegisterResp?.data?.data || [];
     if (!Array.isArray(raw)) return [];
+
+    const targetCategory = (guestCategory || '').toUpperCase().trim();
+
+    const filtered = raw.filter((g: any) => {
+      const name = (g.name || '').trim();
+      if (!name || name.toUpperCase().includes('VACANT')) return false;
+
+      const occCat = (g.occupants_category || '').toUpperCase().trim();
+
+      if (targetCategory === 'SPECIAL GUEST') {
+        return occCat === 'SPECIAL GUEST' || occCat.includes('SPECIAL');
+      } else if (targetCategory === 'VIP GUEST') {
+        return occCat === 'VIP GUEST' || occCat.includes('VIP') || occCat.includes('EXECUTIVE');
+      }
+      return occCat === targetCategory;
+    });
+
     const seen = new Set();
     const list: any[] = [];
-    raw.forEach((g: any) => {
+    filtered.forEach((g: any) => {
       const name = (g.name || '').trim();
-      if (!name || name.toUpperCase().includes('VACANT')) return;
       if (!seen.has(name.toUpperCase())) {
         seen.add(name.toUpperCase());
         list.push(g);
       }
     });
-    return list.sort((a, b) => a.name.localeCompare(b.name));
-  }, [guestsRegisterResp]);
+    return list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [guestsRegisterResp, guestCategory]);
 
   const filteredGuests = React.useMemo(() => {
     if (!guestSearch) return registeredGuests;
     const s = guestSearch.toLowerCase().trim();
-    return registeredGuests.filter((g: any) => g.name.toLowerCase().includes(s));
+    return registeredGuests.filter((g: any) => {
+      return (
+        (g.name || '').toLowerCase().includes(s) ||
+        (g.room_no || '').toLowerCase().includes(s) ||
+        (g.mess_name || '').toLowerCase().includes(s) ||
+        (g.institution_company || '').toLowerCase().includes(s) ||
+        (g.department || '').toLowerCase().includes(s)
+      );
+    });
   }, [registeredGuests, guestSearch]);
 
   const updateReservationMutation = useMutation({
@@ -128,6 +153,7 @@ const Reservations: React.FC = () => {
       setGuestName('');
       setSelectedGuestId('');
       setGuestSearch('');
+      setShowGuestSuggestions(false);
       setSelectedRoom('');
       setEstimatedArrival('');
       setEstimatedDeparture('');
@@ -609,57 +635,153 @@ const Reservations: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Guest Category</label>
               <select
-                className="w-full border p-2 rounded-md"
+                className="w-full border border-emerald-200 focus:border-emerald-500 p-2 rounded-md text-sm font-medium"
                 value={guestCategory}
                 onChange={(e) => {
                   setGuestCategory(e.target.value);
                   setGuestName('');
-                  setSelectedGuestId('');
                   setGuestSearch('');
+                  setSelectedGuestId('');
+                  setSelectedRoom('');
+                  setShowGuestSuggestions(false);
                 }}
               >
                 <option value="SPECIAL GUEST">SPECIAL GUEST</option>
                 <option value="VIP GUEST">VIP GUEST</option>
               </select>
             </div>
-            <div>
+
+            {/* Guest Name Combobox (Searchable & Responsive) */}
+            <div className="relative">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-medium">Guest Name</label>
-                {filteredGuests.length > 0 && (
-                  <span className="text-xs text-muted-foreground">({filteredGuests.length} guests in register)</span>
-                )}
+                <span className="text-xs text-muted-foreground">
+                  ({registeredGuests.length} {guestCategory === 'VIP GUEST' ? 'VIP' : 'Special'} guests in register)
+                </span>
               </div>
-              <Input
-                placeholder="Type to search guest name..."
-                value={guestSearch}
-                onChange={(e) => setGuestSearch(e.target.value)}
-                className="mb-1.5 h-8 text-xs border-emerald-200"
-              />
-              <select
-                className="w-full border p-2 rounded-md"
-                value={guestName}
-                onChange={(e) => {
-                  const name = e.target.value;
-                  setGuestName(name);
-                  const found = registeredGuests.find((g: any) => g.name === name);
-                  if (found) {
-                    setSelectedGuestId(found.id);
-                    if (found.room_id) {
-                      setSelectedRoom(String(found.room_id));
-                    }
-                  } else {
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 h-4 w-4 text-emerald-600 pointer-events-none" />
+                <Input
+                  placeholder={`Search or type ${guestCategory.toLowerCase()} name...`}
+                  value={guestSearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGuestSearch(val);
+                    setGuestName(val);
                     setSelectedGuestId('');
-                    setSelectedRoom('');
-                  }
-                }}
-              >
-                <option value="">-- Select guest --</option>
-                {filteredGuests.map((g: any) => (
-                  <option key={g.id || g.name} value={g.name}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                    setShowGuestSuggestions(true);
+                  }}
+                  onFocus={() => setShowGuestSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowGuestSuggestions(false), 250)}
+                  className="w-full pl-9 pr-16 h-10 border-emerald-200 focus:border-emerald-500 text-sm"
+                />
+                {guestSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGuestSearch('');
+                      setGuestName('');
+                      setSelectedGuestId('');
+                      setSelectedRoom('');
+                      setShowGuestSuggestions(false);
+                    }}
+                    className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
+                    title="Clear"
+                  >
+                    ✕
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowGuestSuggestions(!showGuestSuggestions)}
+                  className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
+                  title="Toggle guest list"
+                >
+                  <ChevronDown size={18} className={`transition-transform duration-200 ${showGuestSuggestions ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {showGuestSuggestions && (
+                <div
+                  className="absolute z-50 left-0 right-0 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-56 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <div className="px-3 py-1.5 bg-emerald-50/90 text-[11px] font-semibold text-emerald-800 flex justify-between items-center sticky top-0 z-10 border-b border-emerald-100 backdrop-blur-sm">
+                    <span>Daftar {guestCategory} ({filteredGuests.length})</span>
+                    <span className="text-[10px] text-stone-500 font-normal">Klik untuk memilih</span>
+                  </div>
+                  {filteredGuests.length === 0 ? (
+                    <div className="px-3 py-3 text-center text-stone-400 italic">
+                      {guestSearch
+                        ? `Tamu "${guestSearch}" tidak ditemukan di kategori ${guestCategory}`
+                        : `Belum ada data tamu ${guestCategory} di Guest Register. Anda dapat langsung mengetik nama tamu baru di atas.`}
+                    </div>
+                  ) : (
+                    filteredGuests.map((g: any) => (
+                      <div
+                        key={g.id || g.name}
+                        onClick={() => {
+                          const formattedName = toTitleCase(g.name);
+                          setGuestName(formattedName);
+                          setGuestSearch(formattedName);
+                          setSelectedGuestId(g.id);
+                          setShowGuestSuggestions(false);
+                          if (g.room_id) {
+                            setSelectedRoom(String(g.room_id));
+                          }
+                        }}
+                        className="px-3 py-2 hover:bg-emerald-50/70 cursor-pointer transition-colors flex justify-between items-center group"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-emerald-950 group-hover:text-emerald-700 text-xs">
+                            <HighlightText text={toTitleCase(g.name)} highlight={guestSearch} />
+                          </span>
+                          <span className="text-[11px] text-stone-500">
+                            {g.institution_company || g.department || '-'}
+                          </span>
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800 font-medium text-[10px] border border-emerald-200">
+                            {g.room_no ? `${g.room_no} (${g.mess_name || 'Room'})` : 'No room assigned'}
+                          </span>
+                          <span className="text-[9px] text-stone-400 mt-0.5">
+                            {g.occupants_category || guestCategory}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Selected Guest Info Badge */}
+              {selectedGuestId && (() => {
+                const found = registeredGuests.find((g: any) => String(g.id) === String(selectedGuestId));
+                if (!found) return null;
+                return (
+                  <div className="mt-1.5 p-2 bg-emerald-50/80 border border-emerald-200 rounded-md text-xs text-emerald-900 flex items-center justify-between animate-fade-in">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-emerald-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                        {toTitleCase(found.name)}
+                        <span className="text-[10px] font-normal px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          {found.occupants_category || guestCategory}
+                        </span>
+                      </span>
+                      <span className="text-[11px] text-emerald-700 mt-0.5">
+                        Kamar Terdaftar: <span className="font-semibold">{found.room_no || 'Belum ada'}</span> {found.mess_name ? `(${found.mess_name})` : ''}
+                        {found.institution_company ? ` • ${found.institution_company}` : ''}
+                      </span>
+                    </div>
+                    {found.room_id && (
+                      <span className="text-[10px] text-emerald-700 bg-white px-2 py-1 rounded border border-emerald-200 shadow-xs font-medium">
+                        Kamar Otomatis Terpilih
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Select Available Room</label>
