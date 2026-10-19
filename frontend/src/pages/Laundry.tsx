@@ -19,7 +19,7 @@ const Laundry: React.FC = () => {
 
   const canInsertDrop = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.droppingInsert);
   // const canInsertDeliver = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.deliveringInsert);
-  const canInsertReceive = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.receivingInsert);
+  // const canInsertReceive = hasPermission(user?.role, ROLE_PERMISSIONS.laundry.receivingInsert);
 
   const [activeTab, setActiveTab] = useState('dropping');
 
@@ -27,29 +27,12 @@ const Laundry: React.FC = () => {
   // const [deliverSearch, setDeliverSearch] = useState('');
   const [receiveSearch, setReceiveSearch] = useState('');
 
-
   const [room, setRoom] = useState('');
   const [guestName, setGuestName] = useState('');
   const [bagId, setBagId] = useState('');
   const [boxId, setBoxId] = useState('');
   const [pkg, setPkg] = useState('Regular');
   const [dropPoint, setDropPoint] = useState('');
-
-  // States for Dispatcher Form
-  const [dispBox, ] = useState('');
-  // const [dispBags, setDispBags] = useState('');
-  // const [dispPoint, setDispPoint] = useState('');
-  // const [dispDeliverDate, setDispDeliverDate] = useState('');
-  // const [dispReturnDate, setDispReturnDate] = useState('');
-  const [dispAction, ] = useState('DELIVERED');
-
-  // States for Officer Form
-  const [offBagId, setOffBagId] = useState('');
-  const [offBagStatus, setOffBagStatus] = useState('ACCEPTED');
-  const [offRecvDate, setOffRecvDate] = useState('');
-  const [offWeight, setOffWeight] = useState('');
-  const [offPcs, setOffPcs] = useState('');
-  const [offAction, setOffAction] = useState('PROCEED');
 
   const [weightInput, setWeightInput] = useState<{ [key: string]: string }>({});
   const [selectedTxForDetails, setSelectedTxForDetails] = useState<any | null>(null);
@@ -82,7 +65,6 @@ const Laundry: React.FC = () => {
   const registerLaundryDp = laundryDpResp?.data?.data || [];
 
   const transactions = laundryDataResp?.data?.data?.transactions || [];
-  const boxList = laundryDataResp?.data?.data?.boxList || [];
 
   const filteredDropTransactions = transactions.filter((t: any) =>
     !dropSearch || Object.values(t).some(val => String(val).toLowerCase().includes(dropSearch.toLowerCase()))
@@ -96,8 +78,6 @@ const Laundry: React.FC = () => {
         g.name?.toLowerCase().includes(guestName.toLowerCase())
       )
     : [];
-
-  const uniqueBagsFromDropping = Array.from(new Set(transactions.map((t: any) => t.laundry_bag_id).filter(Boolean)));
 
   const createDropMutation = useMutation({
     mutationFn: (data: any) => laundryAPI.createDrop(data),
@@ -120,26 +100,6 @@ const Laundry: React.FC = () => {
   const handleDropSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createDropMutation.mutate({ room, guest_name: guestName, laundry_bag_id: bagId, laundry_box_id: boxId, services_package: pkg, drop_point: dropPoint });
-  };
-
-  /*
-  const handleDispatcherSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (dispAction === 'DELIVERED') {
-      actionMutation.mutate({ action: 'deliver', id: dispBox });
-    } else {
-      actionMutation.mutate({ action: 'return', id: dispBox });
-    }
-  };
-  */
-
-  const handleOfficerDetailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (offAction === 'PROCEED') {
-      actionMutation.mutate({ action: 'receive', id: offBagId, data: { bag_status: offBagStatus, weight: offWeight } });
-    } else {
-      actionMutation.mutate({ action: 'complete', id: offBagId });
-    }
   };
 
   const handleWeightChange = (id: string | number, value: string) => {
@@ -292,7 +252,7 @@ const Laundry: React.FC = () => {
                             ) : <span className="text-xs text-gray-300">-</span>}
                           </td>
                           <td className="px-1 py-1">
-                            {t.current_status === 'PROCESS_COMPLETED' || (t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Rejected') ? (
+                            {t.current_status === 'PROCESS_COMPLETED' || t.current_status === 'RETURNED_TO_DROP' || (t.current_status === 'RECEIVED_AT_LAUNDRY' && t.bag_status === 'Rejected') ? (
                               <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={() => actionMutation.mutate({ action: 'distribute', id: t.laundry_bag_id })}>Distribute</Button>
                             ) : <span className="text-xs text-emerald-600 font-semibold">{t.current_status}</span>}
                           </td>
@@ -343,7 +303,7 @@ const Laundry: React.FC = () => {
                           <td className="px-1 py-1 font-semibold text-emerald-700"><HighlightText text={t.bag_status} highlight={receiveSearch} /></td>
                           <td className="px-1 py-1 text-xs">{formatDate(t.receiving_date)}</td>
                           <td className="px-1 py-1">
-                            {t.current_status === 'DROPPED_AT_POINT' ? (
+                            {t.current_status === 'DROPPED_AT_POINT' || t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex justify-center"><Input type="number" step="0.1" className="w-20 h-8 text-center" placeholder="0.0" onChange={e => handleWeightChange(t.id, e.target.value)} value={weightInput[t.id] || ''} /></div>
                             ) : <span className="font-mono">{t.weight || '-'}</span>}
                           </td>
@@ -356,7 +316,7 @@ const Laundry: React.FC = () => {
                             ) : <span className="text-xs text-gray-300">-</span>}
                           </td>
                           <td className="px-1 py-1 text-center">
-                            {t.current_status === 'DROPPED_AT_POINT' ? (
+                            {t.current_status === 'DROPPED_AT_POINT' || t.current_status === 'DELIVERED_TO_LAUNDRY' ? (
                               <div className="flex gap-2 justify-center">
                                 <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-7 px-2" onClick={() => {
                                   const weight = weightInput[t.id];

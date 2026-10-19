@@ -104,7 +104,7 @@ class LaundryModel extends BaseModel
     {
         $query = "UPDATE laundry_transactions 
             SET bag_status = ?, weight = ?, current_status = 'RECEIVED_AT_LAUNDRY', receiving_date = NOW() 
-            WHERE laundry_bag_id = ? AND current_status = 'DROPPED_AT_POINT'";
+            WHERE laundry_bag_id = ? AND current_status IN ('DROPPED_AT_POINT', 'DELIVERED_TO_LAUNDRY')";
         return Database::execute($query, [
             $data['bag_status'], 
             $data['weight'] ?? null, 
@@ -150,7 +150,7 @@ class LaundryModel extends BaseModel
     {
         $query = "UPDATE laundry_transactions 
             SET current_status = 'DISTRIBUTED_TO_ROOM', distribute_date = NOW() 
-            WHERE laundry_bag_id = ? AND (current_status = 'PROCESS_COMPLETED' OR (current_status = 'RECEIVED_AT_LAUNDRY' AND bag_status = 'Rejected'))";
+            WHERE laundry_bag_id = ? AND (current_status IN ('PROCESS_COMPLETED', 'RETURNED_TO_DROP') OR (bag_status = 'Rejected'))";
         return Database::execute($query, [$bagId]);
     }
 }
