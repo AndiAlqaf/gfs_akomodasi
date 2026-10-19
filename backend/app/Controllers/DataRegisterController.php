@@ -16,6 +16,17 @@ class DataRegisterController
     public function handleGet()
     {
         $action = $_GET['action'] ?? '';
+        if (empty($action) && !empty($_GET['type'])) {
+            $type = $_GET['type'];
+            if ($type === 'laundry_dp') $action = 'get_laundry_dp';
+            elseif ($type === 'laundry_bag' || $type === 'laundry_bags') $action = 'get_laundry_bag';
+            elseif ($type === 'meals_dp') $action = 'get_meals_dp';
+            elseif ($type === 'guests') $action = 'get_guests';
+            elseif ($type === 'rooms') $action = 'get_rooms';
+            elseif ($type === 'messes') $action = 'get_messes';
+            elseif ($type === 'areas') $action = 'get_areas';
+            elseif ($type === 'meeting_rooms') $action = 'get_meeting_rooms';
+        }
         
         switch ($action) {
             case 'get_areas':

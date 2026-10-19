@@ -1,9 +1,9 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers;
 
-use AppModelsLaundryModel;
-use AppCoreDatabase;
+use App\Models\LaundryModel;
+use App\Core\Database;
 
 class LaundryController
 {
