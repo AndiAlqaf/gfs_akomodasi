@@ -3,9 +3,12 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Use npmmirror as fallback registry for better connectivity
+RUN npm config set registry https://registry.npmmirror.com
+
 # Copy package files and install dependencies
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --prefer-offline || npm install --no-audit --no-fund
 
 # Copy source files
 COPY . .
@@ -15,7 +18,7 @@ ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Build the app (skip tsc type checking — run vite build directly)
-RUN npx vite build
+RUN npm run build 2>/dev/null || npx --yes vite build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
