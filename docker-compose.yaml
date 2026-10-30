@@ -27,7 +27,7 @@ services:
       start_period: 30s
 
   # ============================================================
-  # Backend PHP Built-in Server
+  # Backend PHP-FPM 8.4
   # ============================================================
   backend:
     build:
@@ -36,9 +36,8 @@ services:
     container_name: gfs-backend
     restart: unless-stopped
     environment:
-      HOST: 0.0.0.0
-      PORT: 31145
-      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-*}
+      # Fail-closed: origin eksplisit, JANGAN pakai '*' di produksi
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-https://silaria.online,https://www.silaria.online}
       APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Makassar}
       DB_HOST: db
       DB_PORT: 3306
@@ -46,6 +45,8 @@ services:
       DB_USER: ${MYSQL_USER}
       DB_PASS: ${MYSQL_PASSWORD}
       DB_CHARSET: utf8mb4
+    expose:
+      - "9000"
     volumes:
       # Persist uploads
       - ./backend/uploads:/var/www/backend/uploads

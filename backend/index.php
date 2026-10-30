@@ -20,6 +20,21 @@ spl_autoload_register(function ($class) {
 
 // Load helpers
 require_once __DIR__ . '/app/Core/helpers.php';
+
+// Handler error global: klien hanya menerima pesan generik, detailnya ke log.
+// Tanpa ini, exception yang tidak tertangkap menghasilkan body kosong (dan
+// dengan display_errors=On di server lama, justru membocorkan stack trace).
+set_exception_handler(function ($e) {
+    error_log('GFS uncaught ' . get_class($e) . ': ' . $e->getMessage()
+        . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode(['error' => 'Internal server error']);
+    exit;
+});
+
 require_once __DIR__ . '/db.php'; // Keep existing DB init for backward compatibility during transition
 
 use App\Core\Router;
@@ -70,13 +85,12 @@ $router->delete('/users', 'UserController@handleDelete');
 // ==============================================
 $requestPath = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
 
-// Handle API base route
+// Handle API base route — healthcheck minimal.
+// Jangan kembalikan nama service, jenis server, atau port internal:
+// itu memetakan stack produksi untuk penyerang.
 if ($requestPath === '/' || $requestPath === '/api' || $requestPath === '/api/') {
     jsonResponse([
-        'name' => 'gfs-akomodasi-api-mvc',
         'status' => 'ok',
-        'server' => 'php-built-in',
-        'port' => 31145,
         'timestamp' => date(DATE_ATOM),
     ]);
 }
@@ -91,19 +105,32 @@ if (strpos($requestPath, '/api/') === 0) {
         return true;
     }
     
-    // Fallback to legacy flat PHP files
-    $backendRoot = realpath(__DIR__);
-    $candidate = realpath($backendRoot . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Legacy' . DIRECTORY_SEPARATOR . ltrim($aliasedPath, '/\\'));
-    
-    if ($candidate !== false && is_file($candidate)) {
-        require $candidate;
-        return true;
+    // Fallback to legacy flat PHP files.
+    // Hardening: tolak path traversal (termasuk yang tiba di sini sebagai
+    // %2e%2e lalu di-rawurldecode), dan hanya izinkan .php di dalam
+    // app/Legacy — bukan file apa pun yang bisa dicapai lewat ../.
+    $legacyPath = ltrim($aliasedPath, '/\\');
+    $legacyRoot = realpath(__DIR__ . '/app/Legacy');
+
+    if ($legacyRoot !== false && $legacyPath !== '' && strpos($legacyPath, '..') === false) {
+        $candidate = realpath($legacyRoot . DIRECTORY_SEPARATOR . $legacyPath);
+
+        if ($candidate !== false
+            && strpos($candidate, $legacyRoot . DIRECTORY_SEPARATOR) === 0
+            && is_file($candidate)
+            && strtolower(pathinfo($candidate, PATHINFO_EXTENSION)) === 'php'
+        ) {
+            require $candidate;
+            return true;
+        }
     }
 }
 
-// Fallback for static files or unresolved paths
+// Fallback for static files or unresolved paths.
+// Status HARUS 404: sebelumnya http_response_code(404) ditimpa oleh default
+// 200 di jsonResponse(), sehingga route yang tidak ada membalas 200 OK.
 http_response_code(404);
 jsonResponse([
     'error' => 'Route not found or file does not exist',
     'path' => $requestPath,
-]);
+], 404);

@@ -247,12 +247,12 @@ class InformationController
                 }
 
             } catch (\PDOException $e) {
-                http_response_code(500);
-                jsonResponse(["error" => $e->getMessage()]);
+                // Log detailnya di server, jangan kirim SQLSTATE ke klien.
+                error_log('GFS information query failed: ' . $e->getMessage());
+                jsonResponse(["error" => "Gagal memuat data"], 500);
             }
         } else {
-            http_response_code(405);
-            jsonResponse(["error" => "Method not allowed"]);
+            jsonResponse(["error" => "Method not allowed"], 405);
         }
     }
 }

@@ -80,17 +80,19 @@ if (!function_exists('jsonResponse')) {
 
 loadEnvFile(__DIR__ . '/.env');
 
-$allowedOrigins = trim((string) envValue('APP_ALLOWED_ORIGINS', '*'));
+$allowedOrigins = trim((string) envValue('APP_ALLOWED_ORIGINS', ''));
 $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if ($allowedOrigins === '' || $allowedOrigins === '*') {
-    header('Access-Control-Allow-Origin: *');
-} else {
-    $origins = array_filter(array_map('trim', explode(',', $allowedOrigins)));
-    if ($requestOrigin !== '' && in_array($requestOrigin, $origins, true)) {
-        header('Access-Control-Allow-Origin: ' . $requestOrigin);
-        header('Vary: Origin');
-    }
+// Fail-closed: wildcard TIDAK lagi dikirim ke klien. Isi APP_ALLOWED_ORIGINS
+// dengan daftar origin eksplisit, mis.
+//   APP_ALLOWED_ORIGINS=https://silaria.online,https://www.silaria.online
+// Frontend dilayani dari origin yang sama (VITE_API_BASE_URL menunjuk ke
+// domain yang sama), jadi CORS memang tidak dibutuhkan oleh aplikasi ini.
+$origins = array_filter(array_map('trim', explode(',', $allowedOrigins)));
+
+header('Vary: Origin');
+if ($requestOrigin !== '' && in_array($requestOrigin, $origins, true)) {
+    header('Access-Control-Allow-Origin: ' . $requestOrigin);
 }
 
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -161,10 +163,13 @@ try {
                 ob_end_clean();
             }
         } catch (\Exception $exRecovery) {
-            jsonResponse(['error' => 'Auto-recovery failed: ' . $exRecovery->getMessage() . ' | Orig: ' . $e->getMessage()], 500);
+            // Jangan bocorkan detail koneksi/DB ke klien; cukup ke log server.
+            error_log('GFS DB auto-recovery failed: ' . $exRecovery->getMessage() . ' | orig: ' . $e->getMessage());
+            jsonResponse(['error' => 'Database unavailable'], 500);
         }
     } else {
-        jsonResponse(['error' => 'Connection failed: ' . $e->getMessage()], 500);
+        error_log('GFS DB connection failed: ' . $e->getMessage());
+        jsonResponse(['error' => 'Database unavailable'], 500);
     }
 }
 ?>

@@ -47,7 +47,8 @@ class ReservationController
                 jsonResponse(["success" => true]);
             } catch (\Exception $e) {
                 Database::rollBack();
-                jsonResponse(["error" => $e->getMessage()], 500);
+                error_log('GFS reservation query failed: ' . $e->getMessage());
+                jsonResponse(["error" => "Gagal memuat data reservasi"], 500);
             }
         }
     }
