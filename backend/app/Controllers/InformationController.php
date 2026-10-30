@@ -244,6 +244,14 @@ class InformationController
                     ";
                     $data = Database::fetchAll($query);
                     jsonResponse(["data" => $data]);
+                } else {
+                    // Tanpa cabang ini, controller tidak mengembalikan apa pun
+                    // dan dispatch() dianggap gagal, sehingga index.php memberi
+                    // 404 "Route not found" untuk type yang tidak dikenal.
+                    jsonResponse([
+                        "error" => "Parameter type tidak dikenal",
+                        "allowed" => ["room", "pob", "meals_delivery", "meals_info", "meeting"],
+                    ], 400);
                 }
 
             } catch (\PDOException $e) {
