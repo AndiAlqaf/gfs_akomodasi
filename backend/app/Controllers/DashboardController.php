@@ -14,9 +14,17 @@ class DashboardController
             $company = '';
         }
 
+        // Normalize inconsistent company naming (e.g., "PT CNI" -> "PT. CNI") in guests
+        Database::execute("
+            UPDATE guests
+            SET institution_company = CONCAT('PT. ', TRIM(SUBSTRING(TRIM(institution_company), 4)))
+            WHERE UPPER(TRIM(institution_company)) LIKE 'PT %'
+              AND UPPER(TRIM(institution_company)) NOT LIKE 'PT.%'
+        ");
+
         // 0. Distinct Institution / Company list from Guest Register
         $companyRows = Database::fetchAll("
-            SELECT DISTINCT TRIM(institution_company) as company
+            SELECT DISTINCT UPPER(TRIM(institution_company)) as company
             FROM guests
             WHERE institution_company IS NOT NULL
               AND TRIM(institution_company) != ''

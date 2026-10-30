@@ -79,6 +79,45 @@ const Dashboard: React.FC = () => {
   ];
 
   const COLORS = ['#A3E635', '#022C22', '#F59E0B'];
+  const LABEL_COLORS = ['#84CC16', '#022C22', '#D97706'];
+
+  const renderOccupancyLabel = ({
+    cx,
+    cy,
+    midAngle,
+    outerRadius,
+    percent,
+    index,
+    name,
+  }: {
+    cx: number;
+    cy: number;
+    midAngle: number;
+    outerRadius: number;
+    percent: number;
+    index: number;
+    name: string;
+  }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 12;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? 'start' : 'end';
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill={LABEL_COLORS[index % LABEL_COLORS.length]}
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        fontSize={11.5}
+        fontWeight={600}
+      >
+        {`${name}: ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -155,16 +194,16 @@ const Dashboard: React.FC = () => {
           <CardHeader className="border-b border-emerald-100 bg-white">
             <CardTitle className="text-lg text-emerald-950 uppercase">Room Availability</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 [&_.recharts-surface]:overflow-visible">
             <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
+              <PieChart margin={{ top: 10, right: 20, left: 20, bottom: 10 }}>
                 <Pie
                   data={occupancyData}
-                  cx="40%"
-                  cy="50%"
+                  cx="42%"
+                  cy="45%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={70}
+                  label={renderOccupancyLabel}
+                  outerRadius={56}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -173,6 +212,7 @@ const Dashboard: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
