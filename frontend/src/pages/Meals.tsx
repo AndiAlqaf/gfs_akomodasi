@@ -42,7 +42,7 @@ const Meals: React.FC = () => {
 
   const { data: scheduleResp, isLoading: scheduleLoading } = useQuery({
     queryKey: ['meals-schedule'],
-    queryFn: mealsAPI.getSchedule,
+    queryFn: mealsAPI.getSchedule, 
   });
 
   const { data: requestResp, isLoading: requestLoading } = useQuery({

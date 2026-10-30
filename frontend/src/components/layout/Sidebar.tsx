@@ -47,8 +47,8 @@ const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="flex items-center p-4 border-b border-emerald-900/50 relative overflow-hidden h-[73px]">
         <div className="flex items-center gap-3 w-full">
-          <div className="shrink-0 bg-lime-400 p-2 rounded-lg text-emerald-950 shadow-lg shadow-lime-400/20">
-            <Building2 className="w-6 h-6" />
+          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-lime-400/20 flex items-center justify-center">
+            <img src="/silaria-logo.svg" alt="SILARIA Logo" className="w-10 h-10 object-contain" />
           </div>
           <div className={cn("transition-all duration-300 whitespace-nowrap", isExpanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4")}>
             <h1 className="font-bold text-lg text-white tracking-tight">SILARIA</h1>

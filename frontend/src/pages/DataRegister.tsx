@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, ChevronLeft, ChevronRight, ChevronDown, Search, Edit, Trash2, Download } from 'lucide-react';
+import { Plus, MapPin, Home, BedDouble, Utensils, Shirt, Package, Users, UserCheck, ChevronLeft, ChevronRight, ChevronDown, Search, Edit, Trash2, Download } from 'lucide-react';
 import { HighlightText } from '@/components/ui/HighlightText';
 import Swal from 'sweetalert2';
 
@@ -26,6 +26,7 @@ export default function DataRegister() {
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [showGuestSuggestions, setShowGuestSuggestions] = useState(false);
+  const [showGuestDetailSuggestions, setShowGuestDetailSuggestions] = useState(false);
   const [roomSearchQuery, setRoomSearchQuery] = useState('');
   const [showRoomSuggestions, setShowRoomSuggestions] = useState(false);
 
@@ -37,6 +38,7 @@ export default function DataRegister() {
   const [laundryDp, setLaundryDp] = useState<any[]>([]);
   const [laundryBag, setLaundryBag] = useState<any[]>([]);
   const [guests, setGuests] = useState<any[]>([]);
+  const [guestDetails, setGuestDetails] = useState<any[]>([]);
   const [meetingRooms, setMeetingRooms] = useState<any[]>([]);
 
   // Pagination State
@@ -59,6 +61,7 @@ export default function DataRegister() {
       case 'laundry_dp': data = laundryDp; break;
       case 'laundry_bag': data = laundryBag; break;
       case 'guest': data = guests; break;
+      case 'guest_detail': data = guestDetails; break;
       default: data = []; break;
     }
 
@@ -81,6 +84,7 @@ export default function DataRegister() {
       case 'laundry_dp': return 'LAUNDRY DROP & DELIVERY POINT';
       case 'laundry_bag': return 'LAUNDRY BAG & BOX';
       case 'guest': return 'GUEST REGISTER';
+      case 'guest_detail': return 'GUEST DETAILS';
       default: return 'DATA REGISTER';
     }
   };
@@ -94,7 +98,7 @@ export default function DataRegister() {
   const fetchData = async () => {
     try {
       const [
-        resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests, resMeetingRooms
+        resAreas, resMesses, resRooms, resMeals, resLaundryDp, resLaundryBag, resGuests, resGuestDetails, resMeetingRooms
       ] = await Promise.all([
         dataRegisterAPI.getAreas(),
         dataRegisterAPI.getMesses(),
@@ -103,8 +107,12 @@ export default function DataRegister() {
         dataRegisterAPI.getLaundryDp(),
         dataRegisterAPI.getLaundryBag(),
         dataRegisterAPI.getGuests(),
+        dataRegisterAPI.getGuestDetails().catch(() => ({ data: { data: [] } })),
         dataRegisterAPI.getMeetingRooms(),
       ]);
+
+      const loadedGuests = resGuests.data?.data || [];
+      const loadedGuestDetails = resGuestDetails.data?.data || [];
 
       setAreas(resAreas.data?.data || []);
       setMesses(resMesses.data?.data || []);
@@ -112,7 +120,8 @@ export default function DataRegister() {
       setMealsDp(resMeals.data?.data || []);
       setLaundryDp(resLaundryDp.data?.data || []);
       setLaundryBag(resLaundryBag.data?.data || []);
-      setGuests(resGuests.data?.data || []);
+      setGuests(loadedGuests);
+      setGuestDetails(loadedGuestDetails.length > 0 ? loadedGuestDetails : loadedGuests);
       setMeetingRooms(resMeetingRooms.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -159,6 +168,7 @@ export default function DataRegister() {
       setFormData({});
       setRoomSearchQuery('');
       setShowRoomSuggestions(false);
+      setShowGuestDetailSuggestions(false);
       fetchData(); // Refresh data
       Swal.fire({ icon: 'success', title: 'Saved!', text: 'Data saved successfully!', timer: 2000, showConfirmButton: false });
     } catch (error: any) {
@@ -195,8 +205,40 @@ export default function DataRegister() {
     setIsModalOpen(true);
   };
 
+  const handleRegisterFromDetail = (row: any) => {
+    setActiveTab('guest');
+    setEditingId(null);
+    setRoomSearchQuery('');
+    setShowRoomSuggestions(false);
+    setShowGuestDetailSuggestions(false);
+    setFormData({
+      name: row.name || '',
+      institution_company: row.institution_company || '',
+      occupants_category: row.occupants_category || 'REGULAR GUEST',
+      personal_identification: row.personal_identification || '',
+      reg_id_card: row.reg_id_card || '',
+      job: row.job || '',
+      position: row.position || '',
+      level_category: row.level_category || '',
+      department: row.department || '',
+      meals_packages: row.meals_packages || '',
+      breakfast_dp: row.breakfast_dp || '',
+      lunch_dp: row.lunch_dp || '',
+      dinner_dp: row.dinner_dp || '',
+      remarks: row.remarks || '',
+      room_id: '',
+    });
+    setIsModalOpen(true);
+  };
+
   const handleExport = () => {
-    const dataToExport = currentData.map(({ created_at, updated_at, ...rest }) => rest);
+    const dataToExport = currentData.map(({ created_at, updated_at, ...rest }) => {
+      if (activeTab === 'guest_detail') {
+        const { room_id, room_no, mess_name, ...detailRest } = rest;
+        return detailRest;
+      }
+      return rest;
+    });
     const fileName = `${getCardTitle()}_Data_${new Date().toISOString().split('T')[0]}`;
     exportToExcel(dataToExport, fileName, getCardTitle());
   };
@@ -593,15 +635,136 @@ export default function DataRegister() {
           </>
         )}
 
-        {activeTab === 'guest' && (
+        {(activeTab === 'guest' || activeTab === 'guest_detail') && (
           <>
+            <div className="grid grid-cols-4 items-center gap-4 relative">
+              <Label className="text-right font-medium">Name</Label>
+              <div className="col-span-3 relative">
+                <div className="relative flex items-center">
+                  <Input
+                    className="border-emerald-200 w-full pr-14"
+                    placeholder={activeTab === 'guest' ? 'Ketik / pilih nama dari Guest Details...' : 'Guest Name'}
+                    value={formData.name ?? ''}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (activeTab === 'guest') {
+                        setShowGuestDetailSuggestions(true);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (activeTab === 'guest') setShowGuestDetailSuggestions(true);
+                    }}
+                    onBlur={() => setTimeout(() => setShowGuestDetailSuggestions(false), 250)}
+                  />
+                  {activeTab === 'guest' && formData.name && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, name: '' });
+                        setShowGuestDetailSuggestions(false);
+                      }}
+                      className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
+                      title="Clear name"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  {activeTab === 'guest' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowGuestDetailSuggestions(!showGuestDetailSuggestions)}
+                      className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
+                      title="Pilih dari Guest Details"
+                    >
+                      <ChevronDown size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {activeTab === 'guest' && showGuestDetailSuggestions && (
+                  <div
+                    className="absolute z-50 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-56 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {(() => {
+                      const q = (formData.name || '').toLowerCase().trim();
+                      const sourceList = guestDetails.length > 0 ? guestDetails : guests;
+                      const sorted = [...sourceList].sort((a: any, b: any) =>
+                        (a.name || '').localeCompare(b.name || '')
+                      );
+                      const filtered = sorted.filter((g: any) => {
+                        if (!g.name || g.name.toUpperCase().startsWith('VACANT')) return false;
+                        if (!q) return true;
+                        return (
+                          g.name?.toLowerCase().includes(q) ||
+                          g.reg_id_card?.toLowerCase().includes(q) ||
+                          g.institution_company?.toLowerCase().includes(q) ||
+                          g.department?.toLowerCase().includes(q)
+                        );
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="px-3 py-3 text-center text-stone-400 italic">
+                            Tidak ada di Guest Details — lanjutkan ketik untuk mendaftarkan tamu baru
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <div className="px-3 py-1.5 bg-emerald-50/90 text-[11px] font-semibold text-emerald-800 flex justify-between items-center sticky top-0 z-10 border-b border-emerald-100 backdrop-blur-sm">
+                            <span>Pilih dari Guest Details ({filtered.length})</span>
+                            <span className="text-[10px] text-emerald-700 font-normal">Klik untuk Auto-Fill</span>
+                          </div>
+                          {filtered.map((item: any) => (
+                            <div
+                              key={item.id}
+                              className="px-3 py-2 hover:bg-emerald-50 cursor-pointer flex justify-between items-center transition-colors gap-2"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  name: item.name || '',
+                                  institution_company: item.institution_company || '',
+                                  occupants_category: item.occupants_category || 'REGULAR GUEST',
+                                  personal_identification: item.personal_identification || '',
+                                  reg_id_card: item.reg_id_card || '',
+                                  job: item.job || '',
+                                  position: item.position || '',
+                                  level_category: item.level_category || '',
+                                  department: item.department || '',
+                                  meals_packages: item.meals_packages || '',
+                                  breakfast_dp: item.breakfast_dp || '',
+                                  lunch_dp: item.lunch_dp || '',
+                                  dinner_dp: item.dinner_dp || '',
+                                  remarks: item.remarks || '',
+                                });
+                                setShowGuestDetailSuggestions(false);
+                              }}
+                            >
+                              <div className="flex flex-col text-left">
+                                <span className="font-semibold text-emerald-950">{item.name}</span>
+                                <span className="text-[10px] text-stone-500">
+                                  {item.institution_company || '-'} {item.position ? `• ${item.position}` : ''}
+                                </span>
+                              </div>
+                              {item.reg_id_card && (
+                                <span className="bg-emerald-100/80 text-emerald-800 px-2 py-0.5 rounded font-mono text-[10px] font-semibold shrink-0">
+                                  ID: {item.reg_id_card}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Inst/Company</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="e.g. PT. CMP" value={formData.institution_company ?? ''} onChange={(e) => setFormData({ ...formData, institution_company: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-medium">Name</Label>
-              <Input className="col-span-3 border-emerald-200" placeholder="Guest Name" value={formData.name ?? ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Personal ID</Label>
@@ -617,124 +780,125 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Reg ID Card</Label>
               <Input className="col-span-3 border-emerald-200" placeholder="ID Card Number" value={formData.reg_id_card ?? ''} onChange={(e) => setFormData({ ...formData, reg_id_card: e.target.value })} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4 relative">
-              <Label className="text-right font-medium">Room</Label>
-              <div className="col-span-3 relative">
-                <div className="relative flex items-center">
-                  <Input
-                    className="border-emerald-200 w-full pr-16"
-                    placeholder="Ketik nomor kamar atau mess..."
-                    value={roomSearchQuery}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setRoomSearchQuery(val);
-                      setShowRoomSuggestions(true);
-                      const exactRoom = rooms.find(r => r.room_no?.toLowerCase() === val.trim().toLowerCase());
-                      if (exactRoom) {
-                        setFormData({ ...formData, room_id: exactRoom.id });
-                      } else if (!val) {
-                        setFormData({ ...formData, room_id: '' });
-                      }
-                    }}
-                    onFocus={() => setShowRoomSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowRoomSuggestions(false), 250)}
-                  />
-                  {formData.room_id && (
+            {activeTab === 'guest' && (
+              <div className="grid grid-cols-4 items-center gap-4 relative">
+                <Label className="text-right font-medium">Room</Label>
+                <div className="col-span-3 relative">
+                  <div className="relative flex items-center">
+                    <Input
+                      className="border-emerald-200 w-full pr-16"
+                      placeholder="Ketik nomor kamar atau mess..."
+                      value={roomSearchQuery}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setRoomSearchQuery(val);
+                        setShowRoomSuggestions(true);
+                        const exactRoom = rooms.find(r => r.room_no?.toLowerCase() === val.trim().toLowerCase());
+                        if (exactRoom) {
+                          setFormData({ ...formData, room_id: exactRoom.id });
+                        } else if (!val) {
+                          setFormData({ ...formData, room_id: '' });
+                        }
+                      }}
+                      onFocus={() => setShowRoomSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowRoomSuggestions(false), 250)}
+                    />
+                    {formData.room_id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, room_id: '' });
+                          setRoomSearchQuery('');
+                          setShowRoomSuggestions(false);
+                        }}
+                        className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
+                        title="Clear room"
+                      >
+                        ✕
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, room_id: '' });
-                        setRoomSearchQuery('');
-                        setShowRoomSuggestions(false);
-                      }}
-                      className="absolute right-8 text-stone-400 hover:text-stone-600 text-xs px-1"
-                      title="Clear room"
+                      onClick={() => setShowRoomSuggestions(!showRoomSuggestions)}
+                      className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
+                      title="Toggle rooms list"
                     >
-                      ✕
+                      <ChevronDown size={16} />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowRoomSuggestions(!showRoomSuggestions)}
-                    className="absolute right-2 text-emerald-700 hover:text-emerald-900 p-1"
-                    title="Toggle rooms list"
-                  >
-                    <ChevronDown size={16} />
-                  </button>
-                </div>
-
-                {showRoomSuggestions && (
-                  <div className="absolute z-50 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-52 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs">
-                    {(() => {
-                      const q = roomSearchQuery.toLowerCase().trim();
-                      const filteredRooms = rooms.filter(r => {
-                        if (!q) return true;
-                        return (
-                          r.room_no?.toLowerCase().includes(q) ||
-                          r.mess_name?.toLowerCase().includes(q) ||
-                          r.area_name?.toLowerCase().includes(q)
-                        );
-                      });
-
-                      if (filteredRooms.length === 0) {
-                        return (
-                          <div className="px-3 py-3 text-center text-stone-400 italic">
-                            Kamar "{roomSearchQuery}" tidak ditemukan
-                          </div>
-                        );
-                      }
-
-                      return filteredRooms.map(r => {
-                        const occupied = guests.filter(g => Number(g.room_id) === Number(r.id) && (!editingId || g.id !== editingId)).length;
-                        const vacant = Math.max((Number(r.beds) || 0) - occupied, 0);
-                        const isFull = vacant <= 0;
-                        const isSelected = Number(formData.room_id) === Number(r.id);
-
-                        return (
-                          <div
-                            key={r.id}
-                            className={`px-3 py-2 cursor-pointer flex justify-between items-center transition-colors ${
-                              isSelected ? 'bg-emerald-100/70 font-semibold' : 'hover:bg-emerald-50'
-                            }`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              if (isFull) {
-                                Swal.fire({
-                                  icon: 'warning',
-                                  title: 'Room not Available',
-                                  text: 'Room not Available (Kamar sudah penuh / Vacant = 0)',
-                                  confirmButtonColor: '#065f46'
-                                });
-                                return;
-                              }
-                              setFormData({ ...formData, room_id: r.id });
-                              setRoomSearchQuery(r.room_no);
-                              setShowRoomSuggestions(false);
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-emerald-950 text-sm">{r.room_no}</span>
-                              <span className="text-[11px] text-stone-500">{r.mess_name || 'Mess'}</span>
-                            </div>
-                            <div>
-                              {isFull ? (
-                                <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold text-[10px] border border-rose-200">
-                                  FULL (Vacant: 0)
-                                </span>
-                              ) : (
-                                <span className="bg-lime-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px] border border-lime-300">
-                                  Vacant: {vacant}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
                   </div>
-                )}
+
+                  {showRoomSuggestions && (
+                    <div className="absolute z-50 w-full bg-white border border-emerald-200 rounded-lg mt-1 max-h-52 overflow-y-auto shadow-xl divide-y divide-emerald-50 text-xs">
+                      {(() => {
+                        const q = roomSearchQuery.toLowerCase().trim();
+                        const filteredRooms = rooms.filter(r => {
+                          if (!q) return true;
+                          return (
+                            r.room_no?.toLowerCase().includes(q) ||
+                            r.mess_name?.toLowerCase().includes(q) ||
+                            r.area_name?.toLowerCase().includes(q)
+                          );
+                        });
+
+                        if (filteredRooms.length === 0) {
+                          return (
+                            <div className="px-3 py-3 text-center text-stone-400 italic">
+                              Kamar "{roomSearchQuery}" tidak ditemukan
+                            </div>
+                          );
+                        }
+
+                        return filteredRooms.map(r => {
+                          const occupied = guests.filter(g => Number(g.room_id) === Number(r.id) && (!editingId || g.id !== editingId)).length;
+                          const vacant = Math.max((Number(r.beds) || 0) - occupied, 0);
+                          const isFull = vacant <= 0;
+                          const isSelected = Number(formData.room_id) === Number(r.id);
+
+                          return (
+                            <div
+                              key={r.id}
+                              className={`px-3 py-2 cursor-pointer flex justify-between items-center transition-colors ${isSelected ? 'bg-emerald-100/70 font-semibold' : 'hover:bg-emerald-50'
+                                }`}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                if (isFull) {
+                                  Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Room not Available',
+                                    text: 'Room not Available (Kamar sudah penuh / Vacant = 0)',
+                                    confirmButtonColor: '#065f46'
+                                  });
+                                  return;
+                                }
+                                setFormData({ ...formData, room_id: r.id });
+                                setRoomSearchQuery(r.room_no);
+                                setShowRoomSuggestions(false);
+                              }}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-emerald-950 text-sm">{r.room_no}</span>
+                                <span className="text-[11px] text-stone-500">{r.mess_name || 'Mess'}</span>
+                              </div>
+                              <div>
+                                {isFull ? (
+                                  <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold text-[10px] border border-rose-200">
+                                    FULL (Vacant: 0)
+                                  </span>
+                                ) : (
+                                  <span className="bg-lime-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px] border border-lime-300">
+                                    Vacant: {vacant}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right font-medium">Category</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.occupants_category ?? ''} onChange={(e) => setFormData({ ...formData, occupants_category: e.target.value })}>
@@ -785,9 +949,9 @@ export default function DataRegister() {
               <Label className="text-right font-medium">Meals Pkg</Label>
               <select className="col-span-3 border border-emerald-200 rounded-md p-2 text-sm" value={formData.meals_packages ?? ''} onChange={(e) => setFormData({ ...formData, meals_packages: e.target.value })}>
                 <option value="">Select Meals Pkg</option>
-                <option value="Standard Buffet">Standard Buffet</option>
-                <option value="Room Delivery">Room Delivery</option>
-                <option value="VIP Buffet">VIP Buffet</option>
+                <option value="STANDARD BUFFET">STANDARD BUFFET</option>
+                <option value="ROOM DELIVERY">ROOM DELIVERY</option>
+                <option value="VIP BUFFET">VIP BUFFET</option>
               </select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -842,6 +1006,9 @@ export default function DataRegister() {
               <TabsTrigger value="guest" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Users size={16} /> GUEST
               </TabsTrigger>
+              <TabsTrigger value="guest_detail" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
+                <UserCheck size={16} /> GUEST DETAILS
+              </TabsTrigger>
               <TabsTrigger value="meeting_room" className="rounded-xl px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-950 font-medium transition-all flex items-center gap-2">
                 <Users size={16} /> MEETING ROOM
               </TabsTrigger>
@@ -873,17 +1040,17 @@ export default function DataRegister() {
               {canInsert && (
                 <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setEditingId(null); }}>
                   <DialogTrigger asChild>
-                    <Button onClick={() => { setEditingId(null); setFormData({}); setRoomSearchQuery(''); setShowRoomSuggestions(false); }} className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
+                    <Button onClick={() => { setEditingId(null); setFormData({}); setRoomSearchQuery(''); setShowRoomSuggestions(false); setShowGuestDetailSuggestions(false); }} className="bg-lime-400 text-emerald-950 hover:bg-lime-500 shadow-sm border border-lime-500/20 font-bold flex items-center gap-2 px-6 rounded-full">
                       <Plus size={18} /> Add New Entry
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[460px]">
                     <DialogHeader>
                       <DialogTitle className="text-emerald-950 text-xl uppercase">{editingId ? 'Edit' : 'Add New'} {activeTab.replace('_', ' ')}</DialogTitle>
                     </DialogHeader>
                     {renderAddForm()}
                     <DialogFooter>
-                      <Button onClick={() => { setIsModalOpen(false); setEditingId(null); setRoomSearchQuery(''); setShowRoomSuggestions(false); }} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
+                      <Button onClick={() => { setIsModalOpen(false); setEditingId(null); setRoomSearchQuery(''); setShowRoomSuggestions(false); setShowGuestDetailSuggestions(false); }} variant="outline" className="border-emerald-200 text-emerald-800" disabled={isSaving}>Cancel</Button>
                       <Button onClick={handleSave} className="bg-emerald-950 text-stone-50 hover:bg-emerald-900" disabled={isSaving}>
                         {isSaving ? 'Saving...' : editingId ? 'Update Entry' : 'Save Entry'}
                       </Button>
@@ -1214,7 +1381,7 @@ export default function DataRegister() {
                 </div>
               </TabsContent>
 
-              {/* TAB G: GUEST */}
+              {/* TAB G: GUEST REGISTER */}
               <TabsContent value="guest" className="m-0 animate-fade-in w-full max-w-full data-[state=active]:flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
                   <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
@@ -1269,6 +1436,83 @@ export default function DataRegister() {
                           <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.remarks || "-"} highlight={searchTerm} /></td>
                           <td className="px-1 py-1 text-center border-l border-emerald-50">
                             <div className="flex items-center justify-center gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
+                                <Edit size={16} />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50" onClick={() => handleDelete(row)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+
+              {/* TAB G2: GUEST DETAILS (Without Room No & Mess) */}
+              <TabsContent value="guest_detail" className="m-0 animate-fade-in w-full max-w-full data-[state=active]:flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="w-full bg-white max-w-full rounded-xl border border-emerald-100 flex-1 overflow-auto max-h-full min-h-0 shadow-sm relative">
+                  <table className="w-full min-w-max text-sm text-left whitespace-nowrap">
+                    <thead className="bg-emerald-950 text-stone-50 uppercase text-sm font-semibold sticky top-0 z-10">
+                      <tr>
+                        <th className="px-1 py-1 text-center border-b border-emerald-900" rowSpan={2}>NO</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>NAME</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>PERSONAL ID</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>REG. ID CARD</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>JOB</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>POSITION</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>LEVEL CATEGORY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>DEPARTMENT</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>INSTITUTION/<br />COMPANY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>GUEST CATEGORY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900" rowSpan={2}>MEALS PACKAGES</th>
+                        <th className="px-4 py-2 text-center border-b border-emerald-900 border-l border-emerald-800" colSpan={3}>MEALS DELIVERY POINT</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REGISTERED BY</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>LAST REGISTERED</th>
+                        <th className="px-1 py-1 border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>REMARKS</th>
+                        <th className="px-1 py-1 text-center border-b border-emerald-900 border-l border-emerald-800" rowSpan={2}>ACTION</th>
+                      </tr>
+                      <tr className="bg-emerald-900/50">
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">BREAKFAST</th>
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">LUNCH</th>
+                        <th className="px-4 py-2 text-center text-xs tracking-wider border-l border-emerald-800">DINNER</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-50">
+                      {paginatedData.map((row, idx) => (
+                        <tr key={row.id} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="px-1 py-1 text-center font-medium text-emerald-950">{getRowIndex(idx)}</td>
+                          <td className="px-1 py-1 text-emerald-900 font-bold"><HighlightText text={row.name} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.personal_identification || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600"><HighlightText text={row.reg_id_card || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.job || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.position || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-900 font-semibold"><HighlightText text={row.level_category || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.department || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.institution_company || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 font-medium"><HighlightText text={row.occupants_category || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800"><HighlightText text={row.meals_packages || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.breakfast_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.lunch_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-800 text-center border-l border-emerald-50"><HighlightText text={row.dinner_dp || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.registered_by || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.last_registration ? new Date(row.last_registration).toLocaleDateString() : "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-emerald-600 border-l border-emerald-50"><HighlightText text={row.remarks || "-"} highlight={searchTerm} /></td>
+                          <td className="px-1 py-1 text-center border-l border-emerald-50">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {canInsert && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-emerald-700 hover:text-emerald-950 hover:bg-lime-100 border border-emerald-200 rounded-md flex items-center gap-1"
+                                  onClick={() => handleRegisterFromDetail(row)}
+                                  title="Register Ulang ke Kamar (Guest Register)"
+                                >
+                                  <BedDouble size={14} /> Register
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => handleEdit(row)}>
                                 <Edit size={16} />
                               </Button>

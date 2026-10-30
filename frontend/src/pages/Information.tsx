@@ -133,8 +133,6 @@ const Information: React.FC = () => {
     return matchSearch;
   });
 
-  // Memoize POB expansion and filtering with a fast default window (last 3 days) to eliminate lag.
-  // If the user specifies pobDateFrom / pobDateTo, it will expand precisely for their requested range.
   // Memoize POB expansion and filtering with a fast default window to eliminate lag.
   // If the user specifies pobDateFrom / pobDateTo, it will expand precisely for their requested range.
   const { filteredPobs, onBoardCount, offBoardCount } = useMemo(() => {
@@ -241,7 +239,17 @@ const Information: React.FC = () => {
       return true;
     });
 
-    // Compute today's (or filtered date's) counts before search and status filter
+    const searchLower = pobSearch.toLowerCase().trim();
+    const dateAndSearchFiltered = validPobs.filter((p: any) => {
+      if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
+
+      if (!searchLower) return true;
+
+      return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
+        (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
+    });
+
+    // Compute counts based on filtered results (date + search filter)
     const now = new Date();
     const todayY = now.getFullYear();
     const todayM = now.getMonth() + 1;
@@ -250,14 +258,12 @@ const Information: React.FC = () => {
     let onBoard = 0;
     let offBoard = 0;
 
-    validPobs.forEach((p: any) => {
+    dateAndSearchFiltered.forEach((p: any) => {
       let isTargetDay = true;
       if (!hasDateFilter) {
         if (!p.date) return;
         const parts = String(p.date).split(' ')[0].split('T')[0].split('-').map(Number);
         isTargetDay = (parts[0] === todayY && parts[1] === todayM && parts[2] === todayD);
-      } else {
-        isTargetDay = isDateInRange(p.date, pobDateFrom, pobDateTo);
       }
       if (isTargetDay) {
         if (p.boarding_status === 'ON BOARD') {
@@ -268,18 +274,22 @@ const Information: React.FC = () => {
       }
     });
 
-    const searchLower = pobSearch.toLowerCase().trim();
-    const filtered = validPobs.filter((p: any) => {
+    // Fallback if search matched historical records outside today when no date filter is set
+    if (!hasDateFilter && onBoard === 0 && offBoard === 0 && dateAndSearchFiltered.length > 0) {
+      dateAndSearchFiltered.forEach((p: any) => {
+        if (p.boarding_status === 'ON BOARD') {
+          onBoard++;
+        } else if (p.boarding_status === 'OFF BOARD') {
+          offBoard++;
+        }
+      });
+    }
+
+    const filtered = dateAndSearchFiltered.filter((p: any) => {
       if (pobStatusFilter !== 'ALL' && p.boarding_status !== pobStatusFilter) {
         return false;
       }
-
-      if (!isDateInRange(p.date, pobDateFrom, pobDateTo)) return false;
-
-      if (!searchLower) return true;
-
-      return Object.values(p).some(val => String(val || '').toLowerCase().includes(searchLower)) ||
-        (p.date ? formatDate(p.date).toLowerCase().includes(searchLower) : false);
+      return true;
     }).sort((a: any, b: any) => {
       // 1. Tanggal (Date) - latest date first
       const getDateStr = (item: any) => {

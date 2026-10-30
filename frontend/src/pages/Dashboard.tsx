@@ -1,21 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BedDouble, Users, UtensilsCrossed, Shirt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BedDouble, Users, UtensilsCrossed, Shirt, Building2, Filter } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid } from 'recharts';
 
+const DEFAULT_COMPANIES = ['PT. CNI', 'PT. CMP'];
+
 const Dashboard: React.FC = () => {
-  const { data: statsResp, isLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: dashboardAPI.getStats,
+  const [selectedCompany, setSelectedCompany] = useState<string>('All');
+  const [appliedCompany, setAppliedCompany] = useState<string>('All');
+
+  const { data: statsResp, isLoading, refetch } = useQuery({
+    queryKey: ['dashboard-stats', appliedCompany],
+    queryFn: () => dashboardAPI.getStats(appliedCompany),
   });
 
-  if (isLoading) {
+  if (isLoading && !statsResp) {
     return <div className="flex items-center justify-center h-full text-emerald-800">Loading Reporting Data...</div>;
   }
 
   const data = statsResp?.data?.data || {};
+  const companyOptions: string[] = Array.from(
+    new Set([
+      ...DEFAULT_COMPANIES,
+      ...(Array.isArray(data.companies) ? data.companies : []),
+    ])
+  )
+    .filter((c) => Boolean(c && c.trim()))
+    .sort((a, b) => a.localeCompare(b));
+
+  const handleCompanyChange = (value: string) => {
+    setSelectedCompany(value);
+    setAppliedCompany(value);
+  };
+
+  const handleFilterClick = () => {
+    setAppliedCompany(selectedCompany);
+    refetch();
+  };
 
   const statsCards = [
     {
@@ -28,7 +52,7 @@ const Dashboard: React.FC = () => {
     {
       title: 'Guests On-Site',
       value: data.onSiteGuests || 0,
-      sub: `Currently Checked In`,
+      sub: appliedCompany !== 'All' ? `Currently Checked In (${appliedCompany})` : `Currently Checked In`,
       icon: Users,
       color: 'bg-blue-600',
     },
@@ -58,8 +82,45 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-emerald-800 mt-1">Real-time Operations Dashboard</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-emerald-800 mt-1">
+            Real-time Operations Dashboard
+            {appliedCompany !== 'All' && (
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                {appliedCompany}
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Institution / Company Filter */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Building2 className="absolute left-3 h-4 w-4 text-emerald-600 pointer-events-none" />
+            <select
+              aria-label="Filter Institution / Company"
+              value={selectedCompany}
+              onChange={(e) => handleCompanyChange(e.target.value)}
+              className="pl-9 pr-8 h-10 w-64 bg-white border border-emerald-200 hover:border-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-lg text-sm text-emerald-950 font-medium shadow-sm transition-colors"
+            >
+              <option value="All">All Institution / Company</option>
+              {companyOptions.map((company) => (
+                <option key={company} value={company}>
+                  {company}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button
+            type="button"
+            onClick={handleFilterClick}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-10 flex items-center gap-1.5 shadow-sm"
+          >
+            <Filter className="w-4 h-4" />
+            Filter
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

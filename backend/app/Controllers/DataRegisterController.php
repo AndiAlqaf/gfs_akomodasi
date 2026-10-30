@@ -6,6 +6,7 @@ use App\Models\AreaModel;
 use App\Models\MessModel;
 use App\Models\RoomModel;
 use App\Models\GuestModel;
+use App\Models\GuestDetailModel;
 use App\Models\MealsDpModel;
 use App\Models\LaundryDpModel;
 use App\Models\LaundryBagModel;
@@ -44,6 +45,10 @@ class DataRegisterController
             case 'get_guests':
                 $model = new GuestModel();
                 jsonResponse(['data' => $model->allWithRelations()]);
+                break;
+            case 'get_guest_details':
+                $model = new GuestDetailModel();
+                jsonResponse(['data' => $model->all()]);
                 break;
             case 'get_meals_dp':
                 $model = new MealsDpModel();
@@ -117,6 +122,30 @@ class DataRegisterController
                 \App\Core\Database::execute('INSERT INTO laundry_bag (nama, room_id, laundry_bag, laundry_box, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?)',
                     [$data['nama'], $data['room_id'], $data['laundry_bag'] ?? '', $data['laundry_box'] ?? '', $registeredBy, $data['remarks'] ?? '']);
                 break;
+            case 'add_guest_detail':
+                requireFields($data, ['name']);
+                (new GuestDetailModel())->ensureTableAndSeed();
+                \App\Core\Database::execute(
+                    'INSERT INTO guest_details (name, institution_company, occupants_category, personal_identification, reg_id_card, job, position, level_category, department, meals_packages, breakfast_dp, lunch_dp, dinner_dp, registered_by, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        $data['name'],
+                        $data['institution_company'] ?? '',
+                        $data['occupants_category'] ?? 'REGULAR GUEST',
+                        $data['personal_identification'] ?? '',
+                        $data['reg_id_card'] ?? '',
+                        $data['job'] ?? '',
+                        $data['position'] ?? '',
+                        $data['level_category'] ?? '',
+                        $data['department'] ?? '',
+                        $data['meals_packages'] ?? '',
+                        $data['breakfast_dp'] ?? '',
+                        $data['lunch_dp'] ?? '',
+                        $data['dinner_dp'] ?? '',
+                        $registeredBy,
+                        $data['remarks'] ?? ''
+                    ]
+                );
+                break;
             case 'add_guest':
                 requireFields($data, ['room_id', 'name']);
                 
@@ -151,6 +180,9 @@ class DataRegisterController
                     "INSERT INTO reservations (guest_id, room_id, guest_status, check_in, check_out) VALUES (?, ?, ?, ?, NULL)",
                     [$guestId, $data['room_id'], $initialStatus, $initialCheckIn]
                 );
+
+                // Keep Guest Details master table synced
+                (new GuestDetailModel())->upsertFromGuestData($data, $registeredBy);
                 break;
             case 'add_meeting_room':
                 requireFields($data, ['meeting_room', 'building', 'capacity']);
@@ -196,6 +228,30 @@ class DataRegisterController
                 \App\Core\Database::execute('UPDATE laundry_bag SET nama = ?, room_id = ?, laundry_bag = ?, laundry_box = ?, remarks = ? WHERE id = ?',
                     [$data['nama'], $data['room_id'], $data['laundry_bag'] ?? '', $data['laundry_box'] ?? '', $data['remarks'] ?? '', $data['id']]);
                 break;
+            case 'update_guest_detail':
+                requireFields($data, ['id', 'name']);
+                (new GuestDetailModel())->ensureTableAndSeed();
+                \App\Core\Database::execute(
+                    'UPDATE guest_details SET name = ?, institution_company = ?, occupants_category = ?, personal_identification = ?, reg_id_card = ?, job = ?, position = ?, level_category = ?, department = ?, meals_packages = ?, breakfast_dp = ?, lunch_dp = ?, dinner_dp = ?, remarks = ? WHERE id = ?',
+                    [
+                        $data['name'],
+                        $data['institution_company'] ?? '',
+                        $data['occupants_category'] ?? 'REGULAR GUEST',
+                        $data['personal_identification'] ?? '',
+                        $data['reg_id_card'] ?? '',
+                        $data['job'] ?? '',
+                        $data['position'] ?? '',
+                        $data['level_category'] ?? '',
+                        $data['department'] ?? '',
+                        $data['meals_packages'] ?? '',
+                        $data['breakfast_dp'] ?? '',
+                        $data['lunch_dp'] ?? '',
+                        $data['dinner_dp'] ?? '',
+                        $data['remarks'] ?? '',
+                        $data['id']
+                    ]
+                );
+                break;
             case 'update_guest':
                 requireFields($data, ['id', 'room_id', 'name']);
                 
@@ -235,6 +291,9 @@ class DataRegisterController
                         [$data['id'], $data['room_id'], $status, $checkIn]
                     );
                 }
+
+                // Keep Guest Details master table synced
+                (new GuestDetailModel())->upsertFromGuestData($data);
                 break;
             case 'update_meeting_room':
                 requireFields($data, ['id', 'meeting_room', 'building', 'capacity']);
@@ -259,6 +318,9 @@ class DataRegisterController
             case 'delete_guest': 
                 \App\Core\Database::execute("DELETE FROM reservations WHERE guest_id = ?", [$id]);
                 (new GuestModel())->delete($id); 
+                break;
+            case 'delete_guest_detail':
+                (new GuestDetailModel())->delete($id);
                 break;
             case 'delete_meals_dp': (new MealsDpModel())->delete($id); break;
             case 'delete_laundry_dp': (new LaundryDpModel())->delete($id); break;

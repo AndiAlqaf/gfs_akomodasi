@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/stores/useAppStore';
-import { Building2, Lock, User as UserIcon, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, User as UserIcon, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -60,8 +60,8 @@ export default function Login() {
         />
 
         <div className="relative z-20 px-16 text-stone-50 max-w-2xl text-center">
-          <div className="inline-flex items-center justify-center p-4 bg-lime-400 rounded-3xl mb-8 shadow-2xl shadow-lime-400/20 animate-pulse">
-            <Building2 className="w-16 h-16 text-emerald-950" />
+          <div className="inline-flex items-center justify-center mb-8 rounded-3xl shadow-2xl shadow-lime-400/20">
+            <img src="/silaria-logo.svg" alt="SILARIA Logo" className="w-24 h-24 object-contain" />
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight mb-4 text-white drop-shadow-md">
             SILARIA
@@ -83,10 +83,10 @@ export default function Login() {
 
         <div className="mx-auto w-full max-w-[440px] relative z-10 animate-in fade-in slide-in-from-right-8 duration-700">
           <div className="lg:hidden mb-8 text-center">
-            <div className="inline-flex bg-lime-400 p-3 rounded-2xl shadow-lg text-emerald-950 mb-3">
-              <Building2 className="w-8 h-8" />
+            <div className="inline-flex mb-3 rounded-2xl shadow-lg">
+              <img src="/silaria-logo.svg" alt="SILARIA Logo" className="w-14 h-14 object-contain" />
             </div>
-            <h2 className="text-2xl font-extrabold text-emerald-950">GFS Ceria</h2>
+            <h2 className="text-2xl font-extrabold text-emerald-950">SILARIA</h2>
             <p className="text-xs text-emerald-700 font-medium uppercase tracking-widest">Accommodation System</p>
           </div>
 

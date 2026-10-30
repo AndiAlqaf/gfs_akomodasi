@@ -58,6 +58,7 @@ export const dataRegisterAPI = {
   getLaundryDp: () => api.get('/data-register', { params: { action: 'get_laundry_dp' } }),
   getLaundryBag: () => api.get('/data-register', { params: { action: 'get_laundry_bag' } }),
   getGuests: () => api.get('/data-register', { params: { action: 'get_guests' } }),
+  getGuestDetails: () => api.get('/data-register', { params: { action: 'get_guest_details' } }),
   getMeetingRooms: () => api.get('/data-register', { params: { action: 'get_meeting_rooms' } }),
   create: (type: string, data: any) =>
     api.post('/data-register', data, { params: { action: `add_${type}` } }),
@@ -129,7 +130,10 @@ export const laundryAPI = {
 };
 
 export const dashboardAPI = {
-  getStats: () => api.get('/dashboard'),
+  getStats: (company?: string) =>
+    api.get('/dashboard', {
+      params: company && company !== 'All' ? { company } : undefined,
+    }),
 };
 
 export const informationAPI = {
