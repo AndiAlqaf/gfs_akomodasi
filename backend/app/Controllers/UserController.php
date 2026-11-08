@@ -21,29 +21,48 @@ class UserController
     public function handlePost()
     {
         $input = jsonInput();
-        $action = $_GET['action'] ?? '';
+        $action = $_GET['action'] ?? ($input['action'] ?? '');
 
-        if ($action === 'login') {
-            requireFields($input, ['username', 'password']);
-            $user = $this->model->login($input['username'], $input['password']);
-            if ($user) {
-                jsonResponse(['status' => 'success', 'data' => $user]);
+        try {
+            if ($action === 'login') {
+                requireFields($input, ['username', 'password']);
+                $user = $this->model->login($input['username'], $input['password']);
+                if ($user) {
+                    jsonResponse(['status' => 'success', 'data' => $user]);
+                } else {
+                    jsonResponse(['status' => 'error', 'error' => 'Username atau password salah.'], 401);
+                }
+            } elseif ($action === 'update') {
+                requireFields($input, ['id', 'name', 'username', 'role']);
+                $this->model->updateUser($input);
+                jsonResponse(['status' => 'success', 'message' => 'User updated successfully']);
+            } elseif ($action === 'delete') {
+                $id = $input['id'] ?? ($_GET['id'] ?? null);
+                if (!$id) {
+                    jsonResponse(['status' => 'error', 'error' => 'ID is required'], 422);
+                }
+                $this->model->delete($id);
+                jsonResponse(['status' => 'success', 'message' => 'User deleted successfully']);
             } else {
-                jsonResponse(['status' => 'error', 'message' => 'Invalid username or password'], 401);
+                requireFields($input, ['name', 'username', 'password', 'role']);
+                $id = $this->model->createUser($input);
+                jsonResponse(['status' => 'success', 'message' => 'User created successfully', 'id' => $id]);
             }
-        } else {
-            requireFields($input, ['name', 'username', 'email']);
-            $id = $this->model->createUser($input);
-            jsonResponse(['status' => 'success', 'message' => 'User created successfully', 'id' => $id]);
+        } catch (\RuntimeException $e) {
+            jsonResponse(['status' => 'error', 'error' => $e->getMessage()], 422);
         }
     }
 
     public function handlePut()
     {
         $input = jsonInput();
-        requireFields($input, ['id', 'name', 'username', 'email', 'role']);
-        $this->model->updateUser($input);
-        jsonResponse(['status' => 'success', 'message' => 'User updated successfully']);
+        requireFields($input, ['id', 'name', 'username', 'role']);
+        try {
+            $this->model->updateUser($input);
+            jsonResponse(['status' => 'success', 'message' => 'User updated successfully']);
+        } catch (\RuntimeException $e) {
+            jsonResponse(['status' => 'error', 'error' => $e->getMessage()], 422);
+        }
     }
 
     public function handleDelete()
@@ -51,7 +70,7 @@ class UserController
         $input = jsonInput();
         $id = $_GET['id'] ?? ($input['id'] ?? null);
         if (!$id) {
-            jsonResponse(['status' => 'error', 'message' => 'ID is required'], 422);
+            jsonResponse(['status' => 'error', 'error' => 'ID is required'], 422);
         }
         $this->model->delete($id);
         jsonResponse(['status' => 'success', 'message' => 'User deleted successfully']);

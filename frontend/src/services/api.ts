@@ -37,7 +37,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.error || error.message || 'API request failed';
+    const message = error.response?.data?.error || error.response?.data?.message || error.message || 'API request failed';
     return Promise.reject(new Error(message));
   }
 );
@@ -142,6 +142,18 @@ export const informationAPI = {
   getMealsDelivery: () => api.get('/information', { params: { type: 'meals_delivery' } }),
   getMealsInfo: () => api.get('/information', { params: { type: 'meals_info' } }),
   getMeetingRooms: () => api.get('/information', { params: { type: 'meeting' } }),
+};
+
+export const userAPI = {
+  getAll: () => api.get('/users'),
+  login: (username: string, password: string) =>
+    api.post('/users', { action: 'login', username, password }, { params: { action: 'login' } }),
+  create: (data: { name: string; username: string; email?: string; password: string; role: string }) =>
+    api.post('/users', data),
+  update: (data: { id: string | number; name: string; username: string; email?: string; password?: string; role: string }) =>
+    api.post('/users', { action: 'update', ...data }, { params: { action: 'update' } }),
+  delete: (id: string | number) =>
+    api.post('/users', { action: 'delete', id }, { params: { action: 'delete', id } }),
 };
 
 export default api;

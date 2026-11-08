@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PRESET_ACCOUNTS } from '@/config/roles';
+import { getStoredAccounts, RoleCode } from '@/config/roles';
+import { userAPI } from '@/services/api';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -18,34 +19,61 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAppStore();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    setTimeout(() => {
-      const found = PRESET_ACCOUNTS.find(
-        (acc) =>
-          acc.username.toLowerCase() === username.trim().toLowerCase() &&
-          (password === acc.password || password === 'admin123' || password === 'password123')
-      );
+    const cleanUsername = username.trim();
 
-      if (found) {
+    try {
+      // 1. Authenticate against backend database (`users` table)
+      const resp = await userAPI.login(cleanUsername, password);
+      const userData = resp?.data?.data;
+      if (userData) {
         login({
-          id: found.id,
-          name: found.name,
-          email: found.email,
-          role: found.role,
+          id: String(userData.id),
+          name: userData.name,
+          email: userData.email,
+          role: userData.role as RoleCode,
         });
         setIsSuccess(true);
         setTimeout(() => {
           navigate('/');
-        }, 800);
-      } else {
-        setError('Invalid username or password. Please check your credentials.');
-        setIsLoading(false);
+        }, 500);
+        return;
       }
-    }, 600);
+    } catch (err: any) {
+      // If backend explicitly returned 401 Invalid credentials, check if account was updated locally first
+      const storedAccounts = getStoredAccounts();
+      const foundLocal = storedAccounts.find(
+        (acc) =>
+          (acc.username.toLowerCase() === cleanUsername.toLowerCase() ||
+            (acc.role === 'super' && ['superadmin', 'super admin', 'super_admin'].includes(cleanUsername.toLowerCase()))) &&
+          password === acc.password
+      );
+
+      if (foundLocal) {
+        login({
+          id: foundLocal.id,
+          name: foundLocal.name,
+          email: foundLocal.email,
+          role: foundLocal.role,
+        });
+        setIsSuccess(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 500);
+        return;
+      }
+
+      setError(err?.message || 'Username atau password salah. Silakan periksa kembali.');
+      setIsLoading(false);
+      return;
+    }
+
+    setError('Username atau password salah. Silakan periksa kembali.');
+    setIsLoading(false);
   };
 
   return (

@@ -18,6 +18,17 @@ export interface UserAccount {
   roleLabel: string;
 }
 
+export const ROLE_LABELS: Record<RoleCode, string> = {
+  super: 'SUPER ADMIN (Master Role Manager)',
+  admin: 'ADMIN (Administrator)',
+  fron: 'FRON (Front Office)',
+  supervisor: 'SUPERVISOR',
+  canteen: 'CANTEEN (Canteen Officer)',
+  laundr: 'LAUNDR (Laundry Dropper)',
+  driver: 'DRIVER (Transport Driver)',
+  laundry: 'LAUNDRY (Laundry Cleaning)',
+};
+
 export const PRESET_ACCOUNTS: UserAccount[] = [
   {
     id: '1',
@@ -26,7 +37,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'superadmin@gfsceria.com',
     role: 'super',
-    roleLabel: 'SUPER (Super Admin)'
+    roleLabel: ROLE_LABELS.super
   },
   {
     id: '2',
@@ -35,7 +46,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'admin@gfsceria.com',
     role: 'admin',
-    roleLabel: 'ADMIN (Administrator)'
+    roleLabel: ROLE_LABELS.admin
   },
   {
     id: '3',
@@ -44,7 +55,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'frontoffice@gfsceria.com',
     role: 'fron',
-    roleLabel: 'FRON (Front Office)'
+    roleLabel: ROLE_LABELS.fron
   },
   {
     id: '4',
@@ -53,7 +64,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'supervisor@gfsceria.com',
     role: 'supervisor',
-    roleLabel: 'SUPERVISOR'
+    roleLabel: ROLE_LABELS.supervisor
   },
   {
     id: '5',
@@ -62,7 +73,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'canteen@gfsceria.com',
     role: 'canteen',
-    roleLabel: 'CANTEEN (Canteen Officer)'
+    roleLabel: ROLE_LABELS.canteen
   },
   {
     id: '6',
@@ -71,7 +82,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'laundrydrop@gfsceria.com',
     role: 'laundr',
-    roleLabel: 'LAUNDR (Laundry Dropper)'
+    roleLabel: ROLE_LABELS.laundr
   },
   {
     id: '7',
@@ -80,7 +91,7 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'driver@gfsceria.com',
     role: 'driver',
-    roleLabel: 'DRIVER'
+    roleLabel: ROLE_LABELS.driver
   },
   {
     id: '8',
@@ -89,9 +100,81 @@ export const PRESET_ACCOUNTS: UserAccount[] = [
     password: 'password123',
     email: 'laundry@gfsceria.com',
     role: 'laundry',
-    roleLabel: 'LAUNDRY (Laundry Cleaning)'
+    roleLabel: ROLE_LABELS.laundry
+  },
+  {
+    id: '9',
+    name: 'Hermansyah Marzuki',
+    username: 'hermansm',
+    password: 'gfs04',
+    email: 'hermansyah.marzuki@cmprima.com',
+    role: 'admin',
+    roleLabel: ROLE_LABELS.admin
+  },
+  {
+    id: '10',
+    name: 'Muhammad Idul',
+    username: 'muhIdul',
+    password: '654321',
+    email: 'muhammad.idul@cerindocorp.co.id',
+    role: 'admin',
+    roleLabel: ROLE_LABELS.admin
+  },
+  {
+    id: '11',
+    name: 'Ummu Atia Ahmad',
+    username: 'ummua',
+    password: '280900',
+    email: 'ummu.ahmad@cerindocorp.co.id',
+    role: 'admin',
+    roleLabel: ROLE_LABELS.admin
   }
 ];
+
+const ACCOUNTS_STORAGE_KEY = 'silaria_accounts_cache_v2';
+
+export function getStoredAccounts(): UserAccount[] {
+  if (typeof window === 'undefined') return PRESET_ACCOUNTS;
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+    if (!raw) return PRESET_ACCOUNTS;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const mapped: UserAccount[] = parsed.map((acc: any) => ({
+        id: String(acc.id),
+        name: acc.name || '',
+        username: acc.username || '',
+        password: acc.password || 'password123',
+        email: acc.email || `${acc.username || 'user'}@gfsceria.com`,
+        role: (acc.role || 'admin') as RoleCode,
+        roleLabel: ROLE_LABELS[(acc.role || 'admin') as RoleCode] || String(acc.role || '').toUpperCase(),
+      }));
+
+      // Ensure any newly added preset accounts (e.g. hermansm, muhIdul, ummua) are present
+      for (const preset of PRESET_ACCOUNTS) {
+        const exists = mapped.some(
+          (m) => m.username.toLowerCase() === preset.username.toLowerCase()
+        );
+        if (!exists) {
+          mapped.push(preset);
+        }
+      }
+      return mapped;
+    }
+  } catch {
+    // fallback to preset
+  }
+  return PRESET_ACCOUNTS;
+}
+
+export function saveStoredAccounts(accounts: UserAccount[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export const ROLE_PERMISSIONS = {
   // 1. Manage Access Account (User Name & Password)

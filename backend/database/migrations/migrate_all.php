@@ -285,7 +285,10 @@ try {
             ['Canteen Officer', 'canteen', 'canteen@gfsceria.com', 'password123', 'canteen'],
             ['Laundry Dropper', 'laundrydrop', 'laundr@gfsceria.com', 'password123', 'laundr'],
             ['Transport Driver', 'driver', 'driver@gfsceria.com', 'password123', 'driver'],
-            ['Laundry Cleaner', 'laundry', 'laundry@gfsceria.com', 'password123', 'laundry']
+            ['Laundry Cleaner', 'laundry', 'laundry@gfsceria.com', 'password123', 'laundry'],
+            ['Hermansyah Marzuki', 'hermansm', 'hermansyah.marzuki@cmprima.com', 'gfs04', 'admin'],
+            ['Muhammad Idul', 'muhIdul', 'muhammad.idul@cerindocorp.co.id', '654321', 'admin'],
+            ['Ummu Atia Ahmad', 'ummua', 'ummu.ahmad@cerindocorp.co.id', '280900', 'admin']
         ];
         foreach ($presets as $p) {
             $insertUser->execute($p);
