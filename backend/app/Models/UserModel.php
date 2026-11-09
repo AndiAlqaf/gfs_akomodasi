@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Crypto;
 
 class UserModel extends BaseModel
 {
@@ -28,17 +29,17 @@ class UserModel extends BaseModel
         // 2. Ensure required preset accounts are seeded
         try {
             $presets = [
-                ['Super Administrator', 'superadmin', 'superadmin@gfsceria.com', 'password123', 'super'],
-                ['System Administrator', 'admin', 'admin@gfsceria.com', 'password123', 'admin'],
-                ['Front Office Staff', 'frontoffice', 'frontoffice@gfsceria.com', 'password123', 'fron'],
-                ['Supervisor Staff', 'supervisor', 'supervisor@gfsceria.com', 'password123', 'supervisor'],
-                ['Canteen Officer', 'canteen', 'canteen@gfsceria.com', 'password123', 'canteen'],
-                ['Laundry Dropper', 'laundrydrop', 'laundr@gfsceria.com', 'password123', 'laundr'],
-                ['Transport Driver', 'driver', 'driver@gfsceria.com', 'password123', 'driver'],
-                ['Laundry Cleaner', 'laundry', 'laundry@gfsceria.com', 'password123', 'laundry'],
-                ['Hermansyah Marzuki', 'hermansm', 'hermansyah.marzuki@cmprima.com', 'gfs04', 'admin'],
-                ['Muhammad Idul', 'muhIdul', 'muhammad.idul@cerindocorp.co.id', '654321', 'admin'],
-                ['Ummu Atia Ahmad', 'ummua', 'ummu.ahmad@cerindocorp.co.id', '280900', 'admin']
+                ['Super Administrator', 'superadmin', 'superadmin@gfsceria.com', Crypto::encrypt('password123'), 'super'],
+                ['System Administrator', 'admin', 'admin@gfsceria.com', Crypto::encrypt('password123'), 'admin'],
+                ['Front Office Staff', 'frontoffice', 'frontoffice@gfsceria.com', Crypto::encrypt('password123'), 'fron'],
+                ['Supervisor Staff', 'supervisor', 'supervisor@gfsceria.com', Crypto::encrypt('password123'), 'supervisor'],
+                ['Canteen Officer', 'canteen', 'canteen@gfsceria.com', Crypto::encrypt('password123'), 'canteen'],
+                ['Laundry Dropper', 'laundrydrop', 'laundr@gfsceria.com', Crypto::encrypt('password123'), 'laundr'],
+                ['Transport Driver', 'driver', 'driver@gfsceria.com', Crypto::encrypt('password123'), 'driver'],
+                ['Laundry Cleaner', 'laundry', 'laundry@gfsceria.com', Crypto::encrypt('password123'), 'laundry'],
+                ['Hermansyah Marzuki', 'hermansm', 'hermansyah.marzuki@cmprima.com', Crypto::encrypt('gfs04'), 'admin'],
+                ['Muhammad Idul', 'muhIdul', 'muhammad.idul@cerindocorp.co.id', Crypto::encrypt('654321'), 'admin'],
+                ['Ummu Atia Ahmad', 'ummua', 'ummu.ahmad@cerindocorp.co.id', Crypto::encrypt('280900'), 'admin']
             ];
 
             $count = Database::fetchColumn("SELECT COUNT(*) FROM `users`");
@@ -49,9 +50,9 @@ class UserModel extends BaseModel
             } else {
                 // Ensure the 3 new admin accounts exist in existing databases
                 $additionalAdmins = [
-                    ['Hermansyah Marzuki', 'hermansm', 'hermansyah.marzuki@cmprima.com', 'gfs04', 'admin'],
-                    ['Muhammad Idul', 'muhIdul', 'muhammad.idul@cerindocorp.co.id', '654321', 'admin'],
-                    ['Ummu Atia Ahmad', 'ummua', 'ummu.ahmad@cerindocorp.co.id', '280900', 'admin']
+                    ['Hermansyah Marzuki', 'hermansm', 'hermansyah.marzuki@cmprima.com', Crypto::encrypt('gfs04'), 'admin'],
+                    ['Muhammad Idul', 'muhIdul', 'muhammad.idul@cerindocorp.co.id', Crypto::encrypt('654321'), 'admin'],
+                    ['Ummu Atia Ahmad', 'ummua', 'ummu.ahmad@cerindocorp.co.id', Crypto::encrypt('280900'), 'admin']
                 ];
                 foreach ($additionalAdmins as $adm) {
                     $exists = Database::fetch("SELECT id FROM `users` WHERE LOWER(TRIM(username)) = LOWER(?)", [$adm[1]]);
@@ -63,6 +64,17 @@ class UserModel extends BaseModel
                     }
                 }
             }
+
+            // 3. Auto-encrypt any legacy unencrypted plaintext passwords in the database
+            $unencryptedUsers = Database::fetchAll("SELECT id, password FROM `users` WHERE password NOT LIKE 'ENC:%'");
+            if (is_array($unencryptedUsers)) {
+                foreach ($unencryptedUsers as $u) {
+                    if (!empty($u['password'])) {
+                        $enc = Crypto::encrypt($u['password']);
+                        Database::execute("UPDATE `users` SET password = ? WHERE id = ?", [$enc, $u['id']]);
+                    }
+                }
+            }
         } catch (\Exception $e) {
             // Ignore DB init errors
         }
@@ -70,7 +82,21 @@ class UserModel extends BaseModel
 
     public function getAllUsers()
     {
-        return Database::fetchAll("SELECT id, name, username, email, password, role, created_at FROM `users` ORDER BY id ASC");
+        $users = Database::fetchAll("SELECT id, name, username, email, password, role, created_at FROM `users` ORDER BY id ASC");
+        foreach ($users as &$user) {
+            $raw = (string)($user['password'] ?? '');
+            if (!Crypto::isEncrypted($raw)) {
+                // Auto-encrypt in DB
+                $encrypted = Crypto::encrypt($raw);
+                Database::execute("UPDATE `users` SET password = ? WHERE id = ?", [$encrypted, $user['id']]);
+                // Keep plain text for human readability on the website
+            } else {
+                // Decrypt into human-readable plain text ("bahasa manusia") for display in Manage Accounts
+                $user['password'] = Crypto::decrypt($raw);
+            }
+        }
+        unset($user);
+        return $users;
     }
 
     public function login($username, $password)
@@ -86,7 +112,13 @@ class UserModel extends BaseModel
             );
         }
 
-        if ($user && (string)$password === (string)$user['password']) {
+        if ($user && Crypto::verifyPassword((string)$password, (string)$user['password'])) {
+            // If the database had legacy plaintext password, auto-encrypt it now
+            if (!Crypto::isEncrypted($user['password'])) {
+                $enc = Crypto::encrypt($user['password']);
+                Database::execute("UPDATE `users` SET password = ? WHERE id = ?", [$enc, $user['id']]);
+            }
+
             unset($user['password']);
             $roleLower = strtolower(trim((string)($user['role'] ?? '')));
             if (in_array($roleLower, ['superadmin', 'super_admin', 'super admin', 'superadministrator'], true)) {
@@ -120,13 +152,17 @@ class UserModel extends BaseModel
             $role = 'super';
         }
 
+        // Encrypt password before saving into database
+        $rawPassword = (string)($data['password'] ?? 'password123');
+        $encryptedPassword = Crypto::encrypt($rawPassword);
+
         Database::execute(
             "INSERT INTO `users` (`name`, `username`, `email`, `password`, `role`) VALUES (?, ?, ?, ?, ?)",
             [
                 trim((string)$data['name']),
                 $username,
                 $email,
-                (string)($data['password'] ?? 'password123'),
+                $encryptedPassword,
                 $role
             ]
         );
@@ -164,13 +200,15 @@ class UserModel extends BaseModel
         }
 
         if (isset($data['password']) && trim((string)$data['password']) !== '') {
+            // Encrypt new password before updating database
+            $encryptedPassword = Crypto::encrypt(trim((string)$data['password']));
             Database::execute(
                 "UPDATE `users` SET name=?, username=?, email=?, password=?, role=? WHERE id=?",
                 [
                     trim((string)$data['name']),
                     $username,
                     $email,
-                    (string)$data['password'],
+                    $encryptedPassword,
                     $role,
                     $id
                 ]

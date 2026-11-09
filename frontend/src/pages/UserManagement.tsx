@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, UserCheck, ShieldCheck, Edit, Trash2, Key, Mail, User, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, UserCheck, ShieldCheck, Edit, Trash2, Key, Mail, User, Eye, EyeOff, Lock } from 'lucide-react';
 import { UserAccount, RoleCode, ROLE_LABELS, getStoredAccounts, saveStoredAccounts, normalizeRole, getRoleLabel } from '@/config/roles';
 import { userAPI } from '@/services/api';
 import Swal from 'sweetalert2';
@@ -206,6 +206,9 @@ const UserManagement: React.FC = () => {
             </CardTitle>
             <span className="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200">
               Authority: SUPER ADMIN ONLY
+            </span>
+            <span className="hidden sm:inline-flex text-xs font-semibold bg-stone-100 text-stone-700 px-2.5 py-0.5 rounded-full border border-stone-200 items-center gap-1.5" title="Password di MySQL terenkripsi AES-256 dan hanya didekripsi untuk Super Admin">
+              <Lock size={12} className="text-emerald-700" /> DB AES-256 Encrypted
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-3">

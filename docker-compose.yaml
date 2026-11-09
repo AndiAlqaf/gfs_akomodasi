@@ -39,6 +39,7 @@ services:
       # Fail-closed: origin eksplisit, JANGAN pakai '*' di produksi
       APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-https://silaria.online,https://www.silaria.online}
       APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Makassar}
+      APP_KEY: ${APP_KEY:-SILARIA_GFS_CERIA_SECURE_VAULT_KEY_2026!#@CERINDO}
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
