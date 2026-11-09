@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { getStoredAccounts, RoleCode } from '@/config/roles';
+import { getStoredAccounts, RoleCode, normalizeRole } from '@/config/roles';
 import { userAPI } from '@/services/api';
 
 export default function Login() {
@@ -35,7 +35,7 @@ export default function Login() {
           id: String(userData.id),
           name: userData.name,
           email: userData.email,
-          role: userData.role as RoleCode,
+          role: normalizeRole(userData.role),
         });
         setIsSuccess(true);
         setTimeout(() => {
@@ -49,7 +49,7 @@ export default function Login() {
       const foundLocal = storedAccounts.find(
         (acc) =>
           (acc.username.toLowerCase() === cleanUsername.toLowerCase() ||
-            (acc.role === 'super' && ['superadmin', 'super admin', 'super_admin'].includes(cleanUsername.toLowerCase()))) &&
+            (normalizeRole(acc.role) === 'super' && ['superadmin', 'super admin', 'super_admin'].includes(cleanUsername.toLowerCase()))) &&
           password === acc.password
       );
 
@@ -58,7 +58,7 @@ export default function Login() {
           id: foundLocal.id,
           name: foundLocal.name,
           email: foundLocal.email,
-          role: foundLocal.role,
+          role: normalizeRole(foundLocal.role),
         });
         setIsSuccess(true);
         setTimeout(() => {

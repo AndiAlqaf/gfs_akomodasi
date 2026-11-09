@@ -82,12 +82,16 @@ class UserModel extends BaseModel
         );
         if (!$user && in_array(strtolower($cleanUsername), ['super admin', 'super_admin', 'superadmin'], true)) {
             $user = Database::fetch(
-                "SELECT id, name, username, email, role, password FROM `users` WHERE role = 'super' ORDER BY id ASC LIMIT 1"
+                "SELECT id, name, username, email, role, password FROM `users` WHERE role = 'super' OR role = 'superadmin' OR role = 'super_admin' ORDER BY id ASC LIMIT 1"
             );
         }
 
         if ($user && (string)$password === (string)$user['password']) {
             unset($user['password']);
+            $roleLower = strtolower(trim((string)($user['role'] ?? '')));
+            if (in_array($roleLower, ['superadmin', 'super_admin', 'super admin', 'superadministrator'], true)) {
+                $user['role'] = 'super';
+            }
             return $user;
         }
         return false;
@@ -111,6 +115,11 @@ class UserModel extends BaseModel
             throw new \RuntimeException("Email '{$email}' sudah digunakan.");
         }
 
+        $role = trim((string)($data['role'] ?? 'admin'));
+        if (in_array(strtolower($role), ['superadmin', 'super_admin', 'super admin'], true)) {
+            $role = 'super';
+        }
+
         Database::execute(
             "INSERT INTO `users` (`name`, `username`, `email`, `password`, `role`) VALUES (?, ?, ?, ?, ?)",
             [
@@ -118,7 +127,7 @@ class UserModel extends BaseModel
                 $username,
                 $email,
                 (string)($data['password'] ?? 'password123'),
-                trim((string)($data['role'] ?? 'admin'))
+                $role
             ]
         );
         return Database::lastInsertId();
@@ -149,6 +158,11 @@ class UserModel extends BaseModel
             throw new \RuntimeException("Email '{$email}' sudah digunakan oleh akun lain.");
         }
 
+        $role = trim((string)($data['role'] ?? 'admin'));
+        if (in_array(strtolower($role), ['superadmin', 'super_admin', 'super admin'], true)) {
+            $role = 'super';
+        }
+
         if (isset($data['password']) && trim((string)$data['password']) !== '') {
             Database::execute(
                 "UPDATE `users` SET name=?, username=?, email=?, password=?, role=? WHERE id=?",
@@ -157,7 +171,7 @@ class UserModel extends BaseModel
                     $username,
                     $email,
                     (string)$data['password'],
-                    trim((string)$data['role']),
+                    $role,
                     $id
                 ]
             );
@@ -168,7 +182,7 @@ class UserModel extends BaseModel
                     trim((string)$data['name']),
                     $username,
                     $email,
-                    trim((string)$data['role']),
+                    $role,
                     $id
                 ]
             );

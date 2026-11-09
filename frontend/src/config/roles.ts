@@ -1,5 +1,6 @@
 export type RoleCode = 
   | 'super' 
+  | 'superadmin'
   | 'admin' 
   | 'fron' 
   | 'supervisor' 
@@ -18,16 +19,61 @@ export interface UserAccount {
   roleLabel: string;
 }
 
-export const ROLE_LABELS: Record<RoleCode, string> = {
+export const ROLE_LABELS: Record<string, string> = {
   super: 'SUPER ADMIN (Master Role Manager)',
+  superadmin: 'SUPER ADMIN (Master Role Manager)',
   admin: 'ADMIN (Administrator)',
   fron: 'FRON (Front Office)',
+  frontoffice: 'FRON (Front Office)',
   supervisor: 'SUPERVISOR',
   canteen: 'CANTEEN (Canteen Officer)',
   laundr: 'LAUNDR (Laundry Dropper)',
+  laundrydrop: 'LAUNDR (Laundry Dropper)',
   driver: 'DRIVER (Transport Driver)',
   laundry: 'LAUNDRY (Laundry Cleaning)',
 };
+
+export function normalizeRole(role: string | undefined | null): RoleCode {
+  if (!role) return 'super';
+  const clean = String(role).trim().toLowerCase();
+  if (
+    clean === 'super' || 
+    clean === 'superadmin' || 
+    clean === 'super_admin' || 
+    clean === 'super admin' || 
+    clean.includes('super')
+  ) {
+    return 'super';
+  }
+  if (clean === 'frontoffice' || clean === 'front_office' || clean === 'front office' || clean === 'fron') {
+    return 'fron';
+  }
+  if (clean === 'laundrydrop' || clean === 'laundry_drop' || clean === 'laundr') {
+    return 'laundr';
+  }
+  if (clean === 'admin' || clean === 'administrator') {
+    return 'admin';
+  }
+  if (clean === 'supervisor') {
+    return 'supervisor';
+  }
+  if (clean === 'canteen') {
+    return 'canteen';
+  }
+  if (clean === 'driver') {
+    return 'driver';
+  }
+  if (clean === 'laundry') {
+    return 'laundry';
+  }
+  return clean as RoleCode;
+}
+
+export function getRoleLabel(role: string | undefined | null): string {
+  if (!role) return ROLE_LABELS.super;
+  const normalized = normalizeRole(role);
+  return ROLE_LABELS[normalized] || ROLE_LABELS[role] || String(role).toUpperCase();
+}
 
 export const PRESET_ACCOUNTS: UserAccount[] = [
   {
@@ -241,7 +287,13 @@ export const ROLE_PERMISSIONS = {
   }
 };
 
-export function hasPermission(role: RoleCode | string | undefined, allowedRoles: string[]): boolean {
+export function hasPermission(role: RoleCode | string | undefined | null, allowedRoles: string[]): boolean {
   if (!role) return false;
-  return allowedRoles.includes(role);
+  const normalized = normalizeRole(role);
+  
+  // Super Admin has master authority over all modules and actions
+  if (normalized === 'super') return true;
+
+  const lowerAllowed = allowedRoles.map((r) => r.toLowerCase().trim());
+  return lowerAllowed.includes(normalized) || lowerAllowed.includes(String(role).toLowerCase().trim());
 }

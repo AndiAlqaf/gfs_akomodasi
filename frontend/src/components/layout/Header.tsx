@@ -12,14 +12,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-import { PRESET_ACCOUNTS } from '@/config/roles';
+import { PRESET_ACCOUNTS, getRoleLabel, normalizeRole } from '@/config/roles';
 
 const Header: React.FC = () => {
   const { user, logout } = useAppStore();
   const location = useLocation();
 
-  const currentAccount = PRESET_ACCOUNTS.find(a => a.role === user?.role);
-  const roleDisplay = currentAccount ? currentAccount.roleLabel : (user?.role?.toUpperCase() || 'SUPER');
+  const currentAccount = PRESET_ACCOUNTS.find(a => normalizeRole(a.role) === normalizeRole(user?.role));
+  const roleDisplay = currentAccount ? currentAccount.roleLabel : getRoleLabel(user?.role);
 
   const pageTitles: Record<string, string> = {
     '/': 'Dashboard',

@@ -11,14 +11,14 @@ import {
 } from 'lucide-react';
 import { useAppStore, useUIStore } from '@/stores/useAppStore';
 import { cn } from '@/lib/utils';
-import { ROLE_PERMISSIONS, hasPermission } from '@/config/roles';
+import { ROLE_PERMISSIONS, hasPermission, normalizeRole } from '@/config/roles';
 
 const Sidebar: React.FC = () => {
   const [isHovered, setIsHovered] = React.useState(false);
   const location = useLocation();
   const { user } = useAppStore();
   const { setSidebarHovered } = useUIStore();
-  const role = user?.role || 'super';
+  const role = normalizeRole(user?.role);
   const isExpanded = isHovered;
 
   useEffect(() => {

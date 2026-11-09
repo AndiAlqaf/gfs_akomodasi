@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Search, UserCheck, ShieldCheck, Edit, Trash2, Key, Mail, User, Eye, EyeOff } from 'lucide-react';
-import { UserAccount, RoleCode, ROLE_LABELS, getStoredAccounts, saveStoredAccounts } from '@/config/roles';
+import { UserAccount, RoleCode, ROLE_LABELS, getStoredAccounts, saveStoredAccounts, normalizeRole, getRoleLabel } from '@/config/roles';
 import { userAPI } from '@/services/api';
 import Swal from 'sweetalert2';
 
@@ -33,7 +33,7 @@ const UserManagement: React.FC = () => {
       const rows = resp?.data?.data;
       if (Array.isArray(rows) && rows.length > 0) {
         const mapped: UserAccount[] = rows.map((r: any) => {
-          const roleCode = (r.role || 'admin') as RoleCode;
+          const roleCode = normalizeRole(r.role || 'admin');
           return {
             id: String(r.id),
             name: r.name || '',
@@ -41,7 +41,7 @@ const UserManagement: React.FC = () => {
             password: r.password || 'password123',
             email: r.email || `${r.username || 'user'}@gfsceria.com`,
             role: roleCode,
-            roleLabel: ROLE_LABELS[roleCode] || String(roleCode).toUpperCase(),
+            roleLabel: getRoleLabel(roleCode),
           };
         });
         setAccounts(mapped);
@@ -81,7 +81,7 @@ const UserManagement: React.FC = () => {
       setUsername(acc.username);
       setEmail(acc.email);
       setPassword(acc.password);
-      setRole(acc.role);
+      setRole(normalizeRole(acc.role));
     } else {
       setEditingId(null);
       setName('');
@@ -123,7 +123,7 @@ const UserManagement: React.FC = () => {
           }
           const updated = accounts.map((a) =>
             a.id === editingId
-              ? { ...a, name: cleanName, username: cleanUsername, email: cleanEmail, password, role, roleLabel: ROLE_LABELS[role] }
+              ? { ...a, name: cleanName, username: cleanUsername, email: cleanEmail, password, role, roleLabel: getRoleLabel(role) }
               : a
           );
           setAccounts(updated);
@@ -151,7 +151,7 @@ const UserManagement: React.FC = () => {
             email: cleanEmail,
             password,
             role,
-            roleLabel: ROLE_LABELS[role],
+            roleLabel: getRoleLabel(role),
           };
           const updated = [...accounts, newAcc];
           setAccounts(updated);
@@ -168,7 +168,7 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDelete = (acc: UserAccount) => {
-    if (acc.role === 'super' && accounts.filter((a) => a.role === 'super').length <= 1) {
+    if (normalizeRole(acc.role) === 'super' && accounts.filter((a) => normalizeRole(a.role) === 'super').length <= 1) {
       return Swal.fire({ icon: 'error', title: 'Tidak Diizinkan', text: 'Akun Super Admin utama tidak boleh dihapus!' });
     }
 
